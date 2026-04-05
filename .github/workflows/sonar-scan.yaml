@@ -30,6 +30,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         # Override sonar.organization and sonar.projectKey from pom.xml (which points to nashtech-garage)
         # to use our own forked project on SonarCloud
-        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -DskipTests
-              -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
-              -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+        run: |
+          mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -DskipTests \
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
