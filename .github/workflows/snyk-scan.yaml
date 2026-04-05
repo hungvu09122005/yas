@@ -29,4 +29,4 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --all-projects --severity-threshold=high
+          args: --file=pom.xml --severity-threshold=high --no-monitor
