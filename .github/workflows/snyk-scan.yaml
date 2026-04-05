@@ -24,9 +24,10 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Install Snyk CLI
+        run: npm install -g snyk
+
       - name: Run Snyk to check for vulnerabilities
-        uses: snyk/actions/maven@master
+        run: snyk test --file=pom.xml --severity-threshold=high --no-monitor
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --file=pom.xml --severity-threshold=high --no-monitor
