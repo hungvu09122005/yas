@@ -28,5 +28,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        # Rule 6 constraint: avoid re-running all unit tests globally. Using -DskipTests to perform only static analysis.
+        # Override sonar.organization and sonar.projectKey from pom.xml (which points to nashtech-garage)
+        # to use our own forked project on SonarCloud
         run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -DskipTests
+              -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
+              -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
