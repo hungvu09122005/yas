@@ -2,15 +2,9 @@ name: SonarCloud Scan
 
 on:
   push:
-    paths:
-      - '**/*.java'
-      - '**/pom.xml'
-      - '.github/workflows/sonar-scan.yaml'
+    branches: [ "**" ]
   pull_request:
-    paths:
-      - '**/*.java'
-      - '**/pom.xml'
-      - '.github/workflows/sonar-scan.yaml'
+    branches: [ "**" ]
   workflow_dispatch:
 
 jobs:
