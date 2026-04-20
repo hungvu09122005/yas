@@ -60,3 +60,4 @@ jobs:
           context: ./backoffice
           push: true
           tags: ghcr.io/nashtech-garage/yas-backoffice:latest
+# Trigger run
