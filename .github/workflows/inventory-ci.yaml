@@ -47,7 +47,7 @@ jobs:
           path: inventory/target/site/jacoco/
 
       - name: Check coverage threshold (>= 70%)
-        run: mvn jacoco:check -pl inventory -am
+        run: mvn jacoco:check -pl inventory
 
       - name: Add coverage report to PR
         uses: madrapps/jacoco-report@v1.6.1

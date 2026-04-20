@@ -47,7 +47,7 @@ jobs:
           path: order/target/site/jacoco/
 
       - name: Check coverage threshold (>= 70%)
-        run: mvn jacoco:check -pl order -am
+        run: mvn jacoco:check -pl order
 
       - name: Add coverage report to PR
         uses: madrapps/jacoco-report@v1.6.1
