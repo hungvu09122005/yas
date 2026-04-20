@@ -30,11 +30,8 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/workflows/actions
 
-      - name: Install common-library
-        run: mvn install -DskipTests -f common-library
-
       - name: Run tests with coverage
-        run: mvn test jacoco:report -f media
+        run: mvn test jacoco:report -pl media -am
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -50,7 +47,7 @@ jobs:
           path: media/target/site/jacoco/
 
       - name: Check coverage threshold (>= 70%)
-        run: mvn jacoco:check@check -f media
+        run: mvn jacoco:check@check -pl media -am
 
       - name: Add coverage report to PR
         uses: madrapps/jacoco-report@v1.6.1
@@ -65,7 +62,7 @@ jobs:
 
       - name: Run Maven Checkstyle
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
-        run: mvn checkstyle:checkstyle -f media -Dcheckstyle.output.file=media-checkstyle-result.xml
+        run: mvn checkstyle:checkstyle -pl media -am -Dcheckstyle.output.file=media-checkstyle-result.xml
 
       - name: Upload Checkstyle result
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
@@ -85,7 +82,7 @@ jobs:
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -f media
+        run: mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -pl media -am
 
   build:
     name: Build
@@ -98,11 +95,8 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/workflows/actions
 
-      - name: Install common-library
-        run: mvn install -DskipTests -f common-library
-
       - name: Build JAR
-        run: mvn package -DskipTests -f media
+        run: mvn package -DskipTests -pl media -am
 
       - name: Log in to the Container registry
         if: ${{ github.ref == 'refs/heads/main' }}
