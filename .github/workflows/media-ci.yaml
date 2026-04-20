@@ -30,6 +30,9 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/workflows/actions
 
+      - name: Install common-library
+        run: mvn install -DskipTests -f common-library
+
       - name: Run tests with coverage
         run: mvn test jacoco:report -f media
 
@@ -94,6 +97,9 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/workflows/actions
+
+      - name: Install common-library
+        run: mvn install -DskipTests -f common-library
 
       - name: Build JAR
         run: mvn package -DskipTests -f media
