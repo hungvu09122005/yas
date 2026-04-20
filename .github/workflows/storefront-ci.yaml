@@ -60,3 +60,4 @@ jobs:
           context: ./storefront
           push: true
           tags: ghcr.io/nashtech-garage/yas-storefront:latest
+# Trigger run
