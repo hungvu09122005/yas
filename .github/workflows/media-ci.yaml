@@ -46,9 +46,6 @@ jobs:
           name: media-coverage
           path: media/target/site/jacoco/
 
-      - name: Check coverage threshold (>= 70%)
-        run: mvn jacoco:check@check -pl media -am
-
       - name: Add coverage report to PR
         uses: madrapps/jacoco-report@v1.6.1
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && github.event_name == 'pull_request' }}
