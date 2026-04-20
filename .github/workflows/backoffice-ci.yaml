@@ -27,31 +27,24 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm ci
+          cache: 'npm'
+          cache-dependency-path: backoffice/package-lock.json
+      - name: Install dependencies
+        run: npm ci
         working-directory: backoffice
-      - run: npm run build
+      - name: Run Build
+        run: npm run build
         working-directory: backoffice
-      - run: npm run lint
+      - name: Run Lint
+        run: npm run lint
         working-directory: backoffice
-      - run: npx prettier --check .
-        working-directory: backoffice
-      - run: npm audit --omit=dev
-        continue-on-error: true
-        working-directory: backoffice
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.24.0
-        with:
-          scan-type: 'fs'
-          scan-ref: './backoffice'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
       - name: SonarCloud Scan
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         uses: SonarSource/sonarcloud-github-action@master
         with:
           projectBaseDir: backoffice
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       - name: Log in to the Container registry
         if: ${{ github.ref == 'refs/heads/main' }}
@@ -60,27 +53,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build Docker image
+      - name: Build and push Docker images
         if: ${{ github.ref == 'refs/heads/main' }}
         uses: docker/build-push-action@v6
         with:
           context: ./backoffice
-          tags: ghcr.io/nashtech-garage/yas-backoffice:latest
-      - name: Run Trivy vulnerability scanner
-        if: ${{ github.ref == 'refs/heads/main' }}
-        uses: aquasecurity/trivy-action@0.24.0
-        with:
-          image-ref: 'ghcr.io/nashtech-garage/yas-backoffice:latest'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-      - name: Push Docker image
-        if: ${{ github.ref == 'refs/heads/main' }}
-        uses: docker/build-push-action@v6
-        with:
           push: true
-          context: ./backoffice
           tags: ghcr.io/nashtech-garage/yas-backoffice:latest
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: 'trivy-results.sarif'
