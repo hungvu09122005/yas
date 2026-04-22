@@ -18,7 +18,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write        # peaceiris/actions-gh-pages cần push lên gh-pages branch
   pull-requests: write   # madrapps/jacoco-report comment lên PR
   checks: write          # dorny/test-reporter upload test results
 
@@ -118,3 +118,23 @@ jobs:
           context: ./cart
           push: true
           tags: ghcr.io/nashtech-garage/yas-cart:latest
+
+  publish-coverage:
+    name: Publish coverage report
+    needs: [test]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Download coverage artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cart-coverage
+          path: ./jacoco-report
+
+      - name: Deploy JaCoCo report to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./jacoco-report
+          destination_dir: cart/coverage
+          keep_files: true
