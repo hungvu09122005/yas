@@ -15,6 +15,11 @@ on:
       - '.github/workflows/storefront-ci.yaml'
   workflow_dispatch:
 
+permissions:
+  contents: write
+  pull-requests: write
+  checks: write
+
 jobs:
   test:
     name: Test
