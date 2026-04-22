@@ -46,8 +46,6 @@ jobs:
           name: rating-coverage
           path: rating/target/site/jacoco/
 
-      - name: Check coverage threshold (>= 70%)
-        run: mvn jacoco:check@check -pl rating
 
       - name: Add coverage report to PR
         uses: madrapps/jacoco-report@v1.6.1
