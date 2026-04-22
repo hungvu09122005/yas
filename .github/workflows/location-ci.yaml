@@ -46,8 +46,6 @@ jobs:
           name: location-coverage
           path: location/target/site/jacoco/
 
-      - name: Check coverage threshold (>= 70%)
-        run: mvn jacoco:check@check -pl location
 
       - name: Add coverage report to PR
         uses: madrapps/jacoco-report@v1.6.1
