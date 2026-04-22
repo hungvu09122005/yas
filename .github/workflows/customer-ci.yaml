@@ -97,4 +97,4 @@ jobs:
         with:
           context: ./customer
           push: true
-          tags: ghcr.io/nashtech-garage/yas-
+          tags: ghcr.io/nashtech-garage/yas-customer:latest
