@@ -108,7 +108,7 @@ jobs:
           tags: ghcr.io/nashtech-garage/yas-backoffice:latest
 
       - name: Upload Trivy scan results to GitHub Security tab
-        if: always()
+        if: ${{ github.ref == 'refs/heads/main' }}
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-results.sarif'
