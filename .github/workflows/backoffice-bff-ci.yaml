@@ -17,6 +17,11 @@ on:
       - 'pom.xml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pull-requests: write   # madrapps/jacoco-report comment lên PR
+  checks: write          # dorny/test-reporter upload test results
+
 jobs:
   test:
     name: Test
