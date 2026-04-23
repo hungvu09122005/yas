@@ -17,6 +17,11 @@ on:
       - 'pom.xml'
   workflow_dispatch:
 
+permissions:
+  contents: write
+  pull-requests: write
+  checks: write
+
 jobs:
   test:
     name: Test
@@ -45,6 +50,9 @@ jobs:
         with:
           name: storefront-bff-coverage
           path: storefront-bff/target/site/jacoco/
+
+      - name: Check coverage threshold (>= 70%)
+        run: mvn jacoco:check@check -pl storefront-bff
 
       - name: Add coverage report to PR
         uses: madrapps/jacoco-report@v1.6.1
@@ -110,3 +118,23 @@ jobs:
           context: ./storefront-bff
           push: true
           tags: ghcr.io/nashtech-garage/yas-storefront-bff:latest
+
+  publish-coverage:
+    name: Publish coverage report
+    needs: [test]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Download coverage artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: storefront-bff-coverage
+          path: ./jacoco-report
+
+      - name: Deploy JaCoCo report to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./jacoco-report
+          destination_dir: storefront-bff/coverage
+          keep_files: true
