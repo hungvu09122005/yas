@@ -35,6 +35,9 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/workflows/actions
 
+      - name: Install common-library
+        run: mvn install -DskipTests -pl common-library
+
       - name: Run tests with coverage
         run: mvn test jacoco:report -pl search -am
 
