@@ -220,7 +220,7 @@ class WarehouseServiceTest {
             WarehouseListGetVm result = warehouseService.getPageableWarehouses(0, 10);
 
             assertThat(result).isNotNull();
-            assertThat(result.warehouseGetVms()).hasSize(1);
+            assertThat(result.warehouseContent()).hasSize(1);
             assertThat(result.totalElements()).isEqualTo(1);
         }
     }
