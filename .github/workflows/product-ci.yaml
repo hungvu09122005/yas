@@ -42,8 +42,15 @@ jobs:
       - name: Install dependencies (skip tests/jacoco)
         run: mvn clean flatten:flatten install -Drevision=1.0-SNAPSHOT -DskipTests -Djacoco.skip=true
 
-      - name: Run tests with coverage
-        run: mvn verify -Drevision=1.0-SNAPSHOT -pl product
+      - name: Run tests, coverage, and SonarCloud
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          if [ "${{ env.FROM_ORIGINAL_REPOSITORY }}" == 'true' ]; then
+            mvn test jacoco:report org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Drevision=1.0-SNAPSHOT -pl product
+          else
+            mvn test jacoco:report -Drevision=1.0-SNAPSHOT -pl product
+          fi
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -90,11 +97,7 @@ jobs:
           path: 'product/**/*-reports/TEST*.xml'
           reporter: java-junit
 
-      - name: Analyze with SonarCloud
-        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -Drevision=1.0-SNAPSHOT org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -pl product -pl product
+
 
   build:
     name: Build
