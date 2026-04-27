@@ -108,10 +108,10 @@ jobs:
       - uses: ./.github/workflows/actions
 
       - name: Install dependencies (skip jacoco)
-        run: mvn install -DskipTests -Djacoco.skip=true -pl product -am
+        run: mvn install -Drevision=1.0-SNAPSHOT -DskipTests -Djacoco.skip=true -pl product -am
 
       - name: Build JAR
-        run: mvn package -DskipTests -pl product
+        run: mvn package -Drevision=1.0-SNAPSHOT -DskipTests -pl product
 
       - name: Log in to the Container registry
         if: ${{ github.ref == 'refs/heads/main' }}
