@@ -347,6 +347,57 @@ class PromotionServiceTest {
         assertEquals(200L, result.discountValue().longValue());
     }
 
+    @Test
+    void updatePromotion_ThenSuccess() {
+        com.yas.promotion.viewmodel.PromotionPutVm putVm = new com.yas.promotion.viewmodel.PromotionPutVm();
+        putVm.setId(1L);
+        putVm.setName("Update");
+        putVm.setSlug("update-slug");
+        putVm.setCouponCode("code1");
+        putVm.setUsageType(UsageType.UNLIMITED);
+        putVm.setDiscountType(DiscountType.PERCENTAGE);
+        putVm.setDiscountPercentage(20L);
+        putVm.setApplyTo(ApplyTo.PRODUCT);
+        putVm.setProductIds(List.of(1L, 2L));
+        putVm.setIsActive(true);
+        putVm.setStartDate(Date.from(Instant.now()));
+        putVm.setEndDate(Date.from(Instant.now().plus(10, ChronoUnit.DAYS)));
+
+        when(promotionRepository.findById(1L)).thenReturn(Optional.of(promotion1));
+        when(promotionRepository.save(any())).thenReturn(promotion1);
+
+        PromotionDetailVm result = promotionService.updatePromotion(putVm);
+        assertEquals("Update", result.name());
+    }
+
+    @Test
+    void deletePromotion_ThenSuccess() {
+        when(promotionUsageRepository.existsByPromotionId(1L)).thenReturn(false);
+        promotionService.deletePromotion(1L);
+        Mockito.verify(promotionRepository, Mockito.times(1)).deleteById(1L);
+    }
+
+    @Test
+    void deletePromotion_WhenInUse_ThenThrowBadRequestException() {
+        when(promotionUsageRepository.existsByPromotionId(1L)).thenReturn(true);
+        assertThrows(BadRequestException.class, () -> promotionService.deletePromotion(1L));
+    }
+
+    @Test
+    void updateUsagePromotion_ThenSuccess() {
+        try (org.mockito.MockedStatic<com.yas.promotion.utils.AuthenticationUtils> utilities = Mockito.mockStatic(com.yas.promotion.utils.AuthenticationUtils.class)) {
+            utilities.when(com.yas.promotion.utils.AuthenticationUtils::extractUserId).thenReturn("user1");
+            
+            com.yas.promotion.viewmodel.PromotionUsageVm usageVm = new com.yas.promotion.viewmodel.PromotionUsageVm("code1", 1L, "user1", 1L);
+            when(promotionRepository.findByCouponCodeAndIsActiveTrue("code1")).thenReturn(Optional.of(promotion1));
+            when(promotionUsageRepository.save(any())).thenReturn(null);
+            when(promotionRepository.save(any())).thenReturn(promotion1);
+
+            promotionService.updateUsagePromotion(List.of(usageVm));
+            Mockito.verify(promotionUsageRepository, Mockito.times(1)).save(any());
+        }
+    }
+
     private List<ProductVm> createProductVms() {
         return List.of(
             new ProductVm(
