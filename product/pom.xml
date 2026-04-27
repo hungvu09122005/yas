@@ -20,6 +20,12 @@
         <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
         <sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
+        <sonar.coverage.exclusions>
+            **/*Application.java,
+            **/config/**,
+            **/exception/**,
+            **/constants/**
+        </sonar.coverage.exclusions>
     </properties>
     <dependencies>
         <dependency>
