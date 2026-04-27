@@ -1,83 +1,326 @@
 package com.yas.product.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.yas.product.ProductApplication;
+import com.yas.commonlibrary.exception.BadRequestException;
+import com.yas.commonlibrary.exception.DuplicatedException;
+import com.yas.commonlibrary.exception.NotFoundException;
 import com.yas.product.model.Category;
 import com.yas.product.repository.CategoryRepository;
-import com.yas.product.repository.ProductCategoryRepository;
 import com.yas.product.viewmodel.NoFileMediaVm;
 import com.yas.product.viewmodel.category.CategoryGetDetailVm;
 import com.yas.product.viewmodel.category.CategoryGetVm;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
+import com.yas.product.viewmodel.category.CategoryListGetVm;
+import com.yas.product.viewmodel.category.CategoryPostVm;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
-@SpringBootTest(classes = ProductApplication.class)
+/**
+ * Pure unit tests for CategoryService — replaces the former @SpringBootTest version.
+ */
+@ExtendWith(MockitoExtension.class)
 class CategoryServiceTest {
-    @Autowired
-    private CategoryRepository categoryRepository;
-    @Autowired
-    private ProductCategoryRepository productCategoryRepository;
-    @MockitoBean
-    private MediaService mediaService;
-    @Autowired
+
+    private static final Long CATEGORY_ID = 1L;
+    private static final Long PARENT_ID = 2L;
+    private static final String CATEGORY_NAME = "Electronics";
+    private static final String CATEGORY_SLUG = "electronics";
+    private static final String MEDIA_URL = "http://media/img.jpg";
+
+    @Mock private CategoryRepository categoryRepository;
+    @Mock private MediaService mediaService;
+
+    @InjectMocks
     private CategoryService categoryService;
 
-    private Category category;
-    private NoFileMediaVm noFileMediaVm;
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
-    @BeforeEach
-    void setUp() {
-
-        category = new Category();
-        category.setName("name");
-        category.setSlug("slug");
-        category.setDescription("description");
-        category.setMetaKeyword("metaKeyword");
-        category.setMetaDescription("metaDescription");
-        category.setDisplayOrder((short) 1);
-        category.setIsPublished(true);
-        category.setImageId(1L);
-        categoryRepository.save(category);
-
-        noFileMediaVm = new NoFileMediaVm(1L, "caption", "fileName", "mediaType", "url");
+    private Category buildCategory(Long id, String name) {
+        Category c = new Category();
+        c.setId(id);
+        c.setName(name);
+        c.setSlug(CATEGORY_SLUG);
+        c.setIsPublished(true);
+        c.setDisplayOrder((short) 1);
+        return c;
     }
 
-    @AfterEach
-    void tearDown() {
-        productCategoryRepository.deleteAll();
-        categoryRepository.deleteAll();
+    private CategoryPostVm buildPostVm(String name, Long parentId) {
+        return new CategoryPostVm(name, CATEGORY_SLUG, "desc", parentId,
+            "metaKw", "metaDesc", (short) 1, true, 1L);
     }
 
-    @Test
-    void getCategoryById_Success() {
-        when(mediaService.getMedia(category.getImageId())).thenReturn(noFileMediaVm);
-        CategoryGetDetailVm categoryGetDetailVm = categoryService.getCategoryById(category.getId());
-        assertNotNull(categoryGetDetailVm);
-        assertEquals("name", categoryGetDetailVm.name());
+    private NoFileMediaVm mediaVm() {
+        return new NoFileMediaVm(1L, "cap", "img.jpg", "image/jpeg", MEDIA_URL);
     }
 
-    @Test
-    void getCategories_Success() {
-        when(mediaService.getMedia(any())).thenReturn(noFileMediaVm);
-        Assertions.assertEquals(1, categoryService.getCategories("name").size());
-        CategoryGetVm categoryGetVm = categoryService.getCategories("name").getFirst();
-        assertEquals("name", categoryGetVm.name());
+    // ── getPageableCategories ─────────────────────────────────────────────────
+
+    @Nested
+    class GetPageableCategoriesTest {
+
+        @Test
+        void testGetPageableCategories_whenCategoriesExist_shouldReturnPagedResult() {
+            Category category = buildCategory(CATEGORY_ID, CATEGORY_NAME);
+            Page<Category> page = new PageImpl<>(List.of(category));
+            when(categoryRepository.findAll(any(Pageable.class))).thenReturn(page);
+
+            CategoryListGetVm result = categoryService.getPageableCategories(0, 10);
+
+            assertThat(result.categoryContent()).hasSize(1);
+            assertThat(result.totalElements()).isEqualTo(1);
+        }
+
+        @Test
+        void testGetPageableCategories_whenEmpty_shouldReturnEmptyPage() {
+            when(categoryRepository.findAll(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(Collections.emptyList()));
+
+            CategoryListGetVm result = categoryService.getPageableCategories(0, 10);
+
+            assertThat(result.categoryContent()).isEmpty();
+        }
     }
 
-    @Test
-    void getCategoriesPageable_Success() {
-        when(mediaService.getMedia(category.getImageId())).thenReturn(noFileMediaVm);
-        Assertions.assertEquals(1, categoryService.getPageableCategories(0, 1).categoryContent().size());
-        CategoryGetVm categoryGetVm = categoryService.getCategories("a").getFirst();
-        assertEquals("name", categoryGetVm.name());
+    // ── create ────────────────────────────────────────────────────────────────
+
+    @Nested
+    class CreateCategoryTest {
+
+        @Test
+        void testCreate_whenNameIsUniqueAndNoParent_shouldSave() {
+            CategoryPostVm postVm = buildPostVm(CATEGORY_NAME, null);
+            Category saved = buildCategory(CATEGORY_ID, CATEGORY_NAME);
+            when(categoryRepository.findExistedName(CATEGORY_NAME, null)).thenReturn(null);
+            when(categoryRepository.save(any(Category.class))).thenReturn(saved);
+
+            Category result = categoryService.create(postVm);
+
+            assertThat(result.getName()).isEqualTo(CATEGORY_NAME);
+            verify(categoryRepository).save(any(Category.class));
+        }
+
+        @Test
+        void testCreate_whenNameAlreadyExists_shouldThrowDuplicatedException() {
+            CategoryPostVm postVm = buildPostVm(CATEGORY_NAME, null);
+            when(categoryRepository.findExistedName(CATEGORY_NAME, null))
+                .thenReturn(buildCategory(99L, CATEGORY_NAME));
+
+            assertThatThrownBy(() -> categoryService.create(postVm))
+                .isInstanceOf(DuplicatedException.class);
+        }
+
+        @Test
+        void testCreate_whenParentIdProvidedAndParentNotFound_shouldThrowBadRequestException() {
+            CategoryPostVm postVm = buildPostVm(CATEGORY_NAME, PARENT_ID);
+            when(categoryRepository.findExistedName(CATEGORY_NAME, null)).thenReturn(null);
+            when(categoryRepository.findById(PARENT_ID)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> categoryService.create(postVm))
+                .isInstanceOf(BadRequestException.class);
+        }
+
+        @Test
+        void testCreate_whenParentExistsAndNameIsUnique_shouldSaveWithParent() {
+            CategoryPostVm postVm = buildPostVm(CATEGORY_NAME, PARENT_ID);
+            Category parent = buildCategory(PARENT_ID, "Parent");
+            Category saved = buildCategory(CATEGORY_ID, CATEGORY_NAME);
+            saved.setParent(parent);
+            when(categoryRepository.findExistedName(CATEGORY_NAME, null)).thenReturn(null);
+            when(categoryRepository.findById(PARENT_ID)).thenReturn(Optional.of(parent));
+            when(categoryRepository.save(any(Category.class))).thenReturn(saved);
+
+            Category result = categoryService.create(postVm);
+
+            assertThat(result.getParent()).isNotNull();
+            assertThat(result.getParent().getId()).isEqualTo(PARENT_ID);
+        }
+    }
+
+    // ── update ────────────────────────────────────────────────────────────────
+
+    @Nested
+    class UpdateCategoryTest {
+
+        @Test
+        void testUpdate_whenCategoryExistsAndNoParent_shouldClearParent() {
+            CategoryPostVm postVm = buildPostVm(CATEGORY_NAME, null);
+            Category existing = buildCategory(CATEGORY_ID, "OldName");
+            when(categoryRepository.findExistedName(CATEGORY_NAME, CATEGORY_ID)).thenReturn(null);
+            when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.of(existing));
+
+            categoryService.update(postVm, CATEGORY_ID);
+
+            assertThat(existing.getParent()).isNull();
+            assertThat(existing.getName()).isEqualTo(CATEGORY_NAME);
+        }
+
+        @Test
+        void testUpdate_whenCategoryNotFound_shouldThrowNotFoundException() {
+            CategoryPostVm postVm = buildPostVm(CATEGORY_NAME, null);
+            when(categoryRepository.findExistedName(CATEGORY_NAME, CATEGORY_ID)).thenReturn(null);
+            when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> categoryService.update(postVm, CATEGORY_ID))
+                .isInstanceOf(NotFoundException.class);
+        }
+
+        @Test
+        void testUpdate_whenNameDuplicated_shouldThrowDuplicatedException() {
+            CategoryPostVm postVm = buildPostVm(CATEGORY_NAME, null);
+            when(categoryRepository.findExistedName(CATEGORY_NAME, CATEGORY_ID))
+                .thenReturn(buildCategory(99L, CATEGORY_NAME));
+
+            assertThatThrownBy(() -> categoryService.update(postVm, CATEGORY_ID))
+                .isInstanceOf(DuplicatedException.class);
+        }
+
+        @Test
+        void testUpdate_whenParentIsSelf_shouldThrowBadRequestException() {
+            CategoryPostVm postVm = buildPostVm(CATEGORY_NAME, CATEGORY_ID); // parent = self
+            Category existing = buildCategory(CATEGORY_ID, "OldName");
+            Category selfAsParent = buildCategory(CATEGORY_ID, "OldName"); // same id
+            when(categoryRepository.findExistedName(CATEGORY_NAME, CATEGORY_ID)).thenReturn(null);
+            when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.of(existing));
+            when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.of(selfAsParent));
+
+            assertThatThrownBy(() -> categoryService.update(postVm, CATEGORY_ID))
+                .isInstanceOf(BadRequestException.class);
+        }
+    }
+
+    // ── getCategoryById ───────────────────────────────────────────────────────
+
+    @Nested
+    class GetCategoryByIdTest {
+
+        @Test
+        void testGetCategoryById_whenCategoryExistsWithImage_shouldReturnDetailVm() {
+            Category category = buildCategory(CATEGORY_ID, CATEGORY_NAME);
+            category.setImageId(1L);
+            when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.of(category));
+            when(mediaService.getMedia(1L)).thenReturn(mediaVm());
+
+            CategoryGetDetailVm result = categoryService.getCategoryById(CATEGORY_ID);
+
+            assertThat(result.name()).isEqualTo(CATEGORY_NAME);
+            assertThat(result.image()).isNotNull();
+            assertThat(result.image().url()).isEqualTo(MEDIA_URL);
+        }
+
+        @Test
+        void testGetCategoryById_whenCategoryHasNoImage_shouldReturnNullImage() {
+            Category category = buildCategory(CATEGORY_ID, CATEGORY_NAME);
+            category.setImageId(null);
+            when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.of(category));
+
+            CategoryGetDetailVm result = categoryService.getCategoryById(CATEGORY_ID);
+
+            assertThat(result.image()).isNull();
+        }
+
+        @Test
+        void testGetCategoryById_whenCategoryHasParent_shouldReturnParentId() {
+            Category parent = buildCategory(PARENT_ID, "Parent");
+            Category category = buildCategory(CATEGORY_ID, CATEGORY_NAME);
+            category.setParent(parent);
+            when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.of(category));
+
+            CategoryGetDetailVm result = categoryService.getCategoryById(CATEGORY_ID);
+
+            assertThat(result.parentCategoryId()).isEqualTo(PARENT_ID);
+        }
+
+        @Test
+        void testGetCategoryById_whenCategoryNotFound_shouldThrowNotFoundException() {
+            when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> categoryService.getCategoryById(CATEGORY_ID))
+                .isInstanceOf(NotFoundException.class);
+        }
+    }
+
+    // ── getCategories ─────────────────────────────────────────────────────────
+
+    @Nested
+    class GetCategoriesTest {
+
+        @Test
+        void testGetCategories_whenMatchingCategories_shouldReturnList() {
+            Category category = buildCategory(CATEGORY_ID, CATEGORY_NAME);
+            category.setImageId(1L);
+            when(categoryRepository.findByNameContainingIgnoreCase("elec")).thenReturn(List.of(category));
+            when(mediaService.getMedia(anyLong())).thenReturn(mediaVm());
+
+            List<CategoryGetVm> result = categoryService.getCategories("elec");
+
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).name()).isEqualTo(CATEGORY_NAME);
+        }
+
+        @Test
+        void testGetCategories_whenNoMatch_shouldReturnEmptyList() {
+            when(categoryRepository.findByNameContainingIgnoreCase(anyString()))
+                .thenReturn(Collections.emptyList());
+
+            List<CategoryGetVm> result = categoryService.getCategories("xyz");
+
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        void testGetCategories_whenCategoryHasNoImage_shouldReturnNullImage() {
+            Category category = buildCategory(CATEGORY_ID, CATEGORY_NAME);
+            // imageId is null by default
+            when(categoryRepository.findByNameContainingIgnoreCase(anyString()))
+                .thenReturn(List.of(category));
+
+            List<CategoryGetVm> result = categoryService.getCategories("elec");
+
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).image()).isNull();
+        }
+    }
+
+    // ── getCategoryByIds / getTopNthCategories ────────────────────────────────
+
+    @Nested
+    class GetCategoryByIdsTest {
+
+        @Test
+        void testGetCategoryByIds_whenIdsMatch_shouldReturnVmList() {
+            Category category = buildCategory(CATEGORY_ID, CATEGORY_NAME);
+            when(categoryRepository.findAllById(List.of(CATEGORY_ID))).thenReturn(List.of(category));
+
+            List<CategoryGetVm> result = categoryService.getCategoryByIds(List.of(CATEGORY_ID));
+
+            assertThat(result).hasSize(1);
+        }
+
+        @Test
+        void testGetTopNthCategories_whenLimitApplied_shouldReturnLimitedList() {
+            when(categoryRepository.findCategoriesOrderedByProductCount(any(Pageable.class)))
+                .thenReturn(List.of("Electronics", "Fashion"));
+
+            List<String> result = categoryService.getTopNthCategories(2);
+
+            assertThat(result).containsExactly("Electronics", "Fashion");
+        }
     }
 }
