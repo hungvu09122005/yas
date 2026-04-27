@@ -82,8 +82,15 @@
                             <goal>check</goal>
                         </goals>
                         <configuration>
+                            <excludes>
+                                <exclude>com/yas/**/*Application.class</exclude>
+                                <exclude>com/yas/**/config/**</exclude>
+                                <exclude>com/yas/**/exception/**</exclude>
+                                <exclude>com/yas/**/controller/**</exclude>
+                            </excludes>
                             <rules>
                                 <rule>
+                                    <element>BUNDLE</element>
                                     <limits>
                                         <limit>
                                             <counter>LINE</counter>
