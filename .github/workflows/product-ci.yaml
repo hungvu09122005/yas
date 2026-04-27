@@ -37,10 +37,10 @@ jobs:
       - uses: ./.github/workflows/actions
 
       - name: Install dependencies (skip jacoco)
-        run: mvn install -DskipTests -Djacoco.skip=true -am -pl product
+        run: mvn install -DskipTests -Djacoco.skip=true -pl product -am
 
       - name: Run tests with coverage
-        run: mvn clean verify -pl product
+        run: mvn verify -pl product
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -105,7 +105,7 @@ jobs:
       - uses: ./.github/workflows/actions
 
       - name: Install dependencies (skip jacoco)
-        run: mvn install -DskipTests -Djacoco.skip=true -am -pl product
+        run: mvn install -DskipTests -Djacoco.skip=true -pl product -am
 
       - name: Build JAR
         run: mvn package -DskipTests -pl product
