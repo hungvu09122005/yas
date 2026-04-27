@@ -752,5 +752,306 @@ class ProductServiceTest {
             assertThatThrownBy(() -> productService.getProductVariationsByParentId(PRODUCT_ID))
                 .isInstanceOf(NotFoundException.class);
         }
+
+        @Test
+        void testGetProductVariationsByParentId_whenParentHasOptionsAndPublishedVariant_shouldReturnVariations() {
+            Product parent = buildProduct(PRODUCT_ID);
+            parent.setHasOptions(true);
+            Product variant = buildProduct(2L);
+            variant.setThumbnailMediaId(null); // no thumbnail
+            parent.getProducts().add(variant);
+
+            com.yas.product.model.ProductOption option = new com.yas.product.model.ProductOption();
+            option.setId(100L);
+            ProductOptionCombination combo = new ProductOptionCombination();
+            combo.setProductOption(option);
+            combo.setValue("Blue");
+
+            when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(parent));
+            when(productOptionCombinationRepository.findAllByProduct(variant)).thenReturn(List.of(combo));
+
+            var result = productService.getProductVariationsByParentId(PRODUCT_ID);
+
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).options()).containsEntry(100L, "Blue");
+        }
+    }
+
+    // ── subtractStockQuantity ─────────────────────────────────────────────────
+
+    @Nested
+    class SubtractStockQuantityTest {
+
+        @Test
+        void testSubtractStockQuantity_whenStockIsEnough_shouldReduceStock() {
+            Product product = buildProduct(PRODUCT_ID);
+            product.setStockQuantity(100L);
+            product.setStockTrackingEnabled(true);
+
+            when(productRepository.findAllByIdIn(List.of(PRODUCT_ID))).thenReturn(List.of(product));
+
+            var items = List.of(new com.yas.product.viewmodel.product.ProductQuantityPutVm(PRODUCT_ID, 30L));
+            productService.subtractStockQuantity(items);
+
+            assertThat(product.getStockQuantity()).isEqualTo(70L);
+            verify(productRepository).saveAll(List.of(product));
+        }
+
+        @Test
+        void testSubtractStockQuantity_whenStockUnderflows_shouldClampToZero() {
+            Product product = buildProduct(PRODUCT_ID);
+            product.setStockQuantity(10L);
+            product.setStockTrackingEnabled(true);
+
+            when(productRepository.findAllByIdIn(List.of(PRODUCT_ID))).thenReturn(List.of(product));
+
+            var items = List.of(new com.yas.product.viewmodel.product.ProductQuantityPutVm(PRODUCT_ID, 50L));
+            productService.subtractStockQuantity(items);
+
+            assertThat(product.getStockQuantity()).isEqualTo(0L);
+        }
+
+        @Test
+        void testSubtractStockQuantity_whenStockTrackingDisabled_shouldNotChangeStock() {
+            Product product = buildProduct(PRODUCT_ID);
+            product.setStockQuantity(100L);
+            product.setStockTrackingEnabled(false);
+
+            when(productRepository.findAllByIdIn(List.of(PRODUCT_ID))).thenReturn(List.of(product));
+
+            var items = List.of(new com.yas.product.viewmodel.product.ProductQuantityPutVm(PRODUCT_ID, 30L));
+            productService.subtractStockQuantity(items);
+
+            // stock tracking disabled → quantity unchanged
+            assertThat(product.getStockQuantity()).isEqualTo(100L);
+        }
+
+        @Test
+        void testSubtractStockQuantity_whenDuplicateProductIds_shouldMergeQuantities() {
+            Product product = buildProduct(PRODUCT_ID);
+            product.setStockQuantity(100L);
+            product.setStockTrackingEnabled(true);
+
+            when(productRepository.findAllByIdIn(anyList())).thenReturn(List.of(product));
+
+            // two entries for same product → merged to 40
+            var items = List.of(
+                new com.yas.product.viewmodel.product.ProductQuantityPutVm(PRODUCT_ID, 20L),
+                new com.yas.product.viewmodel.product.ProductQuantityPutVm(PRODUCT_ID, 20L)
+            );
+            productService.subtractStockQuantity(items);
+
+            assertThat(product.getStockQuantity()).isEqualTo(60L);
+        }
+    }
+
+    // ── restoreStockQuantity ──────────────────────────────────────────────────
+
+    @Nested
+    class RestoreStockQuantityTest {
+
+        @Test
+        void testRestoreStockQuantity_whenTrackingEnabled_shouldAddToStock() {
+            Product product = buildProduct(PRODUCT_ID);
+            product.setStockQuantity(50L);
+            product.setStockTrackingEnabled(true);
+
+            when(productRepository.findAllByIdIn(List.of(PRODUCT_ID))).thenReturn(List.of(product));
+
+            var items = List.of(new com.yas.product.viewmodel.product.ProductQuantityPutVm(PRODUCT_ID, 20L));
+            productService.restoreStockQuantity(items);
+
+            assertThat(product.getStockQuantity()).isEqualTo(70L);
+            verify(productRepository).saveAll(List.of(product));
+        }
+
+        @Test
+        void testRestoreStockQuantity_whenTrackingDisabled_shouldNotChangeStock() {
+            Product product = buildProduct(PRODUCT_ID);
+            product.setStockQuantity(50L);
+            product.setStockTrackingEnabled(false);
+
+            when(productRepository.findAllByIdIn(List.of(PRODUCT_ID))).thenReturn(List.of(product));
+
+            var items = List.of(new com.yas.product.viewmodel.product.ProductQuantityPutVm(PRODUCT_ID, 20L));
+            productService.restoreStockQuantity(items);
+
+            assertThat(product.getStockQuantity()).isEqualTo(50L);
+        }
+    }
+
+    // ── updateProductQuantity ─────────────────────────────────────────────────
+
+    @Nested
+    class UpdateProductQuantityTest {
+
+        @Test
+        void testUpdateProductQuantity_whenProductsExist_shouldSetStockQuantity() {
+            Product product = buildProduct(PRODUCT_ID);
+            product.setStockQuantity(10L);
+            when(productRepository.findAllByIdIn(List.of(PRODUCT_ID))).thenReturn(List.of(product));
+
+            var postVms = List.of(new com.yas.product.viewmodel.product.ProductQuantityPostVm(PRODUCT_ID, 99L));
+            productService.updateProductQuantity(postVms);
+
+            assertThat(product.getStockQuantity()).isEqualTo(99L);
+            verify(productRepository).saveAll(anyList());
+        }
+
+        @Test
+        void testUpdateProductQuantity_whenNoMatchingProduct_shouldNotChangeQuantity() {
+            when(productRepository.findAllByIdIn(anyList())).thenReturn(Collections.emptyList());
+
+            var postVms = List.of(new com.yas.product.viewmodel.product.ProductQuantityPostVm(99L, 50L));
+            productService.updateProductQuantity(postVms);
+
+            verify(productRepository).saveAll(Collections.emptyList());
+        }
+    }
+
+    // ── getListFeaturedProducts ───────────────────────────────────────────────
+
+    @Nested
+    class GetListFeaturedProductsTest {
+
+        @Test
+        void testGetListFeaturedProducts_whenProductsExist_shouldReturnPagedResult() {
+            Product product = buildProduct(PRODUCT_ID);
+            Page<Product> page = new PageImpl<>(List.of(product));
+            when(productRepository.getFeaturedProduct(any(Pageable.class))).thenReturn(page);
+            when(mediaService.getMedia(anyLong())).thenReturn(mediaVm());
+
+            var result = productService.getListFeaturedProducts(0, 10);
+
+            assertThat(result.productList()).hasSize(1);
+        }
+
+        @Test
+        void testGetListFeaturedProducts_whenNoProducts_shouldReturnEmpty() {
+            when(productRepository.getFeaturedProduct(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(Collections.emptyList()));
+
+            var result = productService.getListFeaturedProducts(0, 10);
+
+            assertThat(result.productList()).isEmpty();
+        }
+    }
+
+    // ── getRelatedProductsStorefront ──────────────────────────────────────────
+
+    @Nested
+    class GetRelatedProductsStorefrontTest {
+
+        @Test
+        void testGetRelatedProductsStorefront_whenRelatedProductsExist_shouldReturnPublishedOnes() {
+            Product product = buildProduct(PRODUCT_ID);
+            Product related = buildProduct(2L);
+            related.setThumbnailMediaId(2L);
+
+            com.yas.product.model.ProductRelated productRelated =
+                com.yas.product.model.ProductRelated.builder()
+                    .product(product).relatedProduct(related).build();
+
+            Page<com.yas.product.model.ProductRelated> relatedPage =
+                new PageImpl<>(List.of(productRelated));
+
+            when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(product));
+            when(productRelatedRepository.findAllByProduct(any(), any(Pageable.class)))
+                .thenReturn(relatedPage);
+            when(mediaService.getMedia(2L)).thenReturn(mediaVm());
+
+            var result = productService.getRelatedProductsStorefront(PRODUCT_ID, 0, 10);
+
+            assertThat(result.productContent()).hasSize(1);
+        }
+
+        @Test
+        void testGetRelatedProductsStorefront_whenProductNotFound_shouldThrowNotFoundException() {
+            when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> productService.getRelatedProductsStorefront(PRODUCT_ID, 0, 10))
+                .isInstanceOf(NotFoundException.class);
+        }
+
+        @Test
+        void testGetRelatedProductsStorefront_whenRelatedProductIsUnpublished_shouldFilterItOut() {
+            Product product = buildProduct(PRODUCT_ID);
+            Product unpublished = buildProduct(2L);
+            unpublished.setPublished(false);
+
+            com.yas.product.model.ProductRelated rel =
+                com.yas.product.model.ProductRelated.builder()
+                    .product(product).relatedProduct(unpublished).build();
+
+            Page<com.yas.product.model.ProductRelated> relatedPage = new PageImpl<>(List.of(rel));
+            when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(product));
+            when(productRelatedRepository.findAllByProduct(any(), any(Pageable.class)))
+                .thenReturn(relatedPage);
+
+            var result = productService.getRelatedProductsStorefront(PRODUCT_ID, 0, 10);
+
+            assertThat(result.productContent()).isEmpty();
+        }
+    }
+
+    // ── getProductsForWarehouse ───────────────────────────────────────────────
+
+    @Nested
+    class GetProductsForWarehouseTest {
+
+        @Test
+        void testGetProductsForWarehouse_whenProductsMatch_shouldReturnInfoVms() {
+            Product product = buildProduct(PRODUCT_ID);
+            when(productRepository.findProductForWarehouse(anyString(), anyString(), anyList(), anyString()))
+                .thenReturn(List.of(product));
+
+            var result = productService.getProductsForWarehouse(
+                "name", "sku", List.of(PRODUCT_ID),
+                com.yas.product.model.enumeration.FilterExistInWhSelection.ALL);
+
+            assertThat(result).hasSize(1);
+        }
+
+        @Test
+        void testGetProductsForWarehouse_whenNoMatch_shouldReturnEmpty() {
+            when(productRepository.findProductForWarehouse(anyString(), anyString(), anyList(), anyString()))
+                .thenReturn(Collections.emptyList());
+
+            var result = productService.getProductsForWarehouse(
+                "", "", List.of(),
+                com.yas.product.model.enumeration.FilterExistInWhSelection.YES);
+
+            assertThat(result).isEmpty();
+        }
+    }
+
+    // ── getProductCheckoutList ────────────────────────────────────────────────
+
+    @Nested
+    class GetProductCheckoutListTest {
+
+        @Test
+        void testGetProductCheckoutList_whenProductsExist_shouldReturnVms() {
+            Product product = buildProduct(PRODUCT_ID);
+            Page<Product> page = new PageImpl<>(List.of(product));
+            when(productRepository.findAllPublishedProductsByIds(anyList(), any(Pageable.class)))
+                .thenReturn(page);
+            when(mediaService.getMedia(anyLong())).thenReturn(mediaVm());
+
+            var result = productService.getProductCheckoutList(0, 10, List.of(PRODUCT_ID));
+
+            assertThat(result.productCheckoutListVms()).hasSize(1);
+        }
+
+        @Test
+        void testGetProductCheckoutList_whenNoProducts_shouldReturnEmpty() {
+            when(productRepository.findAllPublishedProductsByIds(anyList(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(Collections.emptyList()));
+
+            var result = productService.getProductCheckoutList(0, 10, List.of());
+
+            assertThat(result.productCheckoutListVms()).isEmpty();
+        }
     }
 }
+
