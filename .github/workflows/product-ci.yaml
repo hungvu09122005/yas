@@ -36,6 +36,9 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/workflows/actions
 
+      - name: Install root POM
+        run: mvn install -N -DskipTests
+
       - name: Install common-library
         run: mvn install -DskipTests -pl common-library
 
@@ -77,7 +80,7 @@ jobs:
 
       - name: Run Maven Checkstyle
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
-        run: mvn checkstyle:checkstyle -pl product -am -Dcheckstyle.output.file=product-checkstyle-result.xml
+        run: mvn checkstyle:checkstyle -pl product -Dcheckstyle.output.file=product-checkstyle-result.xml
 
       - name: Upload Checkstyle result
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
@@ -89,7 +92,7 @@ jobs:
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -pl product -am
+        run: mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -pl product
 
   build:
     name: Build
@@ -102,8 +105,14 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/workflows/actions
 
+      - name: Install root POM
+        run: mvn install -N -DskipTests
+
+      - name: Install common-library
+        run: mvn install -DskipTests -pl common-library
+
       - name: Build JAR
-        run: mvn package -DskipTests -pl product -am
+        run: mvn package -DskipTests -pl product
 
       - name: Log in to the Container registry
         if: ${{ github.ref == 'refs/heads/main' }}
