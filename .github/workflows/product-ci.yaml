@@ -36,11 +36,8 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/workflows/actions
 
-      - name: Install root POM
-        run: mvn install -N -DskipTests
-
-      - name: Install common-library
-        run: mvn install -DskipTests -pl common-library
+      - name: Install dependencies (skip jacoco)
+        run: mvn install -DskipTests -Djacoco.skip=true -am -pl product
 
       - name: Run tests with coverage
         run: mvn clean verify -pl product
@@ -54,24 +51,18 @@ jobs:
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
-        if: always()
         with:
           name: product-coverage
           path: product/target/site/jacoco/
 
-      - name: Test Results
-        uses: dorny/test-reporter@v1
-        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && (success() || failure()) }}
-        with:
-          name: Product-Service-Unit-Test-Results
-          path: 'product/**/*-reports/TEST*.xml'
-          reporter: java-junit
+      - name: Check coverage threshold (>= 70%)
+        run: mvn jacoco:check@check -pl product
 
       - name: Add coverage report to PR
         uses: madrapps/jacoco-report@v1.6.1
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && github.event_name == 'pull_request' }}
         with:
-          paths: product/target/site/jacoco/jacoco.xml
+          paths: ${{ github.workspace }}/product/target/site/jacoco/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: 70
           min-coverage-changed-files: 60
@@ -80,13 +71,21 @@ jobs:
 
       - name: Run Maven Checkstyle
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
-        run: mvn checkstyle:checkstyle -pl product -Dcheckstyle.output.file=product-checkstyle-result.xml
+        run: mvn checkstyle:checkstyle -pl product -am -Dcheckstyle.output.file=product-checkstyle-result.xml
 
       - name: Upload Checkstyle result
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         uses: jwgmeligmeyling/checkstyle-github-action@master
         with:
           path: '**/product-checkstyle-result.xml'
+
+      - name: Test Results
+        uses: dorny/test-reporter@v1
+        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && (success() || failure()) }}
+        with:
+          name: Product-Service-Unit-Test-Results
+          path: 'product/**/*-reports/TEST*.xml'
+          reporter: java-junit
 
       - name: Analyze with SonarCloud
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
@@ -105,11 +104,8 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/workflows/actions
 
-      - name: Install root POM
-        run: mvn install -N -DskipTests
-
-      - name: Install common-library
-        run: mvn install -DskipTests -pl common-library
+      - name: Install dependencies (skip jacoco)
+        run: mvn install -DskipTests -Djacoco.skip=true -am -pl product
 
       - name: Build JAR
         run: mvn package -DskipTests -pl product
@@ -129,3 +125,23 @@ jobs:
           context: ./product
           push: true
           tags: ghcr.io/nashtech-garage/yas-product:latest
+
+  publish-coverage:
+    name: Publish coverage report
+    needs: [test]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Download coverage artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: product-coverage
+          path: ./jacoco-report
+
+      - name: Deploy JaCoCo report to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./jacoco-report
+          destination_dir: product/coverage
+          keep_files: true
