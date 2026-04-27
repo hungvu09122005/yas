@@ -614,7 +614,9 @@ class ProductServiceTest {
             Product existing = buildProduct(99L);
             when(productRepository.findBySlugAndIsPublishedTrue(PRODUCT_SLUG.toLowerCase()))
                 .thenReturn(Optional.of(existing));
-            when(productRepository.findAllById(anyList())).thenReturn(Collections.emptyList());
+            // findAllById is NOT stubbed: the slug-duplicate exception is thrown inside
+            // validateExistingProductProperties(), which runs BEFORE the findAllById call
+            // in validateProductVm(), so findAllById is never reached.
 
             assertThatThrownBy(() -> productService.createProduct(postVm))
                 .isInstanceOf(DuplicatedException.class);
@@ -627,7 +629,9 @@ class ProductServiceTest {
             when(productRepository.findBySlugAndIsPublishedTrue(anyString())).thenReturn(Optional.empty());
             when(productRepository.findByGtinAndIsPublishedTrue(any())).thenReturn(Optional.empty());
             when(productRepository.findBySkuAndIsPublishedTrue(PRODUCT_SKU)).thenReturn(Optional.of(existing));
-            when(productRepository.findAllById(anyList())).thenReturn(Collections.emptyList());
+            // findAllById is NOT stubbed: the SKU-duplicate exception is thrown inside
+            // validateExistingProductProperties(), which runs BEFORE the findAllById call
+            // in validateProductVm(), so findAllById is never reached.
 
             assertThatThrownBy(() -> productService.createProduct(postVm))
                 .isInstanceOf(DuplicatedException.class);
