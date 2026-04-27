@@ -1033,6 +1033,10 @@ class ProductServiceTest {
         @Test
         void testGetProductCheckoutList_whenProductsExist_shouldReturnVms() {
             Product product = buildProduct(PRODUCT_ID);
+            Brand brand = new Brand();
+            brand.setId(10L);
+            product.setBrand(brand);
+
             Page<Product> page = new PageImpl<>(List.of(product));
             when(productRepository.findAllPublishedProductsByIds(anyList(), any(Pageable.class)))
                 .thenReturn(page);
