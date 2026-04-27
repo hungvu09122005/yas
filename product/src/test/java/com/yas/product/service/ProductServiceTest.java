@@ -763,7 +763,7 @@ class ProductServiceTest {
 
             com.yas.product.model.ProductOption option = new com.yas.product.model.ProductOption();
             option.setId(100L);
-            ProductOptionCombination combo = new ProductOptionCombination();
+            com.yas.product.model.ProductOptionCombination combo = new com.yas.product.model.ProductOptionCombination();
             combo.setProductOption(option);
             combo.setValue("Blue");
 
