@@ -220,8 +220,8 @@ class CategoryServiceTest {
             CategoryGetDetailVm result = categoryService.getCategoryById(CATEGORY_ID);
 
             assertThat(result.name()).isEqualTo(CATEGORY_NAME);
-            assertThat(result.image()).isNotNull();
-            assertThat(result.image().url()).isEqualTo(MEDIA_URL);
+            assertThat(result.categoryImage()).isNotNull();
+            assertThat(result.categoryImage().url()).isEqualTo(MEDIA_URL);
         }
 
         @Test
@@ -232,7 +232,7 @@ class CategoryServiceTest {
 
             CategoryGetDetailVm result = categoryService.getCategoryById(CATEGORY_ID);
 
-            assertThat(result.image()).isNull();
+            assertThat(result.categoryImage()).isNull();
         }
 
         @Test
@@ -244,7 +244,7 @@ class CategoryServiceTest {
 
             CategoryGetDetailVm result = categoryService.getCategoryById(CATEGORY_ID);
 
-            assertThat(result.parentCategoryId()).isEqualTo(PARENT_ID);
+            assertThat(result.parentId()).isEqualTo(PARENT_ID);
         }
 
         @Test
@@ -294,7 +294,7 @@ class CategoryServiceTest {
             List<CategoryGetVm> result = categoryService.getCategories("elec");
 
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).image()).isNull();
+            assertThat(result.get(0).categoryImage()).isNull();
         }
     }
 

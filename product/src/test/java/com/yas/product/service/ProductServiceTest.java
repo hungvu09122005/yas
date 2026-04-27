@@ -351,7 +351,7 @@ class ProductServiceTest {
             ProductSlugGetVm result = productService.getProductSlug(PRODUCT_ID);
 
             assertThat(result.slug()).isEqualTo(PRODUCT_SLUG);
-            assertThat(result.parentProductId()).isNull();
+            assertThat(result.productVariantId()).isNull();
         }
 
         @Test
@@ -365,7 +365,7 @@ class ProductServiceTest {
             ProductSlugGetVm result = productService.getProductSlug(PRODUCT_ID);
 
             assertThat(result.slug()).isEqualTo("parent-slug");
-            assertThat(result.parentProductId()).isEqualTo(PRODUCT_ID);
+            assertThat(result.productVariantId()).isEqualTo(PRODUCT_ID);
         }
 
         @Test
@@ -393,7 +393,7 @@ class ProductServiceTest {
             assertThat(result).isNotNull();
             assertThat(result.id()).isEqualTo(PRODUCT_ID);
             assertThat(result.name()).isEqualTo(PRODUCT_NAME);
-            assertThat(result.brandName()).isEqualTo("Brand");
+            assertThat(result.brand()).isEqualTo("Brand");
         }
 
         @Test
@@ -412,7 +412,7 @@ class ProductServiceTest {
 
             ProductEsDetailVm result = productService.getProductEsDetailById(PRODUCT_ID);
 
-            assertThat(result.brandName()).isNull();
+            assertThat(result.brand()).isNull();
         }
     }
 
