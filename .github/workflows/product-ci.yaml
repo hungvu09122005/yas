@@ -59,7 +59,7 @@ jobs:
           path: product/target/site/jacoco/
 
       - name: Check coverage threshold (>= 70%)
-        run: mvn jacoco:check@check -pl product
+        run: mvn -Drevision=1.0-SNAPSHOT jacoco:check@check -pl product
 
       - name: Add coverage report to PR
         uses: madrapps/jacoco-report@v1.6.1
@@ -74,7 +74,7 @@ jobs:
 
       - name: Run Maven Checkstyle
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
-        run: mvn checkstyle:checkstyle -pl product -am -Dcheckstyle.output.file=product-checkstyle-result.xml
+        run: mvn -Drevision=1.0-SNAPSHOT checkstyle:checkstyle -pl product -am -Dcheckstyle.output.file=product-checkstyle-result.xml
 
       - name: Upload Checkstyle result
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
@@ -94,7 +94,7 @@ jobs:
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -pl product
+        run: mvn -Drevision=1.0-SNAPSHOT org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -pl product -pl product
 
   build:
     name: Build
