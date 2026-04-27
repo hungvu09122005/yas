@@ -16,7 +16,6 @@ import com.yas.commonlibrary.exception.NotFoundException;
 import com.yas.product.model.Brand;
 import com.yas.product.model.Category;
 import com.yas.product.model.Product;
-import com.yas.product.model.ProductCategory;
 import com.yas.product.model.ProductImage;
 import com.yas.product.model.ProductRelated;
 import com.yas.product.model.enumeration.DimensionUnit;
@@ -808,7 +807,7 @@ class ProductServiceTest {
             var items = List.of(new com.yas.product.viewmodel.product.ProductQuantityPutVm(PRODUCT_ID, 50L));
             productService.subtractStockQuantity(items);
 
-            assertThat(product.getStockQuantity()).isEqualTo(0L);
+            assertThat(product.getStockQuantity()).isZero();
         }
 
         @Test
