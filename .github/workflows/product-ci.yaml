@@ -40,10 +40,10 @@ jobs:
         run: rm -rf ~/.m2/repository/com/yas/
 
       - name: Install dependencies (skip jacoco)
-        run: mvn install -DskipTests -Djacoco.skip=true -pl product -am
+        run: mvn install -Drevision=1.0-SNAPSHOT -DskipTests -Djacoco.skip=true -pl product -am
 
       - name: Run tests with coverage
-        run: mvn verify -pl product
+        run: mvn verify -Drevision=1.0-SNAPSHOT -pl product
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
