@@ -39,8 +39,8 @@ jobs:
       - name: Clear stale Maven cache
         run: rm -rf ~/.m2/repository/com/yas/
 
-      - name: Install dependencies (skip jacoco)
-        run: mvn install -Drevision=1.0-SNAPSHOT -DskipTests -Djacoco.skip=true -pl product -am
+      - name: Install dependencies (skip tests/jacoco)
+        run: mvn clean install -Drevision=1.0-SNAPSHOT -DskipTests
 
       - name: Run tests with coverage
         run: mvn verify -Drevision=1.0-SNAPSHOT -pl product
@@ -107,8 +107,8 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/workflows/actions
 
-      - name: Install dependencies (skip jacoco)
-        run: mvn install -Drevision=1.0-SNAPSHOT -DskipTests -Djacoco.skip=true -pl product -am
+      - name: Install dependencies (skip tests/jacoco)
+        run: mvn clean install -Drevision=1.0-SNAPSHOT -DskipTests
 
       - name: Build JAR
         run: mvn package -Drevision=1.0-SNAPSHOT -DskipTests -pl product
