@@ -1047,6 +1047,22 @@ class ProductServiceTest {
         }
 
         @Test
+        void testGetProductCheckoutList_whenProductBrandIsNull_shouldReturnVmWithNullBrandId() {
+            Product product = buildProduct(PRODUCT_ID);
+            product.setBrand(null); // explicitly test the null brand fix
+
+            Page<Product> page = new PageImpl<>(List.of(product));
+            when(productRepository.findAllPublishedProductsByIds(anyList(), any(Pageable.class)))
+                .thenReturn(page);
+            when(mediaService.getMedia(anyLong())).thenReturn(mediaVm());
+
+            var result = productService.getProductCheckoutList(0, 10, List.of(PRODUCT_ID));
+
+            assertThat(result.productCheckoutListVms()).hasSize(1);
+            assertThat(result.productCheckoutListVms().getFirst().brandId()).isNull();
+        }
+
+        @Test
         void testGetProductCheckoutList_whenNoProducts_shouldReturnEmpty() {
             when(productRepository.findAllPublishedProductsByIds(anyList(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(Collections.emptyList()));
