@@ -40,7 +40,7 @@ jobs:
         run: rm -rf ~/.m2/repository/com/yas/
 
       - name: Install dependencies (skip tests/jacoco)
-        run: mvn clean install -Drevision=1.0-SNAPSHOT -DskipTests
+        run: mvn clean install -Drevision=1.0-SNAPSHOT -DskipTests -Djacoco.skip=true
 
       - name: Run tests with coverage
         run: mvn verify -Drevision=1.0-SNAPSHOT -pl product
@@ -108,7 +108,7 @@ jobs:
       - uses: ./.github/workflows/actions
 
       - name: Install dependencies (skip tests/jacoco)
-        run: mvn clean install -Drevision=1.0-SNAPSHOT -DskipTests
+        run: mvn clean install -Drevision=1.0-SNAPSHOT -DskipTests -Djacoco.skip=true
 
       - name: Build JAR
         run: mvn package -Drevision=1.0-SNAPSHOT -DskipTests -pl product
