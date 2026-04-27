@@ -29,6 +29,7 @@ jobs:
     timeout-minutes: 15
     env:
       FROM_ORIGINAL_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.ref == 'refs/heads/main' }}
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -39,7 +40,7 @@ jobs:
         run: mvn install -DskipTests -pl common-library
 
       - name: Run tests with coverage
-        run: mvn test jacoco:report -pl product -am
+        run: mvn clean verify -pl product -am
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -50,18 +51,24 @@ jobs:
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: product-coverage
           path: product/target/site/jacoco/
 
-      - name: Check coverage threshold (>= 70%)
-        run: mvn jacoco:check@check -pl product
+      - name: Test Results
+        uses: dorny/test-reporter@v1
+        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && (success() || failure()) }}
+        with:
+          name: Product-Service-Unit-Test-Results
+          path: 'product/**/*-reports/TEST*.xml'
+          reporter: java-junit
 
       - name: Add coverage report to PR
         uses: madrapps/jacoco-report@v1.6.1
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && github.event_name == 'pull_request' }}
         with:
-          paths: ${{ github.workspace }}/product/target/site/jacoco/jacoco.xml
+          paths: product/target/site/jacoco/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: 70
           min-coverage-changed-files: 60
@@ -77,14 +84,6 @@ jobs:
         uses: jwgmeligmeyling/checkstyle-github-action@master
         with:
           path: '**/product-checkstyle-result.xml'
-
-      - name: Test Results
-        uses: dorny/test-reporter@v1
-        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && (success() || failure()) }}
-        with:
-          name: Product-Service-Unit-Test-Results
-          path: 'product/**/*-reports/TEST*.xml'
-          reporter: java-junit
 
       - name: Analyze with SonarCloud
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
@@ -121,25 +120,3 @@ jobs:
           context: ./product
           push: true
           tags: ghcr.io/nashtech-garage/yas-product:latest
-
-  publish-coverage:
-    name: Publish coverage report
-    needs: [test]
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Download coverage artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: product-coverage
-          path: ./jacoco-report
-
-      - name: Deploy JaCoCo report to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./jacoco-report
-          destination_dir: product/coverage
-          keep_files: true
-
-#comment de push
