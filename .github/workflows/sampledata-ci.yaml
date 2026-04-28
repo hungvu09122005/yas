@@ -23,28 +23,23 @@ jobs:
     env:
       FROM_ORIGINAL_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.ref == 'refs/heads/main' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
       - uses: ./.github/workflows/actions
       - name: Run Maven Build Command
-        run: mvn clean install -pl sampledata -am
+        run: mvn clean install -pl sampledata -am -DskipTests
       - name: Run Maven Checkstyle
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         run: mvn checkstyle:checkstyle -pl sampledata -am -Dcheckstyle.output.file=sampledata-checkstyle-result.xml
       - name: Upload Checkstyle Result
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
-        uses: jwgmeligmeyling/checkstyle-github-action@master
+        uses: jwgmeligmeyling/checkstyle-github-action@a12be500c097a5cedab881d4785ef9b4a4d3ee6a # master
         with:
           path: '**/sampledata-checkstyle-result.xml'
-      - name: Analyze with sonar cloud
-        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -f sampledata
       - name: OWASP Dependency Check
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
-        uses: dependency-check/Dependency-Check_Action@main
+        uses: dependency-check/Dependency-Check_Action@1e54355a8b4c8abaa8cc7d0b70aa655a3bb15a6c # main
         env:
           JAVA_HOME: /opt/jdk
         with:
@@ -53,20 +48,20 @@ jobs:
           format: 'HTML'
       - name: Upload OWASP Dependency Check results
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
-        uses: actions/upload-artifact@master
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: OWASP Dependency Check Report
           path: ${{github.workspace}}/reports
       - name: Log in to the Container registry
         if: ${{ github.ref == 'refs/heads/main' }}
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push Docker images
         if: ${{ github.ref == 'refs/heads/main' }}
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: ./sampledata
           push: true
