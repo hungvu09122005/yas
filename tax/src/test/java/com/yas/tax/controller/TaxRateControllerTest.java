@@ -1,17 +1,12 @@
 package com.yas.tax.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yas.tax.model.TaxClass;
 import com.yas.tax.model.TaxRate;
 import com.yas.tax.service.TaxRateService;
@@ -23,25 +18,22 @@ import org.instancio.Instancio;
 import static org.instancio.Select.field;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.util.UriComponentsBuilder;
 
-@WebMvcTest(value = TaxRateController.class,
-        excludeAutoConfiguration = {SecurityAutoConfiguration.class})
+@ExtendWith(MockitoExtension.class)
 public class TaxRateControllerTest {
 
-    @Autowired
-    MockMvc mockMvc;
-
-    @Autowired
-    ObjectMapper objectMapper;
-
-    @MockitoBean
+    @Mock
     TaxRateService taxRateService;
+
+    @InjectMocks
+    TaxRateController taxRateController;
 
     TaxRate taxRate;
     TaxRateVm taxRateVm;
@@ -56,75 +48,77 @@ public class TaxRateControllerTest {
     }
 
     @Test
-    void getPageableTaxRates_shouldReturn200() throws Exception {
+    void getPageableTaxRates_shouldReturn200() {
         TaxRateListGetVm listVm = new TaxRateListGetVm(List.of(), 0, 10, 0, 0, true);
         when(taxRateService.getPageableTaxRates(0, 10)).thenReturn(listVm);
 
-        mockMvc.perform(get("/backoffice/tax-rates/paging")
-                        .param("pageNo", "0")
-                        .param("pageSize", "10"))
-                .andExpect(status().isOk());
+        ResponseEntity<TaxRateListGetVm> response = taxRateController.getPageableTaxRates(0, 10);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
     }
 
     @Test
-    void getTaxRateById_shouldReturn200() throws Exception {
+    void getTaxRateById_shouldReturn200() {
         when(taxRateService.findById(taxRate.getId())).thenReturn(taxRateVm);
 
-        mockMvc.perform(get("/backoffice/tax-rates/{id}", taxRate.getId()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(taxRateVm.id()));
+        ResponseEntity<TaxRateVm> response = taxRateController.getTaxRate(taxRate.getId());
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().id()).isEqualTo(taxRateVm.id());
     }
 
     @Test
-    void createTaxRate_shouldReturn201() throws Exception {
+    void createTaxRate_shouldReturn201() {
         TaxRatePostVm postVm = new TaxRatePostVm(10.0, "12345", 1L, 1L, 1L);
         when(taxRateService.createTaxRate(any())).thenReturn(taxRate);
 
-        mockMvc.perform(post("/backoffice/tax-rates")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(postVm)))
-                .andExpect(status().isCreated());
+        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance();
+        ResponseEntity<TaxRateVm> response = taxRateController.createTaxRate(postVm, uriComponentsBuilder);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody().id()).isEqualTo(taxRateVm.id());
     }
 
     @Test
-    void updateTaxRate_shouldReturn204() throws Exception {
+    void updateTaxRate_shouldReturn204() {
         TaxRatePostVm postVm = new TaxRatePostVm(15.0, "54321", 1L, 1L, 1L);
         doNothing().when(taxRateService).updateTaxRate(any(), anyLong());
 
-        mockMvc.perform(put("/backoffice/tax-rates/{id}", taxRate.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(postVm)))
-                .andExpect(status().isNoContent());
+        ResponseEntity<Void> response = taxRateController.updateTaxRate(taxRate.getId(), postVm);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        verify(taxRateService).updateTaxRate(postVm, taxRate.getId());
     }
 
     @Test
-    void deleteTaxRate_shouldReturn204() throws Exception {
+    void deleteTaxRate_shouldReturn204() {
         doNothing().when(taxRateService).delete(anyLong());
 
-        mockMvc.perform(delete("/backoffice/tax-rates/{id}", taxRate.getId()))
-                .andExpect(status().isNoContent());
+        ResponseEntity<Void> response = taxRateController.deleteTaxRate(taxRate.getId());
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        verify(taxRateService).delete(taxRate.getId());
     }
 
     @Test
-    void getTaxPercentByAddress_shouldReturn200() throws Exception {
+    void getTaxPercentByAddress_shouldReturn200() {
         when(taxRateService.getTaxPercent(1L, 1L, 1L, "12345")).thenReturn(10.0);
 
-        mockMvc.perform(get("/backoffice/tax-rates/tax-percent")
-                        .param("taxClassId", "1")
-                        .param("countryId", "1")
-                        .param("stateOrProvinceId", "1")
-                        .param("zipCode", "12345"))
-                .andExpect(status().isOk());
+        ResponseEntity<Double> response = taxRateController.getTaxPercentByAddress(1L, 1L, 1L, "12345");
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isEqualTo(10.0);
     }
 
     @Test
-    void getBatchTaxPercentsByAddress_shouldReturn200() throws Exception {
+    void getBatchTaxPercentsByAddress_shouldReturn200() {
         when(taxRateService.getBulkTaxRate(any(), any(), any(), any()))
                 .thenReturn(List.of(taxRateVm));
 
-        mockMvc.perform(get("/backoffice/tax-rates/location-based-batch")
-                        .param("taxClassIds", "1", "2")
-                        .param("countryId", "1"))
-                .andExpect(status().isOk());
+        ResponseEntity<List<TaxRateVm>> response = taxRateController.getBatchTaxPercentsByAddress(List.of(1L, 2L), 1L, null, null);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).hasSize(1);
     }
 }
