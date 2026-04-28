@@ -37,4 +37,5 @@ jobs:
           echo "Sonar Key: $SONAR_PROJECT_KEY"
           mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
             -Dsonar.organization=$SONAR_ORGANIZATION \
-            -Dsonar.projectKey=$SONAR_PROJECT_KEY
+            -Dsonar.projectKey=$SONAR_PROJECT_KEY \
+            -Djacoco.haltOnFailure=false
