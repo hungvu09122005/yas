@@ -164,7 +164,7 @@ public class TaxRateServiceTest {
         TaxRateListGetVm result = taxRateService.getPageableTaxRates(0, 10);
 
         assertThat(result).isNotNull();
-        assertThat(result.taxRateGetDetailVms()).isEmpty();
+        assertThat(result.taxRateGetDetailContent()).isEmpty();
     }
 
     @Test

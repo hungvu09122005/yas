@@ -144,6 +144,6 @@ public class TaxClassServiceTest {
         TaxClassListGetVm result = taxClassService.getPageableTaxClasses(0, 10);
 
         assertThat(result).isNotNull();
-        assertThat(result.taxClassVmList()).hasSize(1);
+        assertThat(result.taxClassContent()).hasSize(1);
     }
 }
