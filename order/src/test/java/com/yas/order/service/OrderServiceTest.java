@@ -19,6 +19,7 @@ import com.yas.order.viewmodel.order.OrderGetVm;
 import com.yas.order.viewmodel.order.OrderListVm;
 import com.yas.order.viewmodel.order.OrderVm;
 import com.yas.order.viewmodel.order.PaymentOrderStatusVm;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.instancio.Instancio;
@@ -88,8 +89,9 @@ public class OrderServiceTest {
         when(orderRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(Page.empty());
 
         OrderListVm result = orderService.getAllOrder(
-                Pair.of(null, null), null, List.of(),
-                Pair.of(null, null), null, Pair.of(0, 10));
+                Pair.of(ZonedDateTime.now().minusDays(1), ZonedDateTime.now()),
+                null, List.of(),
+                Pair.of("", ""), null, Pair.of(0, 10));
 
         assertThat(result.totalElements()).isZero();
     }
@@ -100,8 +102,9 @@ public class OrderServiceTest {
         when(orderRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
 
         OrderListVm result = orderService.getAllOrder(
-                Pair.of(null, null), null, List.of(OrderStatus.PENDING),
-                Pair.of(null, null), null, Pair.of(0, 10));
+                Pair.of(ZonedDateTime.now().minusDays(1), ZonedDateTime.now()),
+                null, List.of(OrderStatus.PENDING),
+                Pair.of("", ""), null, Pair.of(0, 10));
 
         assertThat(result.totalElements()).isEqualTo(1);
     }
