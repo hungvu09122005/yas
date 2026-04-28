@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.util.Pair;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -84,7 +85,7 @@ public class OrderServiceTest {
 
     @Test
     void getAllOrder_whenNoOrders_shouldReturnEmptyOrderListVm() {
-        when(orderRepository.findAll(any(Specification.class), any())).thenReturn(Page.empty());
+        when(orderRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(Page.empty());
 
         OrderListVm result = orderService.getAllOrder(
                 Pair.of(null, null), null, List.of(),
@@ -96,7 +97,7 @@ public class OrderServiceTest {
     @Test
     void getAllOrder_whenOrdersExist_shouldReturnOrderListVm() {
         Page<Order> page = new PageImpl<>(List.of(order));
-        when(orderRepository.findAll(any(Specification.class), any())).thenReturn(page);
+        when(orderRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
 
         OrderListVm result = orderService.getAllOrder(
                 Pair.of(null, null), null, List.of(OrderStatus.PENDING),
@@ -134,7 +135,7 @@ public class OrderServiceTest {
     void updateOrderPaymentStatus_whenPending_shouldUpdateAndReturn() {
         PaymentOrderStatusVm vm = PaymentOrderStatusVm.builder()
                 .orderId(order.getId())
-                .paymentId("PAY-001")
+                .paymentId(1L)
                 .paymentStatus(PaymentStatus.PENDING.name())
                 .build();
         when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
@@ -149,7 +150,7 @@ public class OrderServiceTest {
     void updateOrderPaymentStatus_whenCompleted_shouldSetOrderStatusToPaid() {
         PaymentOrderStatusVm vm = PaymentOrderStatusVm.builder()
                 .orderId(order.getId())
-                .paymentId("PAY-001")
+                .paymentId(1L)
                 .paymentStatus(PaymentStatus.COMPLETED.name())
                 .build();
         when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
@@ -163,7 +164,7 @@ public class OrderServiceTest {
     @Test
     void updateOrderPaymentStatus_whenNotFound_shouldThrowNotFoundException() {
         PaymentOrderStatusVm vm = PaymentOrderStatusVm.builder()
-                .orderId(999L).paymentId("PAY-001")
+                .orderId(999L).paymentId(1L)
                 .paymentStatus(PaymentStatus.PENDING.name()).build();
         when(orderRepository.findById(999L)).thenReturn(Optional.empty());
 
