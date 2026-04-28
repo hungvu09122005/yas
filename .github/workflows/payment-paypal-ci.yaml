@@ -58,7 +58,7 @@ jobs:
         run: mvn jacoco:check@check -pl payment-paypal
 
       - name: Add coverage report to PR
-        uses: madrapps/jacoco-report@v1.6.1
+        uses: madrapps/jacoco-report@db72e7e7c96f98d239967958b0a0a6ca7d3bb45f # v1.6.1
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && github.event_name == 'pull_request' }}
         with:
           paths: ${{ github.workspace }}/payment-paypal/target/site/jacoco/jacoco.xml
@@ -74,12 +74,12 @@ jobs:
 
       - name: Upload Checkstyle result
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
-        uses: jwgmeligmeyling/checkstyle-github-action@master
+        uses: jwgmeligmeyling/checkstyle-github-action@a12be500c097a5cedab881d4785ef9b4a4d3ee6a # master
         with:
           path: '**/payment-paypal-checkstyle-result.xml'
 
       - name: Test Results
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@d61b558e8df85cb60d09ca3e5b09653b4477cea7 # v1
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && (success() || failure()) }}
         with:
           name: Payment-Paypal-Service-Unit-Test-Results

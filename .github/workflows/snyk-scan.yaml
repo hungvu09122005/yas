@@ -25,7 +25,7 @@ jobs:
           cache: maven
 
       - name: Install Snyk CLI
-        run: npm install -g snyk
+        run: npm install -g snyk --ignore-scripts
 
       - name: Run Snyk to check for vulnerabilities
         # Free-tier Snyk accounts always get 403 from reporting API after scan (unavoidable).

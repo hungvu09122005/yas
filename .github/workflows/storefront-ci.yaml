@@ -38,7 +38,7 @@ jobs:
           cache-dependency-path: storefront/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
         working-directory: storefront
 
       - name: Run Build (Checking for build errors)
@@ -51,7 +51,7 @@ jobs:
 
       - name: SonarCloud Scan
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarcloud-github-action@ba3875ecf642b2129de2b589510c81a8b53dbf4e # master
         with:
           projectBaseDir: storefront
           args: >
