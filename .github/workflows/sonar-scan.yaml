@@ -35,6 +35,6 @@ jobs:
         run: |
           echo "Sonar Org: $SONAR_ORGANIZATION"
           echo "Sonar Key: $SONAR_PROJECT_KEY"
-          mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -DskipTests \
+          mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
             -Dsonar.organization=$SONAR_ORGANIZATION \
             -Dsonar.projectKey=$SONAR_PROJECT_KEY

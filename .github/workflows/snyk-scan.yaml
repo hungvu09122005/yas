@@ -31,7 +31,24 @@ jobs:
         # Free-tier Snyk accounts always get 403 from reporting API after scan (unavoidable).
         # The scan still runs fully and prints all vulnerabilities to the log.
         # || true ensures pipeline passes despite the 403 platform limitation.
-        run: snyk test --file=pom.xml --severity-threshold=high --no-monitor || true
+        run: |
+          set +e
+          snyk test --file=pom.xml --severity-threshold=high --no-monitor
+          EXIT_CODE=$?
+          set -e
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "No vulnerabilities found."
+            exit 0
+          elif [ $EXIT_CODE -eq 1 ]; then
+            echo "Vulnerabilities found! Failing build."
+            exit 1
+          elif [ $EXIT_CODE -eq 2 ]; then
+            echo "Snyk execution error (often 403 on free tier). Passing build as requested."
+            exit 0
+          else
+            echo "Snyk failed with unexpected exit code: $EXIT_CODE"
+            exit $EXIT_CODE
+          fi
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
           SNYK_DISABLE_ANALYTICS: '1'
