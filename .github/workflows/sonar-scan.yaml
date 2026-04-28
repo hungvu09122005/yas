@@ -28,11 +28,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        # Override sonar.organization and sonar.projectKey from pom.xml (which points to nashtech-garage)
-        # to use our own forked project on SonarCloud
+        # Pin plugin to 4.0.0.4121 - stable version compatible with SonarCloud API
+        # Override sonar.organization and sonar.projectKey from pom.xml (nashtech-garage)
         run: |
-          echo "Sonar Org: ${{ secrets.SONAR_ORGANIZATION }}"
-          echo "Sonar Key: ${{ secrets.SONAR_PROJECT_KEY }}"
-          mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -DskipTests \
+          mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:4.0.0.4121:sonar \
+            -DskipTests \
+            -Djacoco.skip=true \
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
