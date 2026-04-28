@@ -17,13 +17,14 @@ on:
       - 'pom.xml'
   workflow_dispatch:
 
-permissions:
-  contents: write
-  pull-requests: write
-  checks: write
 
 jobs:
   test:
+
+    permissions:
+      contents: write
+      pull-requests: write
+      checks: write
     name: Test
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -99,6 +100,11 @@ jobs:
             -Dsonar.projectKey=$SONAR_PROJECT_KEY
 
   build:
+
+    permissions:
+      contents: write
+      pull-requests: write
+      checks: write
     name: Build
     needs: [test]
     runs-on: ubuntu-latest
