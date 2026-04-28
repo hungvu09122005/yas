@@ -276,7 +276,7 @@ public class OrderServiceTest {
             saved.setId(1L);
             return saved;
         }).when(orderRepository).save(any(Order.class));
-        when(orderItemRepository.saveAll(any())).thenAnswer(i -> i.getArgument(0));
+        when(orderItemRepository.saveAll(any())).thenReturn(List.of());
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
 
         OrderVm result = orderService.createOrder(orderPostVm);
