@@ -1,13 +1,13 @@
 /**
  * Unit tests for {@link ProductDetailService}.
  * Coverage target: >= 70% line coverage.
- * Tests: GetProductDetailByIdTest
+ * ProductDetailInfoVm is a Lombok @Getter/@Setter class, NOT a record.
+ * Accessors are getId(), getName(), etc.
  */
 package com.yas.product.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
@@ -26,7 +26,6 @@ import com.yas.product.repository.ProductRepository;
 import com.yas.product.viewmodel.NoFileMediaVm;
 import com.yas.product.viewmodel.product.ProductDetailInfoVm;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Nested;
@@ -112,13 +111,13 @@ class ProductDetailServiceTest {
             ProductDetailInfoVm result = productDetailService.getProductDetailById(PRODUCT_ID);
 
             assertThat(result).isNotNull();
-            assertThat(result.id()).isEqualTo(PRODUCT_ID);
-            assertThat(result.name()).isEqualTo(PRODUCT_NAME);
-            assertThat(result.slug()).isEqualTo(SLUG);
-            assertThat(result.brandId()).isEqualTo(BRAND_ID);
-            assertThat(result.brandName()).isEqualTo(BRAND_NAME);
-            assertThat(result.thumbnail()).isNotNull();
-            assertThat(result.productImages()).hasSize(1);
+            assertThat(result.getId()).isEqualTo(PRODUCT_ID);
+            assertThat(result.getName()).isEqualTo(PRODUCT_NAME);
+            assertThat(result.getSlug()).isEqualTo(SLUG);
+            assertThat(result.getBrandId()).isEqualTo(BRAND_ID);
+            assertThat(result.getBrandName()).isEqualTo(BRAND_NAME);
+            assertThat(result.getThumbnail()).isNotNull();
+            assertThat(result.getProductImages()).hasSize(1);
         }
 
         @Test
@@ -149,8 +148,8 @@ class ProductDetailServiceTest {
 
             ProductDetailInfoVm result = productDetailService.getProductDetailById(PRODUCT_ID);
 
-            assertThat(result.brandId()).isNull();
-            assertThat(result.brandName()).isNull();
+            assertThat(result.getBrandId()).isNull();
+            assertThat(result.getBrandName()).isNull();
         }
 
         @Test
@@ -163,7 +162,7 @@ class ProductDetailServiceTest {
 
             ProductDetailInfoVm result = productDetailService.getProductDetailById(PRODUCT_ID);
 
-            assertThat(result.categories()).isEmpty();
+            assertThat(result.getCategories()).isEmpty();
         }
 
         @Test
@@ -176,7 +175,7 @@ class ProductDetailServiceTest {
 
             ProductDetailInfoVm result = productDetailService.getProductDetailById(PRODUCT_ID);
 
-            assertThat(result.thumbnail()).isNull();
+            assertThat(result.getThumbnail()).isNull();
         }
 
         @Test
@@ -189,7 +188,7 @@ class ProductDetailServiceTest {
 
             ProductDetailInfoVm result = productDetailService.getProductDetailById(PRODUCT_ID);
 
-            assertThat(result.productImages()).isEmpty();
+            assertThat(result.getProductImages()).isEmpty();
         }
 
         @Test
@@ -220,8 +219,8 @@ class ProductDetailServiceTest {
 
             ProductDetailInfoVm result = productDetailService.getProductDetailById(PRODUCT_ID);
 
-            assertThat(result.variations()).hasSize(1);
-            assertThat(result.variations().get(0).name()).isEqualTo("Var 1");
+            assertThat(result.getVariations()).hasSize(1);
+            assertThat(result.getVariations().get(0).name()).isEqualTo("Var 1");
         }
 
         @Test
@@ -241,7 +240,7 @@ class ProductDetailServiceTest {
 
             ProductDetailInfoVm result = productDetailService.getProductDetailById(PRODUCT_ID);
 
-            assertThat(result.variations()).isEmpty();
+            assertThat(result.getVariations()).isEmpty();
         }
 
         @Test
@@ -262,7 +261,7 @@ class ProductDetailServiceTest {
 
             ProductDetailInfoVm result = productDetailService.getProductDetailById(PRODUCT_ID);
 
-            assertThat(result.productAttributes()).hasSize(1);
+            assertThat(result.getAttributeValues()).hasSize(1);
         }
     }
 }

@@ -333,7 +333,7 @@ class ProductServiceTest {
             when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(p));
             ProductSlugGetVm r = productService.getProductSlug(PRODUCT_ID);
             assertThat(r.slug()).isEqualTo(SLUG);
-            assertThat(r.id()).isNull();
+            assertThat(r.productVariantId()).isNull();
         }
 
         @Test
@@ -372,7 +372,7 @@ class ProductServiceTest {
             p.setBrand(null);
             when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(p));
             ProductEsDetailVm r = productService.getProductEsDetailById(PRODUCT_ID);
-            assertThat(r.brandName()).isNull();
+            assertThat(r.brand()).isNull();
         }
 
         @Test
@@ -595,7 +595,7 @@ class ProductServiceTest {
                 .thenReturn(page);
             when(mediaService.getMedia(anyLong())).thenReturn(mediaVm());
             ProductGetCheckoutListVm r = productService.getProductCheckoutList(0, 10, List.of(PRODUCT_ID));
-            assertThat(r.productContent()).hasSize(1);
+            assertThat(r.productCheckoutListVms()).hasSize(1);
         }
     }
 }
