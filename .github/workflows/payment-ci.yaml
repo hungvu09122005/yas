@@ -36,7 +36,7 @@ jobs:
       - uses: ./.github/workflows/actions
 
       - name: Install common-library
-        run: mvn install -DskipTests -pl common-library
+        run: mvn install -DskipTests -pl common-library,payment-paypal -am
 
       - name: Run tests with coverage
         run: mvn test jacoco:report -pl payment -am
