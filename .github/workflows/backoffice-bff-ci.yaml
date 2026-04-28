@@ -49,11 +49,12 @@ jobs:
           name: backoffice-bff-test-report
           path: backoffice-bff/target/surefire-reports/
 
-      - name: Upload coverage report
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - name: Upload coverage report for SonarCloud
+        uses: actions/upload-artifact@v4
         with:
-          name: backoffice-bff-coverage
-          path: backoffice-bff/target/site/jacoco/
+          name: jacoco-report-backoffice-bff
+          path: backoffice-bff/target/site/jacoco/jacoco.xml
+          retention-days: 1
 
       - name: Check coverage threshold (>= 70%)
         run: mvn jacoco:check@check -f backoffice-bff
@@ -86,15 +87,6 @@ jobs:
           name: Backoffice-BFF-Unit-Test-Results
           path: 'backoffice-bff/**/*-reports/TEST*.xml'
           reporter: java-junit
-
-      - name: Analyze with SonarCloud
-        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
-          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
-        run: |
-          mvn org.sonarsource.scanner.maven:sonar-maven-plugin:5.6.0.6792:sonar -f backoffice-bff \
             -Dsonar.organization=$SONAR_ORGANIZATION \
             -Dsonar.projectKey=$SONAR_PROJECT_KEY
 
@@ -140,9 +132,9 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Download coverage artifact
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@v4
         with:
-          name: backoffice-bff-coverage
+          name: jacoco-report-backoffice-bff
           path: ./jacoco-report
 
       - name: Deploy JaCoCo report to GitHub Pages
