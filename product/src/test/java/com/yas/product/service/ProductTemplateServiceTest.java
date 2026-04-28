@@ -159,10 +159,7 @@ class ProductTemplateServiceTest {
             ProductTemplatePostVm vm = new ProductTemplatePostVm("New Template", List.of(attrVm));
 
             when(productTemplateRepository.findExistedName("New Template", null)).thenReturn(null);
-            ProductTemplate saved = buildTemplate();
-            saved.setName("New Template");
-            when(productTemplateRepository.save(any(ProductTemplate.class))).thenReturn(saved);
-            when(productAttributeRepository.findAllById(List.of(999L))).thenReturn(List.of());
+            when(productAttributeRepository.findAllById(any())).thenReturn(List.of());
 
             assertThrows(BadRequestException.class,
                     () -> productTemplateService.saveProductTemplate(vm));
