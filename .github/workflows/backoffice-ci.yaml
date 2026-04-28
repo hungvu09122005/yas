@@ -67,8 +67,6 @@ jobs:
         with:
           projectBaseDir: backoffice
           args: >
-            -Dsonar.organization=$SONAR_ORGANIZATION
-            -Dsonar.projectKey=$SONAR_PROJECT_KEY
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

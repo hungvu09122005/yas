@@ -87,8 +87,6 @@ jobs:
           name: Backoffice-BFF-Unit-Test-Results
           path: 'backoffice-bff/**/*-reports/TEST*.xml'
           reporter: java-junit
-            -Dsonar.organization=$SONAR_ORGANIZATION \
-            -Dsonar.projectKey=$SONAR_PROJECT_KEY
 
   build:
 
