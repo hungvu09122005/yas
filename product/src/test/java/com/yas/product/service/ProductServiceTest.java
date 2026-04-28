@@ -617,8 +617,6 @@ class ProductServiceTest {
             );
             Brand brand = new Brand();
             brand.setId(BRAND_ID);
-            Category cat = new Category();
-            cat.setId(CATEGORY_ID);
 
             when(productRepository.findBySlugAndIsPublishedTrue(anyString())).thenReturn(Optional.empty());
             when(productRepository.findBySkuAndIsPublishedTrue(anyString())).thenReturn(Optional.empty());
@@ -627,9 +625,7 @@ class ProductServiceTest {
             Product saved = buildProduct();
             when(productRepository.save(any(Product.class))).thenReturn(saved);
             when(brandRepository.findById(BRAND_ID)).thenReturn(Optional.of(brand));
-            when(categoryRepository.findAllById(anyList())).thenReturn(List.of(cat));
             when(productImageRepository.saveAll(anyList())).thenReturn(List.of());
-            when(productCategoryRepository.saveAll(anyList())).thenReturn(List.of());
 
             ProductGetDetailVm result = productService.createProduct(vm);
 
@@ -653,7 +649,6 @@ class ProductServiceTest {
             when(productRepository.findBySlugAndIsPublishedTrue(anyString())).thenReturn(Optional.empty());
             when(productRepository.findBySkuAndIsPublishedTrue(anyString())).thenReturn(Optional.empty());
             when(productRepository.findAllById(anyList())).thenReturn(List.of());
-            when(productRepository.save(any(Product.class))).thenReturn(buildProduct());
             when(brandRepository.findById(999L)).thenReturn(Optional.empty());
 
             assertThrows(NotFoundException.class, () -> productService.createProduct(vm));
@@ -724,21 +719,16 @@ class ProductServiceTest {
             );
             Brand brand = new Brand();
             brand.setId(BRAND_ID);
-            Category cat = new Category();
-            cat.setId(CATEGORY_ID);
             Product related = buildProduct();
             related.setId(2L);
 
             when(productRepository.findBySlugAndIsPublishedTrue(anyString())).thenReturn(Optional.empty());
             when(productRepository.findBySkuAndIsPublishedTrue(anyString())).thenReturn(Optional.empty());
-            when(productRepository.findAllById(List.of(2L))).thenReturn(List.of(related));
-            when(productRepository.findAllById(List.of())).thenReturn(List.of());
+            when(productRepository.findAllById(anyList())).thenReturn(List.of(related));
             Product saved = buildProduct();
             when(productRepository.save(any(Product.class))).thenReturn(saved);
             when(brandRepository.findById(BRAND_ID)).thenReturn(Optional.of(brand));
-            when(categoryRepository.findAllById(anyList())).thenReturn(List.of(cat));
             when(productImageRepository.saveAll(anyList())).thenReturn(List.of());
-            when(productCategoryRepository.saveAll(anyList())).thenReturn(List.of());
             when(productRelatedRepository.saveAll(anyList())).thenReturn(List.of());
 
             ProductGetDetailVm result = productService.createProduct(vm);
