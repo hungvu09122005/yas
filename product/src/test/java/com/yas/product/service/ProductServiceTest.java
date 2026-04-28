@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.yas.commonlibrary.exception.BadRequestException;
+import com.yas.commonlibrary.exception.DuplicatedException;
 import com.yas.commonlibrary.exception.NotFoundException;
 import com.yas.product.model.Brand;
 import com.yas.product.model.Category;
@@ -35,6 +36,7 @@ import com.yas.product.viewmodel.product.ProductDetailVm;
 import com.yas.product.viewmodel.product.ProductEsDetailVm;
 import com.yas.product.viewmodel.product.ProductFeatureGetVm;
 import com.yas.product.viewmodel.product.ProductGetCheckoutListVm;
+import com.yas.product.viewmodel.product.ProductGetDetailVm;
 import com.yas.product.viewmodel.product.ProductListGetFromCategoryVm;
 import com.yas.product.viewmodel.product.ProductListGetVm;
 import com.yas.product.viewmodel.product.ProductListVm;
@@ -596,6 +598,189 @@ class ProductServiceTest {
             when(mediaService.getMedia(anyLong())).thenReturn(mediaVm());
             ProductGetCheckoutListVm r = productService.getProductCheckoutList(0, 10, List.of(PRODUCT_ID));
             assertThat(r.productCheckoutListVms()).hasSize(1);
+        }
+    }
+
+    @Nested
+    class CreateProductTest {
+        @Test
+        void testCreateProduct_whenValidNoVariations_shouldCreate() {
+            ProductPostVm vm = new ProductPostVm(
+                PRODUCT_NAME, SLUG, BRAND_ID, List.of(CATEGORY_ID),
+                "short", "desc", "spec", SKU, "gtin1",
+                10.0, null, 20.0, 10.0, 5.0,
+                99.0, true, true, true, true, true,
+                "metaTitle", "metaKey", "metaDesc",
+                THUMBNAIL_ID, List.of(200L),
+                List.of(), List.of(), List.of(),
+                List.of(), 1L
+            );
+            Brand brand = new Brand();
+            brand.setId(BRAND_ID);
+            Category cat = new Category();
+            cat.setId(CATEGORY_ID);
+
+            when(productRepository.findBySlugAndIsPublishedTrue(anyString())).thenReturn(Optional.empty());
+            when(productRepository.findBySkuAndIsPublishedTrue(anyString())).thenReturn(Optional.empty());
+            when(productRepository.findByGtinAndIsPublishedTrue(anyString())).thenReturn(Optional.empty());
+            when(productRepository.findAllById(anyList())).thenReturn(List.of());
+            Product saved = buildProduct();
+            when(productRepository.save(any(Product.class))).thenReturn(saved);
+            when(brandRepository.findById(BRAND_ID)).thenReturn(Optional.of(brand));
+            when(categoryRepository.findAllById(anyList())).thenReturn(List.of(cat));
+            when(productImageRepository.saveAll(anyList())).thenReturn(List.of());
+            when(productCategoryRepository.saveAll(anyList())).thenReturn(List.of());
+
+            ProductGetDetailVm result = productService.createProduct(vm);
+
+            assertThat(result).isNotNull();
+            assertThat(result.name()).isEqualTo(PRODUCT_NAME);
+            verify(productRepository).save(any(Product.class));
+        }
+
+        @Test
+        void testCreateProduct_whenBrandNotFound_shouldThrow() {
+            ProductPostVm vm = new ProductPostVm(
+                PRODUCT_NAME, SLUG, 999L, List.of(),
+                "short", "desc", "spec", SKU, "",
+                10.0, null, 20.0, 10.0, 5.0,
+                99.0, true, true, true, true, true,
+                "metaTitle", "metaKey", "metaDesc",
+                THUMBNAIL_ID, List.of(),
+                List.of(), List.of(), List.of(),
+                List.of(), 1L
+            );
+            when(productRepository.findBySlugAndIsPublishedTrue(anyString())).thenReturn(Optional.empty());
+            when(productRepository.findBySkuAndIsPublishedTrue(anyString())).thenReturn(Optional.empty());
+            when(productRepository.findAllById(anyList())).thenReturn(List.of());
+            when(productRepository.save(any(Product.class))).thenReturn(buildProduct());
+            when(brandRepository.findById(999L)).thenReturn(Optional.empty());
+
+            assertThrows(NotFoundException.class, () -> productService.createProduct(vm));
+        }
+
+        @Test
+        void testCreateProduct_whenDuplicateSlug_shouldThrow() {
+            ProductPostVm vm = new ProductPostVm(
+                PRODUCT_NAME, SLUG, null, List.of(),
+                "short", "desc", "spec", SKU, "",
+                10.0, null, 20.0, 10.0, 5.0,
+                99.0, true, true, true, true, true,
+                "metaTitle", "metaKey", "metaDesc",
+                null, List.of(),
+                List.of(), List.of(), List.of(),
+                List.of(), 1L
+            );
+            when(productRepository.findBySlugAndIsPublishedTrue(SLUG)).thenReturn(Optional.of(buildProduct()));
+
+            assertThrows(DuplicatedException.class, () -> productService.createProduct(vm));
+        }
+
+        @Test
+        void testCreateProduct_whenLengthLessThanWidth_shouldThrow() {
+            ProductPostVm vm = new ProductPostVm(
+                PRODUCT_NAME, SLUG, null, List.of(),
+                "short", "desc", "spec", SKU, "",
+                10.0, null, 5.0, 20.0, 5.0,
+                99.0, true, true, true, true, true,
+                "metaTitle", "metaKey", "metaDesc",
+                null, List.of(),
+                List.of(), List.of(), List.of(),
+                List.of(), 1L
+            );
+
+            assertThrows(BadRequestException.class, () -> productService.createProduct(vm));
+        }
+
+        @Test
+        void testCreateProduct_whenDuplicateSku_shouldThrow() {
+            ProductPostVm vm = new ProductPostVm(
+                PRODUCT_NAME, "unique-slug", null, List.of(),
+                "short", "desc", "spec", SKU, "",
+                10.0, null, 20.0, 10.0, 5.0,
+                99.0, true, true, true, true, true,
+                "metaTitle", "metaKey", "metaDesc",
+                null, List.of(),
+                List.of(), List.of(), List.of(),
+                List.of(), 1L
+            );
+            when(productRepository.findBySlugAndIsPublishedTrue(anyString())).thenReturn(Optional.empty());
+            when(productRepository.findBySkuAndIsPublishedTrue(SKU)).thenReturn(Optional.of(buildProduct()));
+
+            assertThrows(DuplicatedException.class, () -> productService.createProduct(vm));
+        }
+
+        @Test
+        void testCreateProduct_withRelatedProducts_shouldSaveRelations() {
+            ProductPostVm vm = new ProductPostVm(
+                PRODUCT_NAME, SLUG, BRAND_ID, List.of(CATEGORY_ID),
+                "short", "desc", "spec", SKU, "",
+                10.0, null, 20.0, 10.0, 5.0,
+                99.0, true, true, true, true, true,
+                "metaTitle", "metaKey", "metaDesc",
+                THUMBNAIL_ID, List.of(),
+                List.of(), List.of(), List.of(),
+                List.of(2L), 1L
+            );
+            Brand brand = new Brand();
+            brand.setId(BRAND_ID);
+            Category cat = new Category();
+            cat.setId(CATEGORY_ID);
+            Product related = buildProduct();
+            related.setId(2L);
+
+            when(productRepository.findBySlugAndIsPublishedTrue(anyString())).thenReturn(Optional.empty());
+            when(productRepository.findBySkuAndIsPublishedTrue(anyString())).thenReturn(Optional.empty());
+            when(productRepository.findAllById(List.of(2L))).thenReturn(List.of(related));
+            when(productRepository.findAllById(List.of())).thenReturn(List.of());
+            Product saved = buildProduct();
+            when(productRepository.save(any(Product.class))).thenReturn(saved);
+            when(brandRepository.findById(BRAND_ID)).thenReturn(Optional.of(brand));
+            when(categoryRepository.findAllById(anyList())).thenReturn(List.of(cat));
+            when(productImageRepository.saveAll(anyList())).thenReturn(List.of());
+            when(productCategoryRepository.saveAll(anyList())).thenReturn(List.of());
+            when(productRelatedRepository.saveAll(anyList())).thenReturn(List.of());
+
+            ProductGetDetailVm result = productService.createProduct(vm);
+
+            assertThat(result).isNotNull();
+            verify(productRelatedRepository).saveAll(anyList());
+        }
+    }
+
+    @Nested
+    class SetProductImagesTest {
+        @Test
+        void testSetProductImages_whenEmptyList_shouldDeleteExisting() {
+            Product p = buildProduct();
+            List<ProductImage> result = productService.setProductImages(List.of(), p);
+            assertThat(result).isEmpty();
+            verify(productImageRepository).deleteByProductId(PRODUCT_ID);
+        }
+
+        @Test
+        void testSetProductImages_whenNullList_shouldDeleteExisting() {
+            Product p = buildProduct();
+            List<ProductImage> result = productService.setProductImages(null, p);
+            assertThat(result).isEmpty();
+            verify(productImageRepository).deleteByProductId(PRODUCT_ID);
+        }
+
+        @Test
+        void testSetProductImages_whenNoExistingImages_shouldCreateAll() {
+            Product p = buildProduct();
+            p.setProductImages(null);
+            List<ProductImage> result = productService.setProductImages(List.of(100L, 200L), p);
+            assertThat(result).hasSize(2);
+        }
+
+        @Test
+        void testSetProductImages_whenHasExistingImages_shouldOnlyAddNew() {
+            Product p = buildProduct();
+            ProductImage existing = ProductImage.builder().imageId(100L).product(p).build();
+            p.setProductImages(List.of(existing));
+            List<ProductImage> result = productService.setProductImages(List.of(100L, 200L), p);
+            assertThat(result).hasSize(1);
         }
     }
 }
