@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MediaService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">payment</a> &gt; <a href="index.source.html" class="el_package">com.yas.payment.service</a> &gt; <span class="el_source">MediaService.java</span></div><h1>MediaService.java</h1><pre class="source lang-java linenums">package com.yas.payment.service;
+
+import static com.yas.commonlibrary.utils.AuthenticationUtils.extractJwt;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toMap;
+
+import com.yas.payment.config.ServiceUrlConfig;
+import com.yas.payment.model.PaymentProvider;
+import com.yas.payment.viewmodel.paymentprovider.MediaVm;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import java.net.URI;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.util.UriComponentsBuilder;
+
+<span class="fc" id="L24">@Slf4j</span>
+@Service
+public class MediaService extends AbstractCircuitBreakFallbackHandler {
+
+    public static final String IDS_PARAMS = &quot;ids&quot;;
+
+    private final RestClient restClient;
+    private final ServiceUrlConfig serviceUrlConfig;
+
+<span class="fc" id="L33">    public MediaService(RestClient restClient, ServiceUrlConfig serviceUrlConfig) {</span>
+<span class="fc" id="L34">        this.restClient = restClient;</span>
+<span class="fc" id="L35">        this.serviceUrlConfig = serviceUrlConfig;</span>
+<span class="fc" id="L36">    }</span>
+
+    @Retry(name = &quot;restApi&quot;)
+    @CircuitBreaker(name = &quot;restCircuitBreaker&quot;, fallbackMethod = &quot;fallbackGetMediaVmMap&quot;)
+    public Map&lt;Long, MediaVm&gt; getMediaVmMap(List&lt;PaymentProvider&gt; providers) {
+<span class="fc" id="L41">        Set&lt;Long&gt; mediaIds = getMediaIds(providers);</span>
+<span class="fc bfc" id="L42" title="All 2 branches covered.">        if (mediaIds.isEmpty()) {</span>
+<span class="fc" id="L43">            return Collections.emptyMap();</span>
+        }
+<span class="fc" id="L45">        final URI url = getMediasUrl(mediaIds);</span>
+<span class="fc" id="L46">        log.debug(&quot;Fetch media to get payment provider medias: {}&quot;, url);</span>
+<span class="fc" id="L47">        var medias = restClient.get()</span>
+<span class="fc" id="L48">            .uri(url)</span>
+<span class="pc" id="L49">            .headers(h -&gt; h.setBearerAuth(extractJwt()))</span>
+<span class="fc" id="L50">            .retrieve()</span>
+<span class="fc" id="L51">            .body(new ParameterizedTypeReference&lt;List&lt;MediaVm&gt;&gt;() {});</span>
+
+<span class="fc" id="L53">        return medias.stream().collect(toMap(MediaVm::getId, identity()));</span>
+    }
+
+    private Set&lt;Long&gt; getMediaIds(List&lt;PaymentProvider&gt; providers) {
+<span class="fc" id="L57">        return providers.stream()</span>
+<span class="fc" id="L58">                .map(PaymentProvider::getMediaId)</span>
+<span class="fc" id="L59">                .collect(Collectors.toSet());</span>
+    }
+
+    private URI getMediasUrl(Set&lt;Long&gt; mediaIds) {
+<span class="fc" id="L63">        var iconIds = mediaIds.stream()</span>
+<span class="fc" id="L64">            .map(String::valueOf)</span>
+<span class="fc" id="L65">            .collect(Collectors.joining(&quot;,&quot;));</span>
+<span class="fc" id="L66">        return UriComponentsBuilder</span>
+<span class="fc" id="L67">            .fromUriString(serviceUrlConfig.media())</span>
+<span class="fc" id="L68">            .path(&quot;/medias&quot;)</span>
+<span class="fc" id="L69">            .queryParam(IDS_PARAMS, iconIds)</span>
+<span class="fc" id="L70">            .build()</span>
+<span class="fc" id="L71">            .toUri();</span>
+    }
+
+    private Map&lt;Long, MediaVm&gt; fallbackGetMediaVmMap(List&lt;PaymentProvider&gt; providers,
+            Throwable throwable) {
+<span class="nc" id="L76">        log.error(&quot;Failed to get media for IDs: {}&quot;, providers.stream().map(PaymentProvider::getMediaId).toList());</span>
+<span class="nc" id="L77">        log.error(&quot;Fallback triggered for getMediaVmMap&quot;, throwable);</span>
+<span class="nc" id="L78">        return Collections.emptyMap();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

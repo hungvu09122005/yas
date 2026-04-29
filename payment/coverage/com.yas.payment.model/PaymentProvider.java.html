@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PaymentProvider.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">payment</a> &gt; <a href="index.source.html" class="el_package">com.yas.payment.model</a> &gt; <span class="el_source">PaymentProvider.java</span></div><h1>PaymentProvider.java</h1><pre class="source lang-java linenums">package com.yas.payment.model;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
+import jakarta.persistence.Version;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicUpdate;
+import org.springframework.data.domain.Persistable;
+
+import com.yas.commonlibrary.model.AbstractAuditEntity;
+
+@DynamicUpdate
+@Entity
+@Table(name = &quot;payment_provider&quot;)
+@lombok.Setter
+@lombok.Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class PaymentProvider extends AbstractAuditEntity implements Persistable&lt;String&gt; {
+    @Id
+    private String id;
+    private boolean enabled;
+    private String name;
+    private String configureUrl;
+    private String landingViewComponentName;
+    private String additionalSettings;
+    private Long mediaId;
+
+    @Version
+    private int version;
+
+    @Transient
+    private boolean isNew;
+
+    @Override
+    public boolean isNew() {
+<span class="nc" id="L42">        return isNew;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PaymentProviderMapperImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">payment</a> &gt; <a href="index.source.html" class="el_package">com.yas.payment.mapper</a> &gt; <span class="el_source">PaymentProviderMapperImpl.java</span></div><h1>PaymentProviderMapperImpl.java</h1><pre class="source lang-java linenums">package com.yas.payment.mapper;
+
+import com.yas.payment.model.PaymentProvider;
+import com.yas.payment.viewmodel.paymentprovider.PaymentProviderVm;
+import javax.annotation.processing.Generated;
+import org.springframework.stereotype.Component;
+
+@Generated(
+    value = &quot;org.mapstruct.ap.MappingProcessor&quot;,
+    date = &quot;2026-04-29T10:58:35+0000&quot;,
+    comments = &quot;version: 1.6.3, compiler: javac, environment: Java 25.0.2 (Eclipse Adoptium)&quot;
+)
+@Component
+<span class="fc" id="L14">public class PaymentProviderMapperImpl implements PaymentProviderMapper {</span>
+
+    @Override
+    public PaymentProvider toModel(PaymentProviderVm vm) {
+<span class="nc bnc" id="L18" title="All 2 branches missed.">        if ( vm == null ) {</span>
+<span class="nc" id="L19">            return null;</span>
+        }
+
+<span class="nc" id="L22">        PaymentProvider.PaymentProviderBuilder paymentProvider = PaymentProvider.builder();</span>
+
+<span class="nc" id="L24">        paymentProvider.id( vm.getId() );</span>
+<span class="nc" id="L25">        paymentProvider.name( vm.getName() );</span>
+<span class="nc" id="L26">        paymentProvider.configureUrl( vm.getConfigureUrl() );</span>
+<span class="nc" id="L27">        paymentProvider.mediaId( vm.getMediaId() );</span>
+<span class="nc" id="L28">        paymentProvider.version( vm.getVersion() );</span>
+
+<span class="nc" id="L30">        return paymentProvider.build();</span>
+    }
+
+    @Override
+    public PaymentProviderVm toVm(PaymentProvider m) {
+<span class="pc bpc" id="L35" title="1 of 2 branches missed.">        if ( m == null ) {</span>
+<span class="nc" id="L36">            return null;</span>
+        }
+
+<span class="fc" id="L39">        String id = null;</span>
+<span class="fc" id="L40">        String name = null;</span>
+<span class="fc" id="L41">        String configureUrl = null;</span>
+<span class="fc" id="L42">        int version = 0;</span>
+<span class="fc" id="L43">        Long mediaId = null;</span>
+
+<span class="fc" id="L45">        id = m.getId();</span>
+<span class="fc" id="L46">        name = m.getName();</span>
+<span class="fc" id="L47">        configureUrl = m.getConfigureUrl();</span>
+<span class="fc" id="L48">        version = m.getVersion();</span>
+<span class="fc" id="L49">        mediaId = m.getMediaId();</span>
+
+<span class="fc" id="L51">        String iconUrl = null;</span>
+
+<span class="fc" id="L53">        PaymentProviderVm paymentProviderVm = new PaymentProviderVm( id, name, configureUrl, version, mediaId, iconUrl );</span>
+
+<span class="fc" id="L55">        return paymentProviderVm;</span>
+    }
+
+    @Override
+    public void partialUpdate(PaymentProvider m, PaymentProviderVm v) {
+<span class="nc bnc" id="L60" title="All 2 branches missed.">        if ( v == null ) {</span>
+<span class="nc" id="L61">            return;</span>
+        }
+
+<span class="nc bnc" id="L64" title="All 2 branches missed.">        if ( v.getId() != null ) {</span>
+<span class="nc" id="L65">            m.setId( v.getId() );</span>
+        }
+<span class="nc bnc" id="L67" title="All 2 branches missed.">        if ( v.getName() != null ) {</span>
+<span class="nc" id="L68">            m.setName( v.getName() );</span>
+        }
+<span class="nc bnc" id="L70" title="All 2 branches missed.">        if ( v.getConfigureUrl() != null ) {</span>
+<span class="nc" id="L71">            m.setConfigureUrl( v.getConfigureUrl() );</span>
+        }
+<span class="nc bnc" id="L73" title="All 2 branches missed.">        if ( v.getMediaId() != null ) {</span>
+<span class="nc" id="L74">            m.setMediaId( v.getMediaId() );</span>
+        }
+<span class="nc" id="L76">        m.setVersion( v.getVersion() );</span>
+<span class="nc" id="L77">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

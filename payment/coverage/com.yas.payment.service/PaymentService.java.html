@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PaymentService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">payment</a> &gt; <a href="index.source.html" class="el_package">com.yas.payment.service</a> &gt; <span class="el_source">PaymentService.java</span></div><h1>PaymentService.java</h1><pre class="source lang-java linenums">package com.yas.payment.service;
+
+import com.yas.payment.model.CapturedPayment;
+import com.yas.payment.model.InitiatedPayment;
+import com.yas.payment.model.Payment;
+import com.yas.payment.repository.PaymentRepository;
+import com.yas.payment.service.provider.handler.PaymentHandler;
+import com.yas.payment.viewmodel.CapturePaymentRequestVm;
+import com.yas.payment.viewmodel.CapturePaymentResponseVm;
+import com.yas.payment.viewmodel.InitPaymentRequestVm;
+import com.yas.payment.viewmodel.InitPaymentResponseVm;
+import com.yas.payment.viewmodel.PaymentOrderStatusVm;
+import jakarta.annotation.PostConstruct;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+<span class="fc" id="L22">@Slf4j</span>
+@Service
+@RequiredArgsConstructor
+public class PaymentService {
+    private final PaymentRepository paymentRepository;
+    private final OrderService orderService;
+    private final Map&lt;String, PaymentHandler&gt; providers = new HashMap&lt;&gt;();
+
+    @Autowired
+    private final List&lt;PaymentHandler&gt; paymentHandlers;
+
+    @PostConstruct
+    public void initializeProviders() {
+<span class="fc bfc" id="L35" title="All 2 branches covered.">        for (PaymentHandler handler : paymentHandlers) {</span>
+<span class="fc" id="L36">            providers.put(handler.getProviderId(), handler);</span>
+<span class="fc" id="L37">        }</span>
+<span class="fc" id="L38">    }</span>
+
+    private PaymentHandler getPaymentHandler(String providerName) {
+<span class="fc" id="L41">        PaymentHandler handler = providers.get(providerName);</span>
+<span class="fc bfc" id="L42" title="All 2 branches covered.">        if (handler == null) {</span>
+<span class="fc" id="L43">            throw new IllegalArgumentException(&quot;No payment handler found for provider: &quot; + providerName);</span>
+        }
+<span class="fc" id="L45">        return handler;</span>
+    }
+
+    public InitPaymentResponseVm initPayment(InitPaymentRequestVm initPaymentRequestVm) {
+<span class="fc" id="L49">        PaymentHandler paymentHandler = getPaymentHandler(initPaymentRequestVm.paymentMethod());</span>
+<span class="fc" id="L50">        InitiatedPayment initiatedPayment = paymentHandler.initPayment(initPaymentRequestVm);</span>
+<span class="fc" id="L51">        return InitPaymentResponseVm.builder()</span>
+<span class="fc" id="L52">                .status(initiatedPayment.getStatus())</span>
+<span class="fc" id="L53">                .paymentId(initiatedPayment.getPaymentId())</span>
+<span class="fc" id="L54">                .redirectUrl(initiatedPayment.getRedirectUrl())</span>
+<span class="fc" id="L55">                .build();</span>
+    }
+
+    public CapturePaymentResponseVm capturePayment(CapturePaymentRequestVm capturePaymentRequestVm) {
+<span class="fc" id="L59">        PaymentHandler paymentHandler = getPaymentHandler(capturePaymentRequestVm.paymentMethod());</span>
+<span class="fc" id="L60">        CapturedPayment capturedPayment = paymentHandler.capturePayment(capturePaymentRequestVm);</span>
+<span class="fc" id="L61">        Long orderId = orderService.updateCheckoutStatus(capturedPayment);</span>
+<span class="fc" id="L62">        capturedPayment.setOrderId(orderId);</span>
+<span class="fc" id="L63">        Payment payment = createPayment(capturedPayment);</span>
+        PaymentOrderStatusVm orderPaymentStatusVm =
+<span class="fc" id="L65">                PaymentOrderStatusVm.builder()</span>
+<span class="fc" id="L66">                        .paymentId(payment.getId())</span>
+<span class="fc" id="L67">                        .orderId(payment.getOrderId())</span>
+<span class="fc" id="L68">                        .paymentStatus(payment.getPaymentStatus().name())</span>
+<span class="fc" id="L69">                        .build();</span>
+<span class="fc" id="L70">        orderService.updateOrderStatus(orderPaymentStatusVm);</span>
+<span class="fc" id="L71">        return CapturePaymentResponseVm.builder()</span>
+<span class="fc" id="L72">                .orderId(capturedPayment.getOrderId())</span>
+<span class="fc" id="L73">                .checkoutId(capturedPayment.getCheckoutId())</span>
+<span class="fc" id="L74">                .amount(capturedPayment.getAmount())</span>
+<span class="fc" id="L75">                .paymentFee(capturedPayment.getPaymentFee())</span>
+<span class="fc" id="L76">                .gatewayTransactionId(capturedPayment.getGatewayTransactionId())</span>
+<span class="fc" id="L77">                .paymentMethod(capturedPayment.getPaymentMethod())</span>
+<span class="fc" id="L78">                .paymentStatus(capturedPayment.getPaymentStatus())</span>
+<span class="fc" id="L79">                .failureMessage(capturedPayment.getFailureMessage())</span>
+<span class="fc" id="L80">                .build();</span>
+    }
+
+    private Payment createPayment(CapturedPayment capturedPayment) {
+<span class="fc" id="L84">        Payment payment = Payment.builder()</span>
+<span class="fc" id="L85">                .checkoutId(capturedPayment.getCheckoutId())</span>
+<span class="fc" id="L86">                .orderId(capturedPayment.getOrderId())</span>
+<span class="fc" id="L87">                .paymentStatus(capturedPayment.getPaymentStatus())</span>
+<span class="fc" id="L88">                .paymentFee(capturedPayment.getPaymentFee())</span>
+<span class="fc" id="L89">                .paymentMethod(capturedPayment.getPaymentMethod())</span>
+<span class="fc" id="L90">                .amount(capturedPayment.getAmount())</span>
+<span class="fc" id="L91">                .failureMessage(capturedPayment.getFailureMessage())</span>
+<span class="fc" id="L92">                .gatewayTransactionId(capturedPayment.getGatewayTransactionId())</span>
+<span class="fc" id="L93">                .build();</span>
+<span class="fc" id="L94">        return paymentRepository.save(payment);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>
