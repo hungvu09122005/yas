@@ -125,7 +125,8 @@ jobs:
           echo "=== Test result files found ==="
           find sonar-test-results -name 'TEST*.xml' -print | sort | tee sonar-test-result-files.txt
 
-          coverage_paths="$(paste -sd, sonar-coverage-files.txt)"
+          # Use absolute paths so Maven Sonar plugin can find files from any module subdirectory
+          coverage_paths="$(sed "s|^|${GITHUB_WORKSPACE}/|" sonar-coverage-files.txt | paste -sd, -)"
           if [ -n "$coverage_paths" ]; then
             echo "SONAR_COVERAGE_ARGS=-Dsonar.coverage.jacoco.xmlReportPaths=$coverage_paths" >> "$GITHUB_ENV"
             echo "✅ Coverage reports: $coverage_paths"
@@ -134,7 +135,7 @@ jobs:
             echo "⚠ No coverage reports found!"
           fi
 
-          test_report_paths="$(find sonar-test-results -name 'TEST*.xml' -exec dirname {} \; | sort -u | paste -sd, -)"
+          test_report_paths="$(find sonar-test-results -name 'TEST*.xml' -exec dirname {} \; | sort -u | sed "s|^|${GITHUB_WORKSPACE}/|" | paste -sd, -)"
           if [ -n "$test_report_paths" ]; then
             echo "SONAR_TEST_ARGS=-Dsonar.junit.reportPaths=$test_report_paths" >> "$GITHUB_ENV"
           else
