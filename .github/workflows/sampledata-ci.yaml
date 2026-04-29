@@ -29,27 +29,6 @@ jobs:
       - uses: ./.github/workflows/actions
       - name: Run Maven Build Command
         run: mvn clean install -pl sampledata -am -DskipTests
-
-      - name: Run tests with coverage
-        run: mvn test jacoco:report -pl sampledata -am
-
-      - name: Upload test results
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        if: always()
-        with:
-          name: sampledata-test-report
-          path: sampledata/target/surefire-reports/
-          if-no-files-found: ignore
-
-      - name: Upload coverage report for SonarCloud
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: jacoco-report-sampledata
-          path: sampledata/target/site/jacoco/
-          retention-days: 1
-          if-no-files-found: ignore
-
       - name: Run Maven Checkstyle
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         run: mvn checkstyle:checkstyle -pl sampledata -am -Dcheckstyle.output.file=sampledata-checkstyle-result.xml

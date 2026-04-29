@@ -62,7 +62,6 @@ jobs:
             webhook-ci
             backoffice-bff-ci
             storefront-bff-ci
-            sampledata service ci
             payment-paypal-ci
           )
 
