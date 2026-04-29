@@ -16,13 +16,13 @@ class EventMapperTest {
     void toEventVm_ShouldMapCorrectly() {
         Event event = new Event();
         event.setId(1L);
-        event.setName(EventName.PRODUCT_CREATED);
+        event.setName(EventName.ON_PRODUCT_UPDATED);
 
         EventVm eventVm = eventMapper.toEventVm(event);
 
         assertThat(eventVm).isNotNull();
         assertThat(eventVm.getId()).isEqualTo(1L);
-        assertThat(eventVm.getName()).isEqualTo(EventName.PRODUCT_CREATED);
+        assertThat(eventVm.getName()).isEqualTo(EventName.ON_PRODUCT_UPDATED);
     }
 
     @Test
