@@ -23,6 +23,7 @@ jobs:
 
     permissions:
       contents: write
+      packages: write
       pull-requests: write
       checks: write
     name: Test
@@ -99,6 +100,7 @@ jobs:
 
     permissions:
       contents: write
+      packages: write
       pull-requests: write
       checks: write
     name: Build
