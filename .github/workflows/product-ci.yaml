@@ -69,6 +69,7 @@ jobs:
           min-coverage-changed-files: 60
           title: 'Product Coverage Report'
           update-comment: true
+          pass-build-on-coverage-fail: false
 
       - name: Run Maven Checkstyle
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
