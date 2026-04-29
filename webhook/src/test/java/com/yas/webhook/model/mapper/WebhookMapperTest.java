@@ -30,9 +30,9 @@ class WebhookMapperTest {
         WebhookVm vm = webhookMapper.toWebhookVm(webhook);
 
         assertThat(vm).isNotNull();
-        assertThat(vm.id()).isEqualTo(1L);
-        assertThat(vm.payloadUrl()).isEqualTo("http://test.com");
-        assertThat(vm.contentType()).isEqualTo("application/json");
+        assertThat(vm.getId()).isEqualTo(1L);
+        assertThat(vm.getPayloadUrl()).isEqualTo("http://test.com");
+        assertThat(vm.getContentType()).isEqualTo("application/json");
     }
 
     @Test
@@ -46,8 +46,8 @@ class WebhookMapperTest {
         List<EventVm> eventVms = webhookMapper.toWebhookEventVms(List.of(event1, event2));
 
         assertThat(eventVms).hasSize(2);
-        assertThat(eventVms.get(0).id()).isEqualTo(10L);
-        assertThat(eventVms.get(1).id()).isEqualTo(20L);
+        assertThat(eventVms.get(0).getId()).isEqualTo(10L);
+        assertThat(eventVms.get(1).getId()).isEqualTo(20L);
     }
 
     @Test
@@ -65,12 +65,12 @@ class WebhookMapperTest {
         WebhookListGetVm listGetVm = webhookMapper.toWebhookListGetVm(page, 0, 10);
 
         assertThat(listGetVm).isNotNull();
-        assertThat(listGetVm.pageNo()).isZero();
-        assertThat(listGetVm.pageSize()).isEqualTo(10);
-        assertThat(listGetVm.totalElements()).isEqualTo(1);
-        assertThat(listGetVm.totalPages()).isEqualTo(1);
+        assertThat(listGetVm.getPageNo()).isZero();
+        assertThat(listGetVm.getPageSize()).isEqualTo(10);
+        assertThat(listGetVm.getTotalElements()).isEqualTo(1);
+        assertThat(listGetVm.getTotalPages()).isEqualTo(1);
         assertThat(listGetVm.isLast()).isTrue();
-        assertThat(listGetVm.webhooks()).hasSize(1);
+        assertThat(listGetVm.getWebhooks()).hasSize(1);
     }
 
     @Test
@@ -79,7 +79,7 @@ class WebhookMapperTest {
         webhook.setId(1L);
         webhook.setPayloadUrl("old.com");
 
-        WebhookPostVm postVm = new WebhookPostVm("new.com", "secret", List.of(1L));
+        WebhookPostVm postVm = new WebhookPostVm("new.com", "secret", "application/json", true, List.of());
 
         Webhook updated = webhookMapper.toUpdatedWebhook(webhook, postVm);
 
@@ -90,7 +90,7 @@ class WebhookMapperTest {
 
     @Test
     void toCreatedWebhook_ShouldMapCorrectly() {
-        WebhookPostVm postVm = new WebhookPostVm("new.com", "secret", List.of(1L));
+        WebhookPostVm postVm = new WebhookPostVm("new.com", "secret", "application/json", true, List.of());
 
         Webhook created = webhookMapper.toCreatedWebhook(postVm);
 
@@ -111,9 +111,9 @@ class WebhookMapperTest {
         WebhookDetailVm detailVm = webhookMapper.toWebhookDetailVm(webhook);
 
         assertThat(detailVm).isNotNull();
-        assertThat(detailVm.id()).isEqualTo(1L);
-        assertThat(detailVm.payloadUrl()).isEqualTo("url");
-        assertThat(detailVm.events()).hasSize(1);
-        assertThat(detailVm.events().get(0).id()).isEqualTo(5L);
+        assertThat(detailVm.getId()).isEqualTo(1L);
+        assertThat(detailVm.getPayloadUrl()).isEqualTo("url");
+        assertThat(detailVm.getEvents()).hasSize(1);
+        assertThat(detailVm.getEvents().get(0).getId()).isEqualTo(5L);
     }
 }

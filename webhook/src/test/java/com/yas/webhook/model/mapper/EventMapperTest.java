@@ -3,6 +3,7 @@ package com.yas.webhook.model.mapper;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.yas.webhook.model.Event;
+import com.yas.webhook.model.enums.EventName;
 import com.yas.webhook.model.viewmodel.webhook.EventVm;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
@@ -15,15 +16,13 @@ class EventMapperTest {
     void toEventVm_ShouldMapCorrectly() {
         Event event = new Event();
         event.setId(1L);
-        event.setName("PRODUCT_CREATED");
-        event.setDescription("Product created event");
+        event.setName(EventName.PRODUCT_CREATED);
 
         EventVm eventVm = eventMapper.toEventVm(event);
 
         assertThat(eventVm).isNotNull();
-        assertThat(eventVm.id()).isEqualTo(1L);
-        assertThat(eventVm.name()).isEqualTo("PRODUCT_CREATED");
-        assertThat(eventVm.description()).isEqualTo("Product created event");
+        assertThat(eventVm.getId()).isEqualTo(1L);
+        assertThat(eventVm.getName()).isEqualTo(EventName.PRODUCT_CREATED);
     }
 
     @Test
