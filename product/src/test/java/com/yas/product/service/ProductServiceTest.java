@@ -43,6 +43,7 @@ import com.yas.product.viewmodel.product.ProductListVm;
 import com.yas.product.viewmodel.product.ProductPostVm;
 import com.yas.product.viewmodel.product.ProductQuantityPostVm;
 import com.yas.product.viewmodel.product.ProductQuantityPutVm;
+import com.yas.product.viewmodel.product.ProductPutVm;
 import com.yas.product.viewmodel.product.ProductSlugGetVm;
 import com.yas.product.viewmodel.product.ProductThumbnailGetVm;
 import com.yas.product.viewmodel.product.ProductThumbnailVm;
@@ -771,6 +772,14 @@ class ProductServiceTest {
             p.setProductImages(List.of(existing));
             List<ProductImage> result = productService.setProductImages(List.of(100L, 200L), p);
             assertThat(result).hasSize(1);
+        }
+    }
+    @Nested
+    class UpdateProductTest {
+        @Test
+        void testUpdateProduct_whenNotFound_shouldThrow() {
+            when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.empty());
+            assertThrows(NotFoundException.class, () -> productService.updateProduct(PRODUCT_ID, null));
         }
     }
 }
