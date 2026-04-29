@@ -2,21 +2,41 @@ name: SonarCloud Scan
 
 on:
   workflow_run:
-    workflows: ["payment-ci", "cart-ci", "order-ci", "product-ci", "promotion-ci", "rating-ci", "recommendation-ci", "search-ci", "inventory-ci", "location-ci", "media-ci", "customer-ci", "tax-ci", "webhook-ci", "backoffice-ci", "backoffice-bff-ci", "storefront-ci", "storefront-bff-ci", "sampledata-ci", "payment-paypal-ci"]
+    workflows: ["payment-ci", "cart-ci", "order-ci", "product-ci", "promotion-ci", "rating-ci", "recommendation-ci", "search-ci", "inventory-ci", "location-ci", "media-ci", "customer-ci", "tax-ci", "webhook-ci", "backoffice-bff-ci", "storefront-bff-ci", "sampledata-ci", "payment-paypal-ci"]
     types:
       - completed
   workflow_dispatch:
+
+concurrency:
+  group: sonar-${{ github.event.workflow_run.head_sha || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
 
 jobs:
   sonarcloud_scan:
     name: SonarCloud Scan
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: >-
+      ${{
+        github.event_name == 'workflow_dispatch' ||
+        (
+          github.event.workflow_run.conclusion == 'success' &&
+          (
+            github.event.workflow_run.event != 'pull_request' ||
+            github.event.workflow_run.head_repository.full_name == github.repository
+          )
+        )
+      }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Set up JDK 25
         uses: actions/setup-java@v4
@@ -25,18 +45,122 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Download all coverage artifacts
-        uses: actions/download-artifact@v4
-        with:
-          pattern: jacoco-report-*
-          merge-multiple: false
-          run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download test and coverage artifacts from service CI runs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+        run: |
+          set -euo pipefail
 
-      - name: Build project
+          mkdir -p sonar-coverage
+          mkdir -p sonar-test-results
+
+          workflows=(
+            payment-ci
+            cart-ci
+            order-ci
+            product-ci
+            promotion-ci
+            rating-ci
+            recommendation-ci
+            search-ci
+            inventory-ci
+            location-ci
+            media-ci
+            customer-ci
+            tax-ci
+            webhook-ci
+            backoffice-bff-ci
+            storefront-bff-ci
+            sampledata-ci
+            payment-paypal-ci
+          )
+
+          for workflow in "${workflows[@]}"; do
+            run_id="$(gh run list \
+              --workflow "$workflow" \
+              --commit "$HEAD_SHA" \
+              --json databaseId,conclusion,headSha \
+              --limit 20 \
+              --jq '.[] | select(.headSha == env.HEAD_SHA and .conclusion == "success") | .databaseId' \
+              | head -n 1)"
+
+            if [ -z "$run_id" ]; then
+              echo "No successful $workflow run found for $HEAD_SHA"
+              continue
+            fi
+
+            echo "Downloading coverage artifacts from $workflow run $run_id"
+            gh run download "$run_id" \
+              --pattern 'jacoco-report-*' \
+              --dir "sonar-coverage/$workflow" || true
+
+            echo "Downloading test result artifacts from $workflow run $run_id"
+            gh run download "$run_id" \
+              --pattern '*-test-report' \
+              --dir "sonar-test-results/$workflow" || true
+          done
+
+          find sonar-coverage -name jacoco.xml -print | sort | tee sonar-coverage-files.txt
+          find sonar-test-results -name 'TEST*.xml' -print | sort | tee sonar-test-result-files.txt
+
+          coverage_paths="$(paste -sd, sonar-coverage-files.txt)"
+          if [ -n "$coverage_paths" ]; then
+            echo "SONAR_COVERAGE_ARGS=-Dsonar.coverage.jacoco.xmlReportPaths=$coverage_paths" >> "$GITHUB_ENV"
+          else
+            echo "No coverage reports found for $HEAD_SHA"
+            echo "SONAR_COVERAGE_ARGS=" >> "$GITHUB_ENV"
+          fi
+
+          test_report_paths="$(find sonar-test-results -name 'TEST*.xml' -exec dirname {} \; | sort -u | paste -sd, -)"
+          echo "SONAR_JUNIT_REPORT_PATHS=$test_report_paths" >> "$GITHUB_ENV"
+          if [ -n "$test_report_paths" ]; then
+            echo "SONAR_TEST_ARGS=-Dsonar.junit.reportPaths=$test_report_paths" >> "$GITHUB_ENV"
+          else
+            echo "No JUnit test reports found for $HEAD_SHA"
+            echo "SONAR_TEST_ARGS=" >> "$GITHUB_ENV"
+          fi
+
+      - name: Build project without tests
         run: mvn -B install -DskipTests
 
-      - name: Build and analyze with SonarCloud
+      - name: Resolve pull request metadata
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+          WORKFLOW_RUN_EVENT: ${{ github.event.workflow_run.event || '' }}
+        run: |
+          set -euo pipefail
+
+          if [ "$WORKFLOW_RUN_EVENT" != "pull_request" ]; then
+            echo "number=" >> "$GITHUB_OUTPUT"
+            echo "branch=" >> "$GITHUB_OUTPUT"
+            echo "base=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          number="$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            "repos/${GITHUB_REPOSITORY}/commits/${HEAD_SHA}/pulls" \
+            --jq '.[0].number // ""')"
+
+          branch="$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            "repos/${GITHUB_REPOSITORY}/commits/${HEAD_SHA}/pulls" \
+            --jq '.[0].head.ref // ""')"
+
+          base="$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            "repos/${GITHUB_REPOSITORY}/commits/${HEAD_SHA}/pulls" \
+            --jq '.[0].base.ref // ""')"
+
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+
+      - name: Build and analyze pull request with SonarCloud
+        if: ${{ steps.pr.outputs.number != '' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -46,4 +170,22 @@ jobs:
           mvn -B sonar:sonar \
             -Dsonar.organization=$SONAR_ORGANIZATION \
             -Dsonar.projectKey=$SONAR_PROJECT_KEY \
-            -Dsonar.coverage.jacoco.xmlReportPaths=**/jacoco.xml
+            $SONAR_COVERAGE_ARGS \
+            $SONAR_TEST_ARGS \
+            -Dsonar.pullrequest.key=${{ steps.pr.outputs.number }} \
+            -Dsonar.pullrequest.branch=${{ steps.pr.outputs.branch }} \
+            -Dsonar.pullrequest.base=${{ steps.pr.outputs.base }}
+
+      - name: Build and analyze main branch with SonarCloud
+        if: ${{ steps.pr.outputs.number == '' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
+          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+        run: |
+          mvn -B sonar:sonar \
+            -Dsonar.organization=$SONAR_ORGANIZATION \
+            -Dsonar.projectKey=$SONAR_PROJECT_KEY \
+            $SONAR_COVERAGE_ARGS \
+            $SONAR_TEST_ARGS

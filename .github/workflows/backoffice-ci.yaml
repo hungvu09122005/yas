@@ -63,18 +63,6 @@ jobs:
         continue-on-error: true
         working-directory: backoffice
 
-      - name: SonarCloud Scan
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && env.SONAR_TOKEN != '' }}
-        uses: SonarSource/sonarcloud-github-action@v3.1.0
-        with:
-          projectBaseDir: backoffice
-          args: >
-            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
-            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
-
 
 
   build:
