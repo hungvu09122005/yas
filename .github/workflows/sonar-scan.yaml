@@ -39,6 +39,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          IS_PR: ${{ github.event_name == 'pull_request' }}
         run: |
           set -euo pipefail
 
@@ -68,21 +69,43 @@ jobs:
           sleep 30
 
           for workflow in "${workflows[@]}"; do
+            run_id=""
+
+            # 1) Try to find a run for the current commit
             run_id="$(gh run list \
               --workflow "$workflow" \
               --commit "$HEAD_SHA" \
               --json databaseId,headSha \
               --limit 20 \
               --jq '.[] | select(.headSha == env.HEAD_SHA) | .databaseId' \
-              | head -n 1)"
+              | head -n 1)" || true
 
-            if [ -z "$run_id" ]; then
-              echo "No $workflow run found for $HEAD_SHA"
+            # 2) On main branch: if no run for this commit, get the latest successful run
+            if [ -z "$run_id" ] && [ "$IS_PR" = "false" ]; then
+              echo "No $workflow run for current commit, fetching latest successful run on main..."
+              run_id="$(gh run list \
+                --workflow "$workflow" \
+                --branch main \
+                --status success \
+                --json databaseId \
+                --limit 1 \
+                --jq '.[0].databaseId')" || true
+            fi
+
+            if [ -z "$run_id" ] || [ "$run_id" = "null" ]; then
+              echo "⚠ No $workflow run found — skipping"
               continue
             fi
 
-            echo "Waiting for $workflow run $run_id"
-            gh run watch "$run_id" --exit-status
+            # Wait for the run to complete (only needed for current-commit runs)
+            status="$(gh run view "$run_id" --json status --jq '.status')"
+            if [ "$status" != "completed" ]; then
+              echo "Waiting for $workflow run $run_id to complete..."
+              gh run watch "$run_id" --exit-status || {
+                echo "⚠ $workflow run $run_id failed — skipping"
+                continue
+              }
+            fi
 
             echo "Downloading coverage artifacts from $workflow run $run_id"
             gh run download "$run_id" \
@@ -95,14 +118,20 @@ jobs:
               --dir "sonar-test-results/$workflow" || true
           done
 
+          echo ""
+          echo "=== Coverage files found ==="
           find sonar-coverage -name jacoco.xml -print | sort | tee sonar-coverage-files.txt
+          echo ""
+          echo "=== Test result files found ==="
           find sonar-test-results -name 'TEST*.xml' -print | sort | tee sonar-test-result-files.txt
 
           coverage_paths="$(paste -sd, sonar-coverage-files.txt)"
           if [ -n "$coverage_paths" ]; then
             echo "SONAR_COVERAGE_ARGS=-Dsonar.coverage.jacoco.xmlReportPaths=$coverage_paths" >> "$GITHUB_ENV"
+            echo "✅ Coverage reports: $coverage_paths"
           else
             echo "SONAR_COVERAGE_ARGS=" >> "$GITHUB_ENV"
+            echo "⚠ No coverage reports found!"
           fi
 
           test_report_paths="$(find sonar-test-results -name 'TEST*.xml' -exec dirname {} \; | sort -u | paste -sd, -)"
