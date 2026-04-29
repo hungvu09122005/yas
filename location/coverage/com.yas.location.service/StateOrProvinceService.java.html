@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StateOrProvinceService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">location</a> &gt; <a href="index.source.html" class="el_package">com.yas.location.service</a> &gt; <span class="el_source">StateOrProvinceService.java</span></div><h1>StateOrProvinceService.java</h1><pre class="source lang-java linenums">package com.yas.location.service;
+
+import com.yas.commonlibrary.exception.DuplicatedException;
+import com.yas.commonlibrary.exception.NotFoundException;
+import com.yas.location.mapper.StateOrProvinceMapper;
+import com.yas.location.model.StateOrProvince;
+import com.yas.location.repository.CountryRepository;
+import com.yas.location.repository.StateOrProvinceRepository;
+import com.yas.location.utils.Constants;
+import com.yas.location.viewmodel.stateorprovince.StateOrProvinceAndCountryGetNameVm;
+import com.yas.location.viewmodel.stateorprovince.StateOrProvinceListGetVm;
+import com.yas.location.viewmodel.stateorprovince.StateOrProvincePostVm;
+import com.yas.location.viewmodel.stateorprovince.StateOrProvinceVm;
+import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+public class StateOrProvinceService {
+
+    private final StateOrProvinceRepository stateOrProvinceRepository;
+    private final CountryRepository countryRepository;
+
+    private final StateOrProvinceMapper stateOrProvinceMapper;
+
+    public StateOrProvinceService(StateOrProvinceRepository stateOrProvinceRepository,
+<span class="fc" id="L31">                                  CountryRepository countryRepository, StateOrProvinceMapper stateOrProvinceMapper) {</span>
+<span class="fc" id="L32">        this.stateOrProvinceRepository = stateOrProvinceRepository;</span>
+<span class="fc" id="L33">        this.countryRepository = countryRepository;</span>
+<span class="fc" id="L34">        this.stateOrProvinceMapper = stateOrProvinceMapper;</span>
+<span class="fc" id="L35">    }</span>
+
+    /**
+     * handle business and create state or province.
+     *
+     * @param stateOrProvincePostVm The state or province post Dto
+     * @return StateOrProvince
+     */
+    @Transactional
+    public StateOrProvince createStateOrProvince(final StateOrProvincePostVm stateOrProvincePostVm) {
+<span class="fc" id="L45">        final Long countryId = stateOrProvincePostVm.countryId();</span>
+<span class="fc" id="L46">        final boolean isCountryExisted = countryRepository.existsById(countryId);</span>
+<span class="fc bfc" id="L47" title="All 2 branches covered.">        if (!isCountryExisted) {</span>
+<span class="fc" id="L48">            throw new NotFoundException(Constants.ErrorCode.COUNTRY_NOT_FOUND, countryId);</span>
+        }
+
+<span class="fc bfc" id="L51" title="All 2 branches covered.">        if (stateOrProvinceRepository.existsByNameIgnoreCaseAndCountryId(stateOrProvincePostVm.name(), countryId)) {</span>
+<span class="fc" id="L52">            throw new DuplicatedException(Constants.ErrorCode.NAME_ALREADY_EXITED,</span>
+<span class="fc" id="L53">                stateOrProvincePostVm.name());</span>
+        }
+
+<span class="fc" id="L56">        final StateOrProvince stateOrProvince = StateOrProvince.builder()</span>
+<span class="fc" id="L57">            .name(stateOrProvincePostVm.name())</span>
+<span class="fc" id="L58">            .code(stateOrProvincePostVm.code())</span>
+<span class="fc" id="L59">            .type(stateOrProvincePostVm.type())</span>
+<span class="fc" id="L60">            .country(countryRepository.getReferenceById(countryId))</span>
+<span class="fc" id="L61">            .build();</span>
+
+<span class="fc" id="L63">        return stateOrProvinceRepository.save(stateOrProvince);</span>
+    }
+
+    /**
+     * Handle business and update state or province.
+     *
+     * @param stateOrProvincePostVm The state or province post Dto
+     * @param id                    The id of stateOrProvince need to update
+     */
+    @Transactional
+    public void updateStateOrProvince(final StateOrProvincePostVm stateOrProvincePostVm,
+                                      final Long id) {
+<span class="fc" id="L75">        final StateOrProvince stateOrProvince = stateOrProvinceRepository</span>
+<span class="fc" id="L76">            .findById(id)</span>
+<span class="fc" id="L77">            .orElseThrow(</span>
+<span class="fc" id="L78">                () -&gt; new NotFoundException(Constants.ErrorCode.STATE_OR_PROVINCE_NOT_FOUND, id));</span>
+
+        //For the updating case we don't need to check for the state or province being updated
+<span class="fc bfc" id="L81" title="All 2 branches covered.">        if (stateOrProvinceRepository.existsByNameIgnoreCaseAndCountryIdAndIdNot(</span>
+<span class="fc" id="L82">            stateOrProvincePostVm.name(), stateOrProvince.getCountry().getId(), id)) {</span>
+<span class="fc" id="L83">            throw new DuplicatedException(Constants.ErrorCode.NAME_ALREADY_EXITED,</span>
+<span class="fc" id="L84">                stateOrProvincePostVm.name());</span>
+        }
+
+<span class="fc" id="L87">        stateOrProvince.setName(stateOrProvincePostVm.name());</span>
+<span class="fc" id="L88">        stateOrProvince.setCode(stateOrProvincePostVm.code());</span>
+<span class="fc" id="L89">        stateOrProvince.setType(stateOrProvincePostVm.type());</span>
+
+<span class="fc" id="L91">        stateOrProvinceRepository.save(stateOrProvince);</span>
+<span class="fc" id="L92">    }</span>
+
+    @Transactional
+    public void delete(final Long id) {
+<span class="fc" id="L96">        final boolean isStateOrProvinceExisted = stateOrProvinceRepository.existsById(id);</span>
+<span class="fc bfc" id="L97" title="All 2 branches covered.">        if (!isStateOrProvinceExisted) {</span>
+<span class="fc" id="L98">            throw new NotFoundException(Constants.ErrorCode.STATE_OR_PROVINCE_NOT_FOUND, id);</span>
+        }
+<span class="fc" id="L100">        stateOrProvinceRepository.deleteById(id);</span>
+<span class="fc" id="L101">    }</span>
+
+    @Transactional(readOnly = true)
+    public StateOrProvinceVm findById(final Long id) {
+<span class="fc" id="L105">        final StateOrProvince stateOrProvince = stateOrProvinceRepository</span>
+<span class="fc" id="L106">            .findById(id)</span>
+<span class="fc" id="L107">            .orElseThrow(() -&gt; new NotFoundException(Constants.ErrorCode.STATE_OR_PROVINCE_NOT_FOUND, id));</span>
+<span class="fc" id="L108">        return stateOrProvinceMapper.toStateOrProvinceViewModelFromStateOrProvince(stateOrProvince);</span>
+    }
+
+    @Transactional(readOnly = true)
+    public List&lt;StateOrProvinceAndCountryGetNameVm&gt; getStateOrProvinceAndCountryNames(
+        final List&lt;Long&gt; stateOrProvinceIds) {
+<span class="fc" id="L114">        List&lt;StateOrProvince&gt; stateOrProvinces = stateOrProvinceRepository.findByIdIn(stateOrProvinceIds);</span>
+
+<span class="fc" id="L116">        return stateOrProvinces.stream()</span>
+<span class="fc" id="L117">            .map(StateOrProvinceAndCountryGetNameVm::fromModel)</span>
+<span class="fc" id="L118">            .toList();</span>
+    }
+
+    @Transactional(readOnly = true)
+    public List&lt;StateOrProvinceVm&gt; findAll() {
+<span class="fc" id="L123">        return stateOrProvinceRepository</span>
+<span class="fc" id="L124">            .findAll()</span>
+<span class="fc" id="L125">            .stream()</span>
+<span class="fc" id="L126">            .map(stateOrProvinceMapper::toStateOrProvinceViewModelFromStateOrProvince)</span>
+<span class="fc" id="L127">            .toList();</span>
+    }
+
+    /**
+     * Handle business and paging list of state or provinces.
+     *
+     * @param pageNo    The number of page
+     * @param pageSize  The number of row on every page
+     * @param countryId The country Id which  state or province belong
+     * @return StateOrProvince
+     */
+    @Transactional(readOnly = true)
+    public StateOrProvinceListGetVm getPageableStateOrProvinces(int pageNo, int pageSize,
+                                                                Long countryId) {
+<span class="fc" id="L141">        final Pageable pageable = PageRequest.of(pageNo, pageSize, Sort.by(Sort.Direction.ASC, &quot;name&quot;));</span>
+<span class="fc" id="L142">        final Page&lt;StateOrProvince&gt; stateOrProvincePage =</span>
+<span class="fc" id="L143">            stateOrProvinceRepository.getPageableStateOrProvincesByCountry(</span>
+                countryId, pageable);
+<span class="fc" id="L145">        final List&lt;StateOrProvince&gt; stateOrProvinceList = stateOrProvincePage.getContent();</span>
+
+<span class="fc" id="L147">        final List&lt;StateOrProvinceVm&gt; stateOrProvinceVms = stateOrProvinceList.stream()</span>
+<span class="fc" id="L148">            .map(StateOrProvinceVm::fromModel)</span>
+<span class="fc" id="L149">            .toList();</span>
+
+<span class="fc" id="L151">        return new StateOrProvinceListGetVm(</span>
+            stateOrProvinceVms,
+<span class="fc" id="L153">            stateOrProvincePage.getNumber(),</span>
+<span class="fc" id="L154">            stateOrProvincePage.getSize(),</span>
+<span class="fc" id="L155">            (int) stateOrProvincePage.getTotalElements(),</span>
+<span class="fc" id="L156">            stateOrProvincePage.getTotalPages(),</span>
+<span class="fc" id="L157">            stateOrProvincePage.isLast()</span>
+        );
+    }
+
+    public List&lt;StateOrProvinceVm&gt; getAllByCountryId(Long countryId) {
+<span class="fc" id="L162">        return stateOrProvinceRepository.findAllByCountryIdOrderByNameAsc(countryId).stream()</span>
+<span class="fc" id="L163">            .map(stateOrProvinceMapper::toStateOrProvinceViewModelFromStateOrProvince)</span>
+<span class="fc" id="L164">            .toList();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

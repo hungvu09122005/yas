@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AddressService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">location</a> &gt; <a href="index.source.html" class="el_package">com.yas.location.service</a> &gt; <span class="el_source">AddressService.java</span></div><h1>AddressService.java</h1><pre class="source lang-java linenums">package com.yas.location.service;
+
+import com.yas.commonlibrary.exception.NotFoundException;
+import com.yas.location.model.Address;
+import com.yas.location.model.Country;
+import com.yas.location.repository.AddressRepository;
+import com.yas.location.repository.CountryRepository;
+import com.yas.location.repository.DistrictRepository;
+import com.yas.location.repository.StateOrProvinceRepository;
+import com.yas.location.utils.Constants;
+import com.yas.location.viewmodel.address.AddressDetailVm;
+import com.yas.location.viewmodel.address.AddressGetVm;
+import com.yas.location.viewmodel.address.AddressPostVm;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@Transactional
+@RequiredArgsConstructor
+public class AddressService {
+
+    private final AddressRepository addressRepository;
+    private final StateOrProvinceRepository stateOrProvinceRepository;
+    private final CountryRepository countryRepository;
+    private final DistrictRepository districtRepository;
+
+    public AddressGetVm createAddress(AddressPostVm dto) {
+<span class="fc" id="L30">        Address address = AddressPostVm.fromModel(dto);</span>
+<span class="fc" id="L31">        stateOrProvinceRepository.findById(dto.stateOrProvinceId()).ifPresent(address::setStateOrProvince);</span>
+<span class="fc" id="L32">        Country country = countryRepository.findById(dto.countryId())</span>
+<span class="fc" id="L33">            .orElseThrow(() -&gt; new NotFoundException(Constants.ErrorCode.COUNTRY_NOT_FOUND, dto.countryId()));</span>
+<span class="fc" id="L34">        address.setCountry(country);</span>
+<span class="fc" id="L35">        districtRepository.findById(dto.districtId()).ifPresent(address::setDistrict);</span>
+<span class="fc" id="L36">        return AddressGetVm.fromModel(addressRepository.save(address));</span>
+    }
+
+    public void updateAddress(Long id, AddressPostVm dto) {
+<span class="fc" id="L40">        Address address = addressRepository.findById(id).orElseThrow(() -&gt;</span>
+<span class="fc" id="L41">            new NotFoundException(Constants.ErrorCode.ADDRESS_NOT_FOUND, id));</span>
+
+<span class="fc" id="L43">        address.setContactName(dto.contactName());</span>
+<span class="fc" id="L44">        address.setAddressLine1(dto.addressLine1());</span>
+<span class="fc" id="L45">        address.setAddressLine2(dto.addressLine2());</span>
+<span class="fc" id="L46">        address.setPhone(dto.phone());</span>
+<span class="fc" id="L47">        address.setCity(dto.city());</span>
+<span class="fc" id="L48">        address.setZipCode(dto.zipCode());</span>
+
+<span class="fc" id="L50">        stateOrProvinceRepository.findById(dto.stateOrProvinceId()).ifPresent(address::setStateOrProvince);</span>
+<span class="fc" id="L51">        countryRepository.findById(dto.countryId()).ifPresent(address::setCountry);</span>
+<span class="fc" id="L52">        districtRepository.findById(dto.districtId()).ifPresent(address::setDistrict);</span>
+<span class="fc" id="L53">        addressRepository.save(address);</span>
+<span class="fc" id="L54">    }</span>
+
+    public List&lt;AddressDetailVm&gt; getAddressList(List&lt;Long&gt; ids) {
+<span class="fc" id="L57">        List&lt;Address&gt; addressList = addressRepository.findAllByIdIn(ids);</span>
+<span class="fc" id="L58">        return addressList.stream().map(address -&gt; AddressDetailVm.fromModel(address)).toList();</span>
+    }
+
+    public AddressDetailVm getAddress(Long id) {
+<span class="fc" id="L62">        Address address = addressRepository.findById(id).orElseThrow(() -&gt;</span>
+<span class="fc" id="L63">            new NotFoundException(Constants.ErrorCode.ADDRESS_NOT_FOUND, id));</span>
+<span class="fc" id="L64">        return AddressDetailVm.fromModel(address);</span>
+    }
+
+    public void deleteAddress(Long id) {
+<span class="fc" id="L68">        Address address = addressRepository.findById(id).orElseThrow(() -&gt;</span>
+<span class="fc" id="L69">            new NotFoundException(Constants.ErrorCode.ADDRESS_NOT_FOUND, id));</span>
+<span class="fc" id="L70">        addressRepository.delete(address);</span>
+<span class="fc" id="L71">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

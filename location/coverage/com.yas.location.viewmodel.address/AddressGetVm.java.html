@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AddressGetVm.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">location</a> &gt; <a href="index.source.html" class="el_package">com.yas.location.viewmodel.address</a> &gt; <span class="el_source">AddressGetVm.java</span></div><h1>AddressGetVm.java</h1><pre class="source lang-java linenums">package com.yas.location.viewmodel.address;
+
+import com.yas.location.model.Address;
+import lombok.Builder;
+
+@Builder
+<span class="fc" id="L7">public record AddressGetVm(Long id, String contactName, String phone, String addressLine1, String addressLine2,</span>
+                           String city, String zipCode,
+                           Long districtId, Long stateOrProvinceId, Long countryId) {
+    public static AddressGetVm fromModel(Address address) {
+<span class="fc" id="L11">        return AddressGetVm.builder()</span>
+<span class="fc" id="L12">            .id(address.getId())</span>
+<span class="fc" id="L13">            .contactName(address.getContactName())</span>
+<span class="fc" id="L14">            .phone(address.getPhone())</span>
+<span class="fc" id="L15">            .addressLine1(address.getAddressLine1())</span>
+<span class="fc" id="L16">            .addressLine2(address.getAddressLine2())</span>
+<span class="fc" id="L17">            .city(address.getCity())</span>
+<span class="fc" id="L18">            .districtId(address.getDistrict().getId())</span>
+<span class="fc" id="L19">            .stateOrProvinceId(address.getStateOrProvince().getId())</span>
+<span class="fc" id="L20">            .countryId(address.getCountry().getId())</span>
+<span class="fc" id="L21">            .zipCode(address.getZipCode())</span>
+<span class="fc" id="L22">            .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

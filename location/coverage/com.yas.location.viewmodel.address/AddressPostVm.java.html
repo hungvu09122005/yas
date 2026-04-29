@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AddressPostVm.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">location</a> &gt; <a href="index.source.html" class="el_package">com.yas.location.viewmodel.address</a> &gt; <span class="el_source">AddressPostVm.java</span></div><h1>AddressPostVm.java</h1><pre class="source lang-java linenums">package com.yas.location.viewmodel.address;
+
+import com.yas.location.model.Address;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.Builder;
+
+@Builder
+<span class="fc" id="L9">public record AddressPostVm(@Size(max = 450) String contactName,</span>
+                            @Size(max = 25) String phone,
+                            @Size(max = 450) String addressLine1,
+                            @Size(max = 450) String addressLine2,
+                            @Size(max = 450) String city,
+                            @Size(max = 25) String zipCode,
+                            @NotNull Long districtId,
+                            @NotNull Long stateOrProvinceId,
+                            @NotNull Long countryId) {
+
+    public static Address fromModel(AddressPostVm dto) {
+<span class="fc" id="L20">        return Address.builder()</span>
+<span class="fc" id="L21">            .contactName(dto.contactName)</span>
+<span class="fc" id="L22">            .phone(dto.phone)</span>
+<span class="fc" id="L23">            .addressLine1(dto.addressLine1)</span>
+<span class="fc" id="L24">            .addressLine2(dto.addressLine2)</span>
+<span class="fc" id="L25">            .city(dto.city())</span>
+<span class="fc" id="L26">            .zipCode(dto.zipCode)</span>
+<span class="fc" id="L27">            .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>
