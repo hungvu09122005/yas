@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrderSpecification.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">order</a> &gt; <a href="index.source.html" class="el_package">com.yas.order.specification</a> &gt; <span class="el_source">OrderSpecification.java</span></div><h1>OrderSpecification.java</h1><pre class="source lang-java linenums">package com.yas.order.specification;
+
+import com.yas.order.model.Order;
+import com.yas.order.model.OrderItem;
+import com.yas.order.model.enumeration.OrderStatus;
+import com.yas.order.utils.Constants;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.jpa.domain.Specification;
+
+public class OrderSpecification {
+
+    private OrderSpecification() {}
+
+    public static Specification&lt;Order&gt; existsByCreatedByAndInProductIdAndOrderStatusCompleted(
+        String createdBy, List&lt;Long&gt; productIds) {
+
+<span class="fc" id="L25">        return Specification.where(hasCreatedBy(createdBy))</span>
+<span class="fc" id="L26">            .and(hasOrderStatus(OrderStatus.COMPLETED))</span>
+<span class="fc" id="L27">            .and(hasProductInOrderItems(productIds));</span>
+    }
+
+    public static Specification&lt;Order&gt; findMyOrders(String userId, String productName, OrderStatus orderStatus) {
+<span class="fc" id="L31">        return (root, query, criteriaBuilder) -&gt; {</span>
+
+<span class="nc" id="L33">            Predicate hasCreatedByPredicate</span>
+<span class="nc" id="L34">                = hasCreatedBy(userId).toPredicate(root, query, criteriaBuilder);</span>
+<span class="nc" id="L35">            Predicate hasOrderStatusPredicate</span>
+<span class="nc" id="L36">                = hasOrderStatus(orderStatus).toPredicate(root, query, criteriaBuilder);</span>
+<span class="nc" id="L37">            Predicate hasProductNamePredicate</span>
+<span class="nc" id="L38">                = hasProductNameInOrderItems(productName).toPredicate(root, query, criteriaBuilder);</span>
+
+<span class="nc" id="L40">            return criteriaBuilder.and(</span>
+                hasCreatedByPredicate,
+                hasOrderStatusPredicate,
+                hasProductNamePredicate
+            );
+        };
+    }
+
+    public static Specification&lt;Order&gt; findOrderByWithMulCriteria(
+        List&lt;OrderStatus&gt; orderStatus,
+        String billingPhoneNumber,
+        String countryName,
+        String email,
+        String productName,
+        ZonedDateTime createdFrom,
+        ZonedDateTime createdTo) {
+
+<span class="fc" id="L57">        return (root, query, criteriaBuilder) -&gt; {</span>
+
+<span class="nc bnc" id="L59" title="All 4 branches missed.">            if (query != null &amp;&amp; Long.class != query.getResultType()) {</span>
+<span class="nc" id="L60">                root.fetch(Constants.Column.ORDER_SHIPPING_ADDRESS_ID_COLUMN, JoinType.LEFT);</span>
+<span class="nc" id="L61">                root.fetch(Constants.Column.ORDER_BILLING_ADDRESS_ID_COLUMN, JoinType.LEFT);</span>
+            }
+
+<span class="nc" id="L64">            Predicate withEmail</span>
+<span class="nc" id="L65">                = withEmail(email).toPredicate(root, query, criteriaBuilder);</span>
+<span class="nc" id="L66">            Predicate withOrderStatus</span>
+<span class="nc" id="L67">                = withOrderStatus(orderStatus).toPredicate(root, query, criteriaBuilder);</span>
+<span class="nc" id="L68">            Predicate withProductName</span>
+<span class="nc" id="L69">                = withProductName(productName).toPredicate(root, query, criteriaBuilder);</span>
+<span class="nc" id="L70">            Predicate withBillingPhoneNumber</span>
+<span class="nc" id="L71">                = withBillingPhoneNumber(billingPhoneNumber).toPredicate(root, query, criteriaBuilder);</span>
+<span class="nc" id="L72">            Predicate withCountryName</span>
+<span class="nc" id="L73">                = withCountryName(countryName).toPredicate(root, query, criteriaBuilder);</span>
+<span class="nc" id="L74">            Predicate withDateRange</span>
+<span class="nc" id="L75">                = withDateRange(createdFrom, createdTo).toPredicate(root, query, criteriaBuilder);</span>
+
+<span class="nc" id="L77">            return criteriaBuilder.and(</span>
+                withEmail,
+                withOrderStatus,
+                withProductName,
+                withBillingPhoneNumber,
+                withCountryName,
+                withDateRange
+            );
+        };
+    }
+
+    public static Specification&lt;Order&gt; hasProductInOrderItems(List&lt;Long&gt; productIds) {
+<span class="fc" id="L89">        return (root, query, criteriaBuilder) -&gt; {</span>
+
+<span class="nc bnc" id="L91" title="All 2 branches missed.">            if (query == null) {</span>
+<span class="nc" id="L92">                return criteriaBuilder.conjunction();</span>
+            }
+
+<span class="nc" id="L95">            Subquery&lt;OrderItem&gt; subquery = query.subquery(OrderItem.class);</span>
+<span class="nc" id="L96">            Root&lt;OrderItem&gt; orderItemRoot = subquery.from(OrderItem.class);</span>
+<span class="nc" id="L97">            subquery.select(orderItemRoot)</span>
+<span class="nc" id="L98">                .where(</span>
+<span class="nc" id="L99">                    criteriaBuilder.and(</span>
+<span class="nc" id="L100">                        criteriaBuilder.equal(</span>
+<span class="nc" id="L101">                            orderItemRoot.get(Constants.Column.ORDER_ORDER_ID_COLUMN),</span>
+<span class="nc" id="L102">                            root.get(Constants.Column.ID_COLUMN)</span>
+                        ),
+<span class="nc" id="L104">                        orderItemRoot.get(Constants.Column.ORDER_ITEM_PRODUCT_ID_COLUMN)</span>
+<span class="nc" id="L105">                            .in(Optional.ofNullable(productIds).orElse(List.of()))</span>
+                    )
+                );
+
+<span class="nc" id="L109">            return criteriaBuilder.exists(subquery);</span>
+        };
+    }
+
+    public static Specification&lt;Order&gt; hasCreatedBy(String createdBy) {
+<span class="fc" id="L114">        return (root, query, criteriaBuilder) -&gt;</span>
+<span class="fc" id="L115">            criteriaBuilder.equal(root.get(Constants.Column.CREATE_BY_COLUMN), createdBy);</span>
+    }
+
+    public static Specification&lt;Order&gt; hasOrderStatus(OrderStatus orderStatus) {
+<span class="fc" id="L119">        return (root, query, criteriaBuilder) -&gt; {</span>
+<span class="pc bpc" id="L120" title="1 of 2 branches missed.">            if (orderStatus != null) {</span>
+<span class="fc" id="L121">                return criteriaBuilder.equal(</span>
+<span class="fc" id="L122">                    root.get(Constants.Column.ORDER_ORDER_STATUS_COLUMN),</span>
+                    orderStatus);
+            }
+<span class="nc" id="L125">            return criteriaBuilder.conjunction();</span>
+        };
+    }
+
+    public static Specification&lt;Order&gt; hasProductNameInOrderItems(String productName) {
+<span class="fc" id="L130">        return (root, query, criteriaBuilder) -&gt; {</span>
+
+<span class="pc bpc" id="L132" title="1 of 2 branches missed.">            if (query == null) {</span>
+<span class="nc" id="L133">                return criteriaBuilder.conjunction();</span>
+            }
+
+<span class="fc" id="L136">            Subquery&lt;Long&gt; subquery = query.subquery(Long.class);</span>
+<span class="fc" id="L137">            Root&lt;OrderItem&gt; orderItemRoot = subquery.from(OrderItem.class);</span>
+
+<span class="fc" id="L139">            Predicate productNamePredicate = criteriaBuilder.conjunction();</span>
+<span class="pc bpc" id="L140" title="1 of 2 branches missed.">            if (StringUtils.isNotEmpty(productName)) {</span>
+<span class="fc" id="L141">                productNamePredicate = criteriaBuilder.like(</span>
+<span class="fc" id="L142">                    criteriaBuilder.lower(orderItemRoot.get(Constants.Column.ORDER_ITEM_PRODUCT_NAME_COLUMN)),</span>
+<span class="fc" id="L143">                    &quot;%&quot; + productName.toLowerCase() + &quot;%&quot;</span>
+                );
+            }
+
+<span class="fc" id="L147">            subquery.select(orderItemRoot.get(Constants.Column.ORDER_ORDER_ID_COLUMN))</span>
+<span class="fc" id="L148">                .where(productNamePredicate);</span>
+
+<span class="fc" id="L150">            return criteriaBuilder.in(root.get(Constants.Column.ID_COLUMN)).value(subquery);</span>
+        };
+    }
+
+    public static Specification&lt;Order&gt; withEmail(String email) {
+<span class="fc" id="L155">        return (root, query, criteriaBuilder) -&gt; {</span>
+<span class="pc bpc" id="L156" title="1 of 2 branches missed.">            if (StringUtils.isNotEmpty(email)) {</span>
+<span class="fc" id="L157">                return criteriaBuilder.like(</span>
+<span class="fc" id="L158">                    criteriaBuilder.lower(root.get(Constants.Column.ORDER_EMAIL_COLUMN)),</span>
+<span class="fc" id="L159">                    &quot;%&quot; + email.toLowerCase() + &quot;%&quot;</span>
+                );
+            }
+<span class="nc" id="L162">            return criteriaBuilder.conjunction();</span>
+        };
+    }
+
+    public static Specification&lt;Order&gt; withOrderStatus(List&lt;OrderStatus&gt; orderStatus) {
+<span class="fc" id="L167">        return (root, query, criteriaBuilder) -&gt; {</span>
+<span class="pc bpc" id="L168" title="1 of 2 branches missed.">            if (CollectionUtils.isNotEmpty(orderStatus)) {</span>
+<span class="fc" id="L169">                return root.get(Constants.Column.ORDER_ORDER_STATUS_COLUMN).in(orderStatus);</span>
+            }
+<span class="nc" id="L171">            return criteriaBuilder.conjunction();</span>
+        };
+    }
+
+    public static Specification&lt;Order&gt; withProductName(String productName) {
+<span class="nc" id="L176">        return (root, query, criteriaBuilder) -&gt; {</span>
+
+<span class="nc bnc" id="L178" title="All 4 branches missed.">            if (query == null || StringUtils.isEmpty(productName)) {</span>
+<span class="nc" id="L179">                return criteriaBuilder.conjunction();</span>
+            }
+
+<span class="nc" id="L182">            Subquery&lt;Long&gt; subquery = query.subquery(Long.class);</span>
+<span class="nc" id="L183">            Root&lt;OrderItem&gt; orderItemRoot = subquery.from(OrderItem.class);</span>
+<span class="nc" id="L184">            subquery.select(orderItemRoot.get(Constants.Column.ORDER_ORDER_ID_COLUMN));</span>
+<span class="nc" id="L185">            subquery.where(</span>
+<span class="nc" id="L186">                criteriaBuilder.and(</span>
+<span class="nc" id="L187">                    criteriaBuilder.equal(</span>
+<span class="nc" id="L188">                        orderItemRoot.get(Constants.Column.ORDER_ORDER_ID_COLUMN),</span>
+<span class="nc" id="L189">                        root.get(Constants.Column.ID_COLUMN)),</span>
+<span class="nc" id="L190">                    criteriaBuilder.like(</span>
+<span class="nc" id="L191">                        criteriaBuilder.lower(orderItemRoot.get(Constants.Column.ORDER_ITEM_PRODUCT_NAME_COLUMN)),</span>
+<span class="nc" id="L192">                        &quot;%&quot; + productName.toLowerCase() + &quot;%&quot;</span>
+                    )
+                )
+            );
+<span class="nc" id="L196">            return criteriaBuilder.exists(subquery);</span>
+
+        };
+    }
+
+    public static Specification&lt;Order&gt; withBillingPhoneNumber(String billingPhoneNumber) {
+<span class="fc" id="L202">        return (root, query, criteriaBuilder) -&gt; {</span>
+<span class="pc bpc" id="L203" title="2 of 4 branches missed.">            if (billingPhoneNumber != null &amp;&amp; !billingPhoneNumber.isEmpty()) {</span>
+<span class="fc" id="L204">                return criteriaBuilder.like(</span>
+<span class="fc" id="L205">                    criteriaBuilder.lower(</span>
+<span class="fc" id="L206">                        root.get(Constants.Column.ORDER_BILLING_ADDRESS_ID_COLUMN)</span>
+<span class="fc" id="L207">                            .get(Constants.Column.ORDER_PHONE_COLUMN)</span>
+                    ),
+<span class="fc" id="L209">                    &quot;%&quot; + billingPhoneNumber.toLowerCase() + &quot;%&quot;</span>
+                );
+            }
+<span class="nc" id="L212">            return criteriaBuilder.conjunction();</span>
+        };
+    }
+
+    public static Specification&lt;Order&gt; withCountryName(String countryName) {
+<span class="fc" id="L217">        return (root, query, criteriaBuilder) -&gt; {</span>
+<span class="pc bpc" id="L218" title="2 of 4 branches missed.">            if (countryName != null &amp;&amp; !countryName.isEmpty()) {</span>
+<span class="fc" id="L219">                return criteriaBuilder.like(</span>
+<span class="fc" id="L220">                    criteriaBuilder.lower(</span>
+<span class="fc" id="L221">                        root.get(Constants.Column.ORDER_BILLING_ADDRESS_ID_COLUMN)</span>
+<span class="fc" id="L222">                            .get(Constants.Column.ORDER_COUNTRY_NAME_COLUMN)</span>
+                    ),
+<span class="fc" id="L224">                    &quot;%&quot; + countryName.toLowerCase() + &quot;%&quot;</span>
+                );
+            }
+<span class="nc" id="L227">            return criteriaBuilder.conjunction();</span>
+        };
+    }
+
+    public static Specification&lt;Order&gt; withDateRange(ZonedDateTime createdFrom, ZonedDateTime createdTo) {
+<span class="fc" id="L232">        return (root, query, criteriaBuilder) -&gt; {</span>
+<span class="pc bpc" id="L233" title="2 of 4 branches missed.">            if (createdFrom != null &amp;&amp; createdTo != null) {</span>
+<span class="fc" id="L234">                return criteriaBuilder.between(</span>
+<span class="fc" id="L235">                    root.get(Constants.Column.CREATE_ON_COLUMN),</span>
+                    createdFrom,
+                    createdTo
+                );
+            }
+<span class="nc" id="L240">            return criteriaBuilder.conjunction();</span>
+        };
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

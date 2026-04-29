@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrderService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">order</a> &gt; <a href="index.source.html" class="el_package">com.yas.order.service</a> &gt; <span class="el_source">OrderService.java</span></div><h1>OrderService.java</h1><pre class="source lang-java linenums">package com.yas.order.service;
+
+import static com.yas.order.utils.Constants.ErrorCode.ORDER_NOT_FOUND;
+
+import com.yas.commonlibrary.csv.BaseCsv;
+import com.yas.commonlibrary.csv.CsvExporter;
+import com.yas.commonlibrary.exception.NotFoundException;
+import com.yas.commonlibrary.utils.AuthenticationUtils;
+import com.yas.order.mapper.OrderMapper;
+import com.yas.order.model.Order;
+import com.yas.order.model.OrderAddress;
+import com.yas.order.model.OrderItem;
+import com.yas.order.model.csv.OrderItemCsv;
+import com.yas.order.model.enumeration.DeliveryStatus;
+import com.yas.order.model.enumeration.OrderStatus;
+import com.yas.order.model.enumeration.PaymentStatus;
+import com.yas.order.model.request.OrderRequest;
+import com.yas.order.repository.OrderItemRepository;
+import com.yas.order.repository.OrderRepository;
+import com.yas.order.specification.OrderSpecification;
+import com.yas.order.utils.Constants;
+import com.yas.order.viewmodel.order.OrderBriefVm;
+import com.yas.order.viewmodel.order.OrderExistsByProductAndUserGetVm;
+import com.yas.order.viewmodel.order.OrderGetVm;
+import com.yas.order.viewmodel.order.OrderListVm;
+import com.yas.order.viewmodel.order.OrderPostVm;
+import com.yas.order.viewmodel.order.OrderVm;
+import com.yas.order.viewmodel.order.PaymentOrderStatusVm;
+import com.yas.order.viewmodel.orderaddress.OrderAddressPostVm;
+import com.yas.order.viewmodel.product.ProductVariationVm;
+import com.yas.order.viewmodel.promotion.PromotionUsageVm;
+import java.io.IOException;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.util.Pair;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+
+<span class="fc" id="L54">@Slf4j</span>
+@Service
+@Transactional
+@RequiredArgsConstructor
+public class OrderService {
+    private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final ProductService productService;
+    private final CartService cartService;
+    private final OrderMapper orderMapper;
+    private final PromotionService promotionService;
+
+    public OrderVm createOrder(OrderPostVm orderPostVm) {
+
+<span class="fc" id="L68">        OrderAddressPostVm billingAddressPostVm = orderPostVm.billingAddressPostVm();</span>
+<span class="fc" id="L69">        OrderAddress billOrderAddress = OrderAddress.builder()</span>
+<span class="fc" id="L70">                .phone(billingAddressPostVm.phone())</span>
+<span class="fc" id="L71">                .contactName(billingAddressPostVm.contactName())</span>
+<span class="fc" id="L72">                .addressLine1(billingAddressPostVm.addressLine1())</span>
+<span class="fc" id="L73">                .addressLine2(billingAddressPostVm.addressLine2())</span>
+<span class="fc" id="L74">                .city(billingAddressPostVm.city())</span>
+<span class="fc" id="L75">                .zipCode(billingAddressPostVm.zipCode())</span>
+<span class="fc" id="L76">                .districtId(billingAddressPostVm.districtId())</span>
+<span class="fc" id="L77">                .districtName(billingAddressPostVm.districtName())</span>
+<span class="fc" id="L78">                .stateOrProvinceId(billingAddressPostVm.stateOrProvinceId())</span>
+<span class="fc" id="L79">                .stateOrProvinceName(billingAddressPostVm.stateOrProvinceName())</span>
+<span class="fc" id="L80">                .countryId(billingAddressPostVm.countryId())</span>
+<span class="fc" id="L81">                .countryName(billingAddressPostVm.countryName())</span>
+<span class="fc" id="L82">                .build();</span>
+
+<span class="fc" id="L84">        OrderAddressPostVm shipOrderAddressPostVm = orderPostVm.shippingAddressPostVm();</span>
+<span class="fc" id="L85">        OrderAddress shippOrderAddress = OrderAddress.builder()</span>
+<span class="fc" id="L86">                .phone(shipOrderAddressPostVm.phone())</span>
+<span class="fc" id="L87">                .contactName(shipOrderAddressPostVm.contactName())</span>
+<span class="fc" id="L88">                .addressLine1(shipOrderAddressPostVm.addressLine1())</span>
+<span class="fc" id="L89">                .addressLine2(shipOrderAddressPostVm.addressLine2())</span>
+<span class="fc" id="L90">                .city(shipOrderAddressPostVm.city())</span>
+<span class="fc" id="L91">                .zipCode(shipOrderAddressPostVm.zipCode())</span>
+<span class="fc" id="L92">                .districtId(shipOrderAddressPostVm.districtId())</span>
+<span class="fc" id="L93">                .districtName(shipOrderAddressPostVm.districtName())</span>
+<span class="fc" id="L94">                .stateOrProvinceId(shipOrderAddressPostVm.stateOrProvinceId())</span>
+<span class="fc" id="L95">                .stateOrProvinceName(shipOrderAddressPostVm.stateOrProvinceName())</span>
+<span class="fc" id="L96">                .countryId(shipOrderAddressPostVm.countryId())</span>
+<span class="fc" id="L97">                .countryName(shipOrderAddressPostVm.countryName())</span>
+<span class="fc" id="L98">                .build();</span>
+
+<span class="fc" id="L100">        Order order = Order.builder()</span>
+<span class="fc" id="L101">                .email(orderPostVm.email())</span>
+<span class="fc" id="L102">                .note(orderPostVm.note())</span>
+<span class="fc" id="L103">                .tax(orderPostVm.tax())</span>
+<span class="fc" id="L104">                .discount(orderPostVm.discount())</span>
+<span class="fc" id="L105">                .numberItem(orderPostVm.numberItem())</span>
+<span class="fc" id="L106">                .totalPrice(orderPostVm.totalPrice())</span>
+<span class="fc" id="L107">                .couponCode(orderPostVm.couponCode())</span>
+<span class="fc" id="L108">                .orderStatus(OrderStatus.PENDING)</span>
+<span class="fc" id="L109">                .deliveryFee(orderPostVm.deliveryFee())</span>
+<span class="fc" id="L110">                .deliveryMethod(orderPostVm.deliveryMethod())</span>
+<span class="fc" id="L111">                .deliveryStatus(DeliveryStatus.PREPARING)</span>
+<span class="fc" id="L112">                .paymentStatus(orderPostVm.paymentStatus())</span>
+<span class="fc" id="L113">                .shippingAddressId(shippOrderAddress)</span>
+<span class="fc" id="L114">                .billingAddressId(billOrderAddress)</span>
+<span class="fc" id="L115">                .checkoutId(orderPostVm.checkoutId())</span>
+<span class="fc" id="L116">                .build();</span>
+<span class="fc" id="L117">        orderRepository.save(order);</span>
+
+<span class="fc" id="L119">        Set&lt;OrderItem&gt; orderItems = orderPostVm.orderItemPostVms().stream()</span>
+<span class="fc" id="L120">                .map(item -&gt; OrderItem.builder()</span>
+<span class="fc" id="L121">                        .productId(item.productId())</span>
+<span class="fc" id="L122">                        .productName(item.productName())</span>
+<span class="fc" id="L123">                        .quantity(item.quantity())</span>
+<span class="fc" id="L124">                        .productPrice(item.productPrice())</span>
+<span class="fc" id="L125">                        .note(item.note())</span>
+<span class="fc" id="L126">                        .orderId(order.getId())</span>
+<span class="fc" id="L127">                        .build())</span>
+<span class="fc" id="L128">                .collect(Collectors.toSet());</span>
+<span class="fc" id="L129">        orderItemRepository.saveAll(orderItems);</span>
+
+<span class="fc" id="L131">        OrderVm orderVm = OrderVm.fromModel(order, orderItems);</span>
+<span class="fc" id="L132">        productService.subtractProductStockQuantity(orderVm);</span>
+<span class="fc" id="L133">        cartService.deleteCartItems(orderVm);</span>
+<span class="fc" id="L134">        acceptOrder(orderVm.id());</span>
+
+        // update promotion
+<span class="fc" id="L137">        List&lt;PromotionUsageVm&gt; promotionUsageVms = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L138">        orderItems.forEach(item -&gt; {</span>
+<span class="fc" id="L139">            PromotionUsageVm promotionUsageVm = PromotionUsageVm.builder()</span>
+<span class="fc" id="L140">                    .productId(item.getProductId())</span>
+<span class="fc" id="L141">                    .orderId(order.getId())</span>
+<span class="fc" id="L142">                    .promotionCode(order.getCouponCode())</span>
+<span class="fc" id="L143">                    .build();</span>
+<span class="fc" id="L144">            promotionUsageVms.add(promotionUsageVm);</span>
+<span class="fc" id="L145">        });</span>
+<span class="fc" id="L146">        promotionService.updateUsagePromotion(promotionUsageVms);</span>
+<span class="fc" id="L147">        return orderVm;</span>
+    }
+
+    public OrderVm getOrderWithItemsById(long id) {
+
+<span class="fc" id="L152">        Order order = orderRepository.findById(id).orElseThrow(()</span>
+<span class="fc" id="L153">                -&gt; new NotFoundException(Constants.ErrorCode.ORDER_NOT_FOUND, id));</span>
+
+<span class="fc" id="L155">        List&lt;OrderItem&gt; orderItems = orderItemRepository.findAllByOrderId(order.getId());</span>
+<span class="fc" id="L156">        return OrderVm.fromModel(order, new HashSet&lt;&gt;(orderItems));</span>
+    }
+
+    public OrderListVm getAllOrder(Pair&lt;ZonedDateTime, ZonedDateTime&gt; timePair,
+                                   String productName,
+                                   List&lt;OrderStatus&gt; orderStatus,
+                                   Pair&lt;String, String&gt; billingPair,
+                                   String email,
+                                   Pair&lt;Integer, Integer&gt; infoPage) {
+
+<span class="fc" id="L166">        Sort sort = Sort.by(Sort.Direction.DESC, Constants.Column.CREATE_ON_COLUMN);</span>
+<span class="fc" id="L167">        Pageable pageable = PageRequest.of(infoPage.getFirst(), infoPage.getSecond(), sort);</span>
+
+<span class="fc" id="L169">        List&lt;OrderStatus&gt; allOrderStatus = Arrays.asList(OrderStatus.values());</span>
+
+<span class="fc" id="L171">        ZonedDateTime createdFrom = timePair.getFirst();</span>
+<span class="fc" id="L172">        ZonedDateTime createdTo = timePair.getSecond();</span>
+<span class="fc" id="L173">        String billingCountry = billingPair.getFirst();</span>
+<span class="fc" id="L174">        String billingPhoneNumber = billingPair.getSecond();</span>
+
+<span class="fc" id="L176">        Specification&lt;Order&gt; spec = OrderSpecification.findOrderByWithMulCriteria(</span>
+<span class="fc bfc" id="L177" title="All 2 branches covered.">            orderStatus.isEmpty() ? allOrderStatus : orderStatus,</span>
+            billingPhoneNumber,
+            billingCountry,
+            email,
+            productName,
+            createdFrom,
+            createdTo
+        );
+
+<span class="fc" id="L186">        Page&lt;Order&gt; orderPage = orderRepository.findAll(spec, pageable);</span>
+<span class="fc bfc" id="L187" title="All 2 branches covered.">        if (orderPage.isEmpty()) {</span>
+<span class="fc" id="L188">            return new OrderListVm(null, 0, 0);</span>
+        }
+
+<span class="fc" id="L191">        List&lt;OrderBriefVm&gt; orderVms = orderPage.getContent()</span>
+<span class="fc" id="L192">                .stream()</span>
+<span class="fc" id="L193">                .map(OrderBriefVm::fromModel)</span>
+<span class="fc" id="L194">                .toList();</span>
+
+<span class="fc" id="L196">        return new OrderListVm(orderVms, orderPage.getTotalElements(), orderPage.getTotalPages());</span>
+    }
+
+    public List&lt;OrderBriefVm&gt; getLatestOrders(int count) {
+
+<span class="fc bfc" id="L201" title="All 2 branches covered.">        if (count &lt;= 0) {</span>
+<span class="fc" id="L202">            return List.of();</span>
+        }
+
+<span class="fc" id="L205">        Pageable pageable = PageRequest.of(0, count);</span>
+<span class="fc" id="L206">        List&lt;Order&gt; orders = orderRepository.getLatestOrders(pageable);</span>
+
+<span class="fc bfc" id="L208" title="All 2 branches covered.">        if (CollectionUtils.isEmpty(orders)) {</span>
+<span class="fc" id="L209">            return List.of();</span>
+        }
+
+<span class="fc" id="L212">        return orders.stream()</span>
+<span class="fc" id="L213">                .map(OrderBriefVm::fromModel)</span>
+<span class="fc" id="L214">                .toList();</span>
+    }
+
+    public OrderExistsByProductAndUserGetVm isOrderCompletedWithUserIdAndProductId(final Long productId) {
+
+<span class="fc" id="L219">        String userId = AuthenticationUtils.extractUserId();</span>
+
+<span class="fc" id="L221">        List&lt;ProductVariationVm&gt; productVariations = productService.getProductVariations(productId);</span>
+
+        List&lt;Long&gt; productIds;
+<span class="pc bpc" id="L224" title="1 of 2 branches missed.">        if (CollectionUtils.isEmpty(productVariations)) {</span>
+<span class="fc" id="L225">            productIds = Collections.singletonList(productId);</span>
+        } else {
+<span class="nc" id="L227">            productIds = productVariations.stream().map(ProductVariationVm::id).toList();</span>
+        }
+
+        Specification&lt;Order&gt;
+<span class="fc" id="L231">            spec = OrderSpecification.existsByCreatedByAndInProductIdAndOrderStatusCompleted(userId, productIds);</span>
+<span class="fc" id="L232">        boolean existedOrder = orderRepository.findOne(spec).isPresent();</span>
+
+<span class="fc" id="L234">        return new OrderExistsByProductAndUserGetVm(existedOrder);</span>
+    }
+
+    public List&lt;OrderGetVm&gt; getMyOrders(String productName, OrderStatus orderStatus) {
+<span class="fc" id="L238">        String userId = AuthenticationUtils.extractUserId();</span>
+<span class="fc" id="L239">        Specification&lt;Order&gt; orderSpec = OrderSpecification.findMyOrders(userId, productName, orderStatus);</span>
+<span class="fc" id="L240">        Sort sort = Sort.by(Sort.Direction.DESC, Constants.Column.CREATE_ON_COLUMN);</span>
+<span class="fc" id="L241">        List&lt;Order&gt; orders = orderRepository.findAll(orderSpec, sort);</span>
+<span class="fc" id="L242">        return orders.stream().map(order -&gt; OrderGetVm.fromModel(order, null)).toList();</span>
+    }
+
+    public OrderGetVm findOrderVmByCheckoutId(String checkoutId) {
+<span class="fc" id="L246">        Order order = this.findOrderByCheckoutId(checkoutId);</span>
+<span class="fc" id="L247">        List&lt;OrderItem&gt; orderItems = orderItemRepository.findAllByOrderId(order.getId());</span>
+<span class="fc" id="L248">        return OrderGetVm.fromModel(order, new HashSet&lt;&gt;(orderItems));</span>
+    }
+
+    public Order findOrderByCheckoutId(String checkoutId) {
+<span class="fc" id="L252">        return this.orderRepository.findByCheckoutId(checkoutId)</span>
+<span class="fc" id="L253">                .orElseThrow(() -&gt; new NotFoundException(ORDER_NOT_FOUND, &quot;of checkoutId &quot; + checkoutId));</span>
+    }
+
+    public PaymentOrderStatusVm updateOrderPaymentStatus(PaymentOrderStatusVm paymentOrderStatusVm) {
+<span class="fc" id="L257">        var order = this.orderRepository</span>
+<span class="fc" id="L258">                .findById(paymentOrderStatusVm.orderId())</span>
+<span class="fc" id="L259">                .orElseThrow(() -&gt; new NotFoundException(ORDER_NOT_FOUND, paymentOrderStatusVm.orderId()));</span>
+
+<span class="fc" id="L261">        order.setPaymentId(paymentOrderStatusVm.paymentId());</span>
+<span class="fc" id="L262">        String paymentStatus = paymentOrderStatusVm.paymentStatus();</span>
+<span class="fc" id="L263">        order.setPaymentStatus(PaymentStatus.valueOf(paymentStatus));</span>
+<span class="fc bfc" id="L264" title="All 2 branches covered.">        if (PaymentStatus.COMPLETED.name().equals(paymentStatus)) {</span>
+<span class="fc" id="L265">            order.setOrderStatus(OrderStatus.PAID);</span>
+        }
+<span class="fc" id="L267">        Order result = this.orderRepository.save(order);</span>
+<span class="fc" id="L268">        return PaymentOrderStatusVm.builder()</span>
+<span class="fc" id="L269">                .orderId(result.getId())</span>
+<span class="fc" id="L270">                .orderStatus(result.getOrderStatus().getName())</span>
+<span class="fc" id="L271">                .paymentId(paymentOrderStatusVm.paymentId())</span>
+<span class="fc" id="L272">                .paymentStatus(paymentOrderStatusVm.paymentStatus())</span>
+<span class="fc" id="L273">                .build();</span>
+    }
+
+    public void rejectOrder(Long orderId, String rejectReason) {
+<span class="fc" id="L277">        Order order = this.orderRepository.findById(orderId)</span>
+<span class="fc" id="L278">                .orElseThrow(() -&gt; new NotFoundException(ORDER_NOT_FOUND, orderId));</span>
+<span class="fc" id="L279">        order.setOrderStatus(OrderStatus.REJECT);</span>
+<span class="fc" id="L280">        order.setRejectReason(rejectReason);</span>
+<span class="fc" id="L281">        this.orderRepository.save(order);</span>
+<span class="fc" id="L282">    }</span>
+
+    public void acceptOrder(Long orderId) {
+<span class="fc" id="L285">        Order order = this.orderRepository.findById(orderId)</span>
+<span class="fc" id="L286">                .orElseThrow(() -&gt; new NotFoundException(ORDER_NOT_FOUND, orderId));</span>
+<span class="fc" id="L287">        order.setOrderStatus(OrderStatus.ACCEPTED);</span>
+<span class="fc" id="L288">        this.orderRepository.save(order);</span>
+<span class="fc" id="L289">    }</span>
+
+    public byte[] exportCsv(OrderRequest orderRequest) throws IOException {
+<span class="fc" id="L292">        ZonedDateTime createdFrom = orderRequest.getCreatedFrom();</span>
+<span class="fc" id="L293">        ZonedDateTime createdTo = orderRequest.getCreatedTo();</span>
+<span class="fc" id="L294">        String productName = orderRequest.getProductName();</span>
+<span class="fc" id="L295">        List&lt;OrderStatus&gt; orderStatus = orderRequest.getOrderStatus();</span>
+<span class="fc" id="L296">        String billingCountry = orderRequest.getBillingCountry();</span>
+<span class="fc" id="L297">        String billingPhoneNumber = orderRequest.getBillingPhoneNumber();</span>
+<span class="fc" id="L298">        String email = orderRequest.getEmail();</span>
+<span class="fc" id="L299">        int pageNo = orderRequest.getPageNo();</span>
+<span class="fc" id="L300">        int pageSize = orderRequest.getPageSize();</span>
+
+<span class="fc" id="L302">        OrderListVm orderListVm = getAllOrder(</span>
+<span class="fc" id="L303">            Pair.of(createdFrom, createdTo),</span>
+            productName,
+            orderStatus,
+<span class="fc" id="L306">            Pair.of(billingCountry, billingPhoneNumber),</span>
+            email,
+<span class="fc" id="L308">            Pair.of(pageNo, pageSize)</span>
+        );
+
+<span class="pc bpc" id="L311" title="1 of 2 branches missed.">        if (Objects.isNull(orderListVm.orderList())) {</span>
+<span class="fc" id="L312">            return CsvExporter.exportToCsv(List.of(), OrderItemCsv.class);</span>
+        }
+
+<span class="nc" id="L315">        List&lt;BaseCsv&gt; orders = orderListVm.orderList().stream().map(orderMapper::toCsv).collect(</span>
+<span class="nc" id="L316">            Collectors.toUnmodifiableList());</span>
+<span class="nc" id="L317">        return CsvExporter.exportToCsv(orders, OrderItemCsv.class);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

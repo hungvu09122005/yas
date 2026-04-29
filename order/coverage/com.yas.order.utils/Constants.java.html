@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Constants.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">order</a> &gt; <a href="index.source.html" class="el_package">com.yas.order.utils</a> &gt; <span class="el_source">Constants.java</span></div><h1>Constants.java</h1><pre class="source lang-java linenums">package com.yas.order.utils;
+
+<span class="nc" id="L3">public final class Constants {</span>
+
+    public final class ErrorCode {
+
+<span class="nc" id="L7">        private ErrorCode() {</span>
+<span class="nc" id="L8">        }</span>
+
+        public static final String ORDER_NOT_FOUND = &quot;ORDER_NOT_FOUND&quot;;
+        public static final String CHECKOUT_NOT_FOUND = &quot;CHECKOUT_NOT_FOUND&quot;;
+        public static final String CHECKOUT_ITEM_NOT_EMPTY = &quot;CHECKOUT_ITEM_NOT_EMPTY&quot;;
+        public static final String SIGN_IN_REQUIRED = &quot;SIGN_IN_REQUIRED&quot;;
+    }
+
+    public final class MessageCode {
+
+<span class="nc" id="L18">        private MessageCode() {</span>
+<span class="nc" id="L19">        }</span>
+
+        public static final String CREATE_CHECKOUT = &quot;Create checkout {} by user {}&quot;;
+        public static final String UPDATE_CHECKOUT_STATUS = &quot;Update checkout {} STATUS from {} to {}&quot;;
+        public static final String UPDATE_CHECKOUT_PAYMENT = &quot;Update checkout {} PAYMENT from {} to {}&quot;;
+    }
+
+    public final class Column {
+
+<span class="nc" id="L28">        private Column() {</span>
+<span class="nc" id="L29">        }</span>
+
+        // common column
+        public static final String ID_COLUMN = &quot;id&quot;;
+        public static final String CREATE_ON_COLUMN = &quot;createdOn&quot;;
+        public static final String CREATE_BY_COLUMN = &quot;createdBy&quot;;
+
+        // Order entity
+        public static final String ORDER_EMAIL_COLUMN = &quot;email&quot;;
+        public static final String ORDER_PHONE_COLUMN = &quot;phone&quot;;
+        public static final String ORDER_ORDER_ID_COLUMN = &quot;orderId&quot;;
+        public static final String ORDER_ORDER_STATUS_COLUMN = &quot;orderStatus&quot;;
+        public static final String ORDER_COUNTRY_NAME_COLUMN = &quot;countryName&quot;;
+        public static final String ORDER_SHIPPING_ADDRESS_ID_COLUMN = &quot;shippingAddressId&quot;;
+        public static final String ORDER_BILLING_ADDRESS_ID_COLUMN = &quot;billingAddressId&quot;;
+
+        // OrderItem entity
+        public static final String ORDER_ITEM_PRODUCT_ID_COLUMN = &quot;productId&quot;;
+        public static final String ORDER_ITEM_PRODUCT_NAME_COLUMN = &quot;productName&quot;;
+
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

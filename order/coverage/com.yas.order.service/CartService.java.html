@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CartService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">order</a> &gt; <a href="index.source.html" class="el_package">com.yas.order.service</a> &gt; <span class="el_source">CartService.java</span></div><h1>CartService.java</h1><pre class="source lang-java linenums">package com.yas.order.service;
+
+import com.yas.order.config.ServiceUrlConfig;
+import com.yas.order.viewmodel.cart.CartItemDeleteVm;
+import com.yas.order.viewmodel.order.OrderVm;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import java.net.URI;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.util.UriComponentsBuilder;
+
+@Service
+@RequiredArgsConstructor
+public class CartService extends AbstractCircuitBreakFallbackHandler {
+
+    private final RestClient restClient;
+    private final ServiceUrlConfig serviceUrlConfig;
+
+    @Retry(name = &quot;restApi&quot;)
+    @CircuitBreaker(name = &quot;restCircuitBreaker&quot;, fallbackMethod = &quot;handleBodilessFallback&quot;)
+    public void deleteCartItems(OrderVm orderVm) {
+<span class="fc" id="L27">        final String jwt = ((Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal())</span>
+<span class="fc" id="L28">            .getTokenValue();</span>
+
+<span class="fc" id="L30">        List&lt;CartItemDeleteVm&gt; cartItemDeleteVms = orderVm.orderItemVms()</span>
+<span class="fc" id="L31">            .stream()</span>
+<span class="fc" id="L32">            .map(orderItemVm -&gt; new CartItemDeleteVm(orderItemVm.productId(), orderItemVm.quantity()))</span>
+<span class="fc" id="L33">            .toList();</span>
+
+<span class="fc" id="L35">        final URI url = UriComponentsBuilder</span>
+<span class="fc" id="L36">            .fromUriString(serviceUrlConfig.cart())</span>
+<span class="fc" id="L37">            .path(&quot;/storefront/cart/items/remove&quot;)</span>
+<span class="fc" id="L38">            .buildAndExpand()</span>
+<span class="fc" id="L39">            .toUri();</span>
+
+<span class="fc" id="L41">        restClient.post()</span>
+<span class="fc" id="L42">            .uri(url)</span>
+<span class="pc" id="L43">            .headers(h -&gt; h.setBearerAuth(jwt))</span>
+<span class="fc" id="L44">            .body(cartItemDeleteVms)</span>
+<span class="fc" id="L45">            .retrieve();</span>
+<span class="fc" id="L46">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

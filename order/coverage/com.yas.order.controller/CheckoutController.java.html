@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CheckoutController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">order</a> &gt; <a href="index.source.html" class="el_package">com.yas.order.controller</a> &gt; <span class="el_source">CheckoutController.java</span></div><h1>CheckoutController.java</h1><pre class="source lang-java linenums">package com.yas.order.controller;
+
+import com.yas.commonlibrary.constants.ApiConstant;
+import com.yas.order.service.CheckoutService;
+import com.yas.order.viewmodel.ErrorVm;
+import com.yas.order.viewmodel.checkout.CheckoutPaymentMethodPutVm;
+import com.yas.order.viewmodel.checkout.CheckoutPostVm;
+import com.yas.order.viewmodel.checkout.CheckoutStatusPutVm;
+import com.yas.order.viewmodel.checkout.CheckoutVm;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequiredArgsConstructor
+public class CheckoutController {
+
+    private final CheckoutService checkoutService;
+
+    @PostMapping(&quot;/storefront/checkouts&quot;)
+    public ResponseEntity&lt;CheckoutVm&gt; createCheckout(@Valid @RequestBody CheckoutPostVm checkoutPostVm) {
+<span class="fc" id="L32">        return ResponseEntity.ok(checkoutService.createCheckout(checkoutPostVm));</span>
+    }
+
+    @PutMapping(&quot;/storefront/checkouts/status&quot;)
+    public ResponseEntity&lt;Long&gt; updateCheckoutStatus(@Valid @RequestBody CheckoutStatusPutVm checkoutStatusPutVm) {
+<span class="fc" id="L37">        return ResponseEntity.ok(checkoutService.updateCheckoutStatus(checkoutStatusPutVm));</span>
+    }
+
+    @GetMapping(&quot;/storefront/checkouts/{id}&quot;)
+    public ResponseEntity&lt;CheckoutVm&gt; getOrderWithItemsById(@PathVariable String id) {
+<span class="fc" id="L42">        return ResponseEntity.ok(checkoutService.getCheckoutPendingStateWithItemsById(id));</span>
+    }
+
+    @PutMapping(&quot;/storefront/checkouts/{id}/payment-method&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = ApiConstant.CODE_200, description = ApiConstant.OK,
+            content = @Content()),
+        @ApiResponse(responseCode = ApiConstant.CODE_404, description = ApiConstant.NOT_FOUND,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class))),
+        @ApiResponse(responseCode = ApiConstant.CODE_400, description = ApiConstant.BAD_REQUEST,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;Void&gt; updatePaymentMethod(@PathVariable final String id,
+                                                    @Valid @RequestBody
+                                                    final CheckoutPaymentMethodPutVm checkoutPaymentMethodPutVm) {
+<span class="fc" id="L56">        checkoutService.updateCheckoutPaymentMethod(id, checkoutPaymentMethodPutVm);</span>
+<span class="fc" id="L57">        return ResponseEntity.ok().build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

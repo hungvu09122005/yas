@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CheckoutService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">order</a> &gt; <a href="index.source.html" class="el_package">com.yas.order.service</a> &gt; <span class="el_source">CheckoutService.java</span></div><h1>CheckoutService.java</h1><pre class="source lang-java linenums">package com.yas.order.service;
+
+import static com.yas.order.utils.Constants.ErrorCode.CHECKOUT_NOT_FOUND;
+
+import com.yas.commonlibrary.constants.ApiConstant;
+import com.yas.commonlibrary.constants.MessageCode;
+import com.yas.commonlibrary.exception.ForbiddenException;
+import com.yas.commonlibrary.exception.NotFoundException;
+import com.yas.commonlibrary.utils.AuthenticationUtils;
+import com.yas.order.mapper.CheckoutMapper;
+import com.yas.order.model.Checkout;
+import com.yas.order.model.CheckoutItem;
+import com.yas.order.model.Order;
+import com.yas.order.model.enumeration.CheckoutState;
+import com.yas.order.repository.CheckoutRepository;
+import com.yas.order.utils.Constants;
+import com.yas.order.viewmodel.checkout.CheckoutItemPostVm;
+import com.yas.order.viewmodel.checkout.CheckoutItemVm;
+import com.yas.order.viewmodel.checkout.CheckoutPaymentMethodPutVm;
+import com.yas.order.viewmodel.checkout.CheckoutPostVm;
+import com.yas.order.viewmodel.checkout.CheckoutStatusPutVm;
+import com.yas.order.viewmodel.checkout.CheckoutVm;
+import com.yas.order.viewmodel.product.ProductCheckoutListVm;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+
+<span class="fc" id="L35">@Slf4j</span>
+@Service
+@Transactional
+@RequiredArgsConstructor
+public class CheckoutService {
+
+    private final CheckoutRepository checkoutRepository;
+    private final OrderService orderService;
+    private final ProductService productService;
+    private final CheckoutMapper checkoutMapper;
+
+    /**
+     * Creates a new {@link Checkout} object in a PENDING state.
+     *
+     * @param checkoutPostVm the view model containing checkout details and items
+     * @return a {@link CheckoutVm} object representing the newly created checkout
+     */
+    public CheckoutVm createCheckout(CheckoutPostVm checkoutPostVm) {
+<span class="fc" id="L53">        Checkout checkout = checkoutMapper.toModel(checkoutPostVm);</span>
+<span class="fc" id="L54">        checkout.setCheckoutState(CheckoutState.PENDING);</span>
+<span class="fc" id="L55">        checkout.setCustomerId(AuthenticationUtils.extractUserId());</span>
+
+<span class="fc" id="L57">        prepareCheckoutItems(checkout, checkoutPostVm);</span>
+<span class="fc" id="L58">        checkout = checkoutRepository.save(checkout);</span>
+
+<span class="fc" id="L60">        CheckoutVm checkoutVm = checkoutMapper.toVm(checkout);</span>
+<span class="fc" id="L61">        Set&lt;CheckoutItemVm&gt; checkoutItemVms = checkout.getCheckoutItems()</span>
+<span class="fc" id="L62">                .stream()</span>
+<span class="fc" id="L63">                .map(checkoutMapper::toVm)</span>
+<span class="fc" id="L64">                .collect(Collectors.toSet());</span>
+<span class="fc" id="L65">        log.info(Constants.MessageCode.CREATE_CHECKOUT, checkout.getId(), checkout.getCustomerId());</span>
+<span class="fc" id="L66">        return checkoutVm.toBuilder()</span>
+<span class="fc" id="L67">                .checkoutItemVms(checkoutItemVms)</span>
+<span class="fc" id="L68">                .build();</span>
+    }
+
+    private void prepareCheckoutItems(Checkout checkout, CheckoutPostVm checkoutPostVm) {
+<span class="fc" id="L72">        Set&lt;Long&gt; productIds = checkoutPostVm.checkoutItemPostVms()</span>
+<span class="fc" id="L73">                .stream()</span>
+<span class="fc" id="L74">                .map(CheckoutItemPostVm::productId)</span>
+<span class="fc" id="L75">                .collect(Collectors.toSet());</span>
+
+<span class="fc" id="L77">        List&lt;CheckoutItem&gt; checkoutItems = checkoutPostVm.checkoutItemPostVms()</span>
+<span class="fc" id="L78">                .stream()</span>
+<span class="fc" id="L79">                .map(checkoutMapper::toModel)</span>
+<span class="fc" id="L80">                .map(item -&gt; {</span>
+<span class="fc" id="L81">                    item.setCheckout(checkout);</span>
+<span class="fc" id="L82">                    return item;</span>
+<span class="fc" id="L83">                }).toList();</span>
+
+<span class="fc" id="L85">        Map&lt;Long, ProductCheckoutListVm&gt; products</span>
+<span class="fc" id="L86">                = productService.getProductInfomation(productIds, 0, productIds.size());</span>
+
+<span class="fc" id="L88">        List&lt;CheckoutItem&gt; enrichedItems = enrichCheckoutItemsWithProductDetails(products, checkoutItems);</span>
+<span class="fc" id="L89">        BigDecimal totalAmount = enrichedItems.stream()</span>
+<span class="fc" id="L90">                .map(item -&gt; item.getProductPrice().multiply(BigDecimal.valueOf(item.getQuantity())))</span>
+<span class="fc" id="L91">                .reduce(BigDecimal.ZERO, BigDecimal::add);</span>
+
+<span class="fc" id="L93">        checkout.setCheckoutItems(enrichedItems);</span>
+<span class="fc" id="L94">        checkout.setTotalAmount(totalAmount);</span>
+<span class="fc" id="L95">    }</span>
+
+    private List&lt;CheckoutItem&gt; enrichCheckoutItemsWithProductDetails(
+            Map&lt;Long, ProductCheckoutListVm&gt; products,
+            List&lt;CheckoutItem&gt; checkoutItems) {
+<span class="fc" id="L100">        return checkoutItems.stream().map(item -&gt; {</span>
+<span class="fc" id="L101">            ProductCheckoutListVm product = products.get(item.getProductId());</span>
+<span class="fc bfc" id="L102" title="All 2 branches covered.">            if (product == null) {</span>
+<span class="fc" id="L103">                throw new NotFoundException(MessageCode.PRODUCT_NOT_FOUND, item.getProductId());</span>
+            }
+<span class="fc" id="L105">            return item.toBuilder()</span>
+<span class="fc" id="L106">                    .productName(product.getName())</span>
+<span class="fc" id="L107">                    .productPrice(BigDecimal.valueOf(product.getPrice()))</span>
+<span class="fc" id="L108">                    .build();</span>
+<span class="fc" id="L109">        }).toList();</span>
+    }
+
+    public CheckoutVm getCheckoutPendingStateWithItemsById(String id) {
+<span class="fc" id="L113">        Checkout checkout = checkoutRepository.findByIdAndCheckoutState(id, CheckoutState.PENDING).orElseThrow(()</span>
+<span class="nc" id="L114">                -&gt; new NotFoundException(CHECKOUT_NOT_FOUND, id));</span>
+
+<span class="fc bfc" id="L116" title="All 2 branches covered.">        if (isNotOwnedByCurrentUser(checkout)) {</span>
+<span class="fc" id="L117">            throw new ForbiddenException(ApiConstant.FORBIDDEN, &quot;You can not view this checkout&quot;);</span>
+        }
+
+<span class="fc" id="L120">        CheckoutVm checkoutVm = checkoutMapper.toVm(checkout);</span>
+
+<span class="fc" id="L122">        List&lt;CheckoutItem&gt; checkoutItems = checkout.getCheckoutItems();</span>
+<span class="fc bfc" id="L123" title="All 2 branches covered.">        if (CollectionUtils.isEmpty(checkoutItems)) {</span>
+<span class="fc" id="L124">            return checkoutVm;</span>
+        }
+
+<span class="fc" id="L127">        Set&lt;CheckoutItemVm&gt; checkoutItemVms = checkoutItems</span>
+<span class="fc" id="L128">                .stream()</span>
+<span class="fc" id="L129">                .map(checkoutMapper::toVm)</span>
+<span class="fc" id="L130">                .collect(Collectors.toSet());</span>
+
+<span class="fc" id="L132">        return checkoutVm.toBuilder().checkoutItemVms(checkoutItemVms).build();</span>
+    }
+
+    public Long updateCheckoutStatus(CheckoutStatusPutVm checkoutStatusPutVm) {
+<span class="nc" id="L136">        Checkout checkout = checkoutRepository.findById(checkoutStatusPutVm.checkoutId())</span>
+<span class="nc" id="L137">                .orElseThrow(() -&gt; new NotFoundException(CHECKOUT_NOT_FOUND, checkoutStatusPutVm.checkoutId()));</span>
+
+<span class="nc bnc" id="L139" title="All 2 branches missed.">        if (isNotOwnedByCurrentUser(checkout)) {</span>
+<span class="nc" id="L140">            throw new ForbiddenException(ApiConstant.FORBIDDEN, &quot;You are not authorized to update this checkout&quot;);</span>
+        }
+
+<span class="nc" id="L143">        checkout.setCheckoutState(CheckoutState.valueOf(checkoutStatusPutVm.checkoutStatus()));</span>
+<span class="nc" id="L144">        checkoutRepository.save(checkout);</span>
+<span class="nc" id="L145">        log.info(Constants.MessageCode.UPDATE_CHECKOUT_STATUS,</span>
+<span class="nc" id="L146">                checkout.getId(),</span>
+<span class="nc" id="L147">                checkoutStatusPutVm.checkoutStatus(),</span>
+<span class="nc" id="L148">                checkout.getCheckoutState()</span>
+        );
+<span class="nc" id="L150">        Order order = orderService.findOrderByCheckoutId(checkoutStatusPutVm.checkoutId());</span>
+<span class="nc" id="L151">        return order.getId();</span>
+    }
+
+    public void updateCheckoutPaymentMethod(String id, CheckoutPaymentMethodPutVm checkoutPaymentMethodPutVm) {
+<span class="fc" id="L155">        Checkout checkout = checkoutRepository.findById(id)</span>
+<span class="fc" id="L156">                .orElseThrow(() -&gt; new NotFoundException(CHECKOUT_NOT_FOUND, id));</span>
+<span class="fc" id="L157">        checkout.setPaymentMethodId(checkoutPaymentMethodPutVm.paymentMethodId());</span>
+<span class="fc" id="L158">        log.info(Constants.MessageCode.UPDATE_CHECKOUT_PAYMENT,</span>
+<span class="fc" id="L159">                checkout.getId(),</span>
+<span class="fc" id="L160">                checkoutPaymentMethodPutVm.paymentMethodId(),</span>
+<span class="fc" id="L161">                checkout.getPaymentMethodId()</span>
+        );
+<span class="fc" id="L163">        checkoutRepository.save(checkout);</span>
+<span class="fc" id="L164">    }</span>
+
+    private boolean isNotOwnedByCurrentUser(Checkout checkout) {
+<span class="fc bfc" id="L167" title="All 2 branches covered.">        return !checkout.getCreatedBy().equals(AuthenticationUtils.extractUserId());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

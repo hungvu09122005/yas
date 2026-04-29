@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrderController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">order</a> &gt; <a href="index.source.html" class="el_package">com.yas.order.controller</a> &gt; <span class="el_source">OrderController.java</span></div><h1>OrderController.java</h1><pre class="source lang-java linenums">package com.yas.order.controller;
+
+import com.yas.commonlibrary.csv.CsvExporter;
+import com.yas.order.model.csv.OrderItemCsv;
+import com.yas.order.model.enumeration.OrderStatus;
+import com.yas.order.model.request.OrderRequest;
+import com.yas.order.service.OrderService;
+import com.yas.order.viewmodel.order.OrderBriefVm;
+import com.yas.order.viewmodel.order.OrderExistsByProductAndUserGetVm;
+import com.yas.order.viewmodel.order.OrderGetVm;
+import com.yas.order.viewmodel.order.OrderListVm;
+import com.yas.order.viewmodel.order.OrderPostVm;
+import com.yas.order.viewmodel.order.OrderVm;
+import com.yas.order.viewmodel.order.PaymentOrderStatusVm;
+import jakarta.validation.Valid;
+import java.io.IOException;
+import java.time.ZonedDateTime;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.util.Pair;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequiredArgsConstructor
+public class OrderController {
+    private final OrderService orderService;
+
+    @PostMapping(&quot;/storefront/orders&quot;)
+    public ResponseEntity&lt;OrderVm&gt; createOrder(@Valid @RequestBody OrderPostVm orderPostVm) {
+<span class="fc" id="L41">        OrderVm orderVm = orderService.createOrder(orderPostVm);</span>
+<span class="fc" id="L42">        return ResponseEntity.ok(orderVm);</span>
+    }
+
+    @PutMapping(&quot;/storefront/orders/status&quot;)
+    public ResponseEntity&lt;PaymentOrderStatusVm&gt; updateOrderPaymentStatus(
+        @Valid @RequestBody PaymentOrderStatusVm paymentOrderStatusVm
+    ) {
+<span class="fc" id="L49">        PaymentOrderStatusVm orderStatusVm = orderService.updateOrderPaymentStatus(paymentOrderStatusVm);</span>
+<span class="fc" id="L50">        return ResponseEntity.ok(orderStatusVm);</span>
+    }
+
+    @GetMapping(&quot;/storefront/orders/completed&quot;)
+    public ResponseEntity&lt;OrderExistsByProductAndUserGetVm&gt; checkOrderExistsByProductIdAndUserIdWithStatus(
+            @RequestParam Long productId) {
+<span class="fc" id="L56">        return ResponseEntity.ok(orderService.isOrderCompletedWithUserIdAndProductId(productId));</span>
+    }
+
+    @GetMapping(&quot;/storefront/orders/my-orders&quot;)
+    public ResponseEntity&lt;List&lt;OrderGetVm&gt;&gt; getMyOrders(@RequestParam String productName,
+                                                        @RequestParam(required = false) OrderStatus orderStatus) {
+<span class="fc" id="L62">        return ResponseEntity.ok(orderService.getMyOrders(productName, orderStatus));</span>
+    }
+
+    @GetMapping(&quot;/backoffice/orders/{id}&quot;)
+    public ResponseEntity&lt;OrderVm&gt; getOrderWithItemsById(@PathVariable long id) {
+<span class="fc" id="L67">        return ResponseEntity.ok(orderService.getOrderWithItemsById(id));</span>
+    }
+
+    @GetMapping(&quot;/storefront/orders/checkout/{id}&quot;)
+    public ResponseEntity&lt;OrderGetVm&gt; getOrderWithCheckoutId(@PathVariable String id) {
+<span class="nc" id="L72">        return ResponseEntity.ok(orderService.findOrderVmByCheckoutId(id));</span>
+    }
+
+    @GetMapping(&quot;/backoffice/orders&quot;)
+    public ResponseEntity&lt;OrderListVm&gt; getOrders(
+            @RequestParam(value = &quot;createdFrom&quot;, defaultValue = &quot;#{new java.util.Date(1970-01-01)}&quot;, required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) ZonedDateTime createdFrom,
+            @RequestParam(value = &quot;createdTo&quot;, defaultValue = &quot;#{new java.util.Date()}&quot;, required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) ZonedDateTime createdTo,
+            @RequestParam(value = &quot;productName&quot;, defaultValue = &quot;&quot;, required = false) String productName,
+            @RequestParam(value = &quot;orderStatus&quot;, defaultValue = &quot;&quot;, required = false) List&lt;OrderStatus&gt; orderStatus,
+            @RequestParam(value = &quot;billingPhoneNumber&quot;, defaultValue = &quot;&quot;, required = false) String billingPhoneNumber,
+            @RequestParam(value = &quot;email&quot;, defaultValue = &quot;&quot;, required = false) String email,
+            @RequestParam(value = &quot;billingCountry&quot;, defaultValue = &quot;&quot;, required = false) String billingCountry,
+            @RequestParam(value = &quot;pageNo&quot;, defaultValue = &quot;0&quot;, required = false) int pageNo,
+            @RequestParam(value = &quot;pageSize&quot;, defaultValue = &quot;10&quot;, required = false) int pageSize
+    ) {
+
+<span class="nc" id="L90">        return ResponseEntity.ok(orderService.getAllOrder(</span>
+<span class="nc" id="L91">                Pair.of(createdFrom, createdTo),</span>
+                productName,
+                orderStatus,
+<span class="nc" id="L94">                Pair.of(billingCountry, billingPhoneNumber),</span>
+                email,
+<span class="nc" id="L96">                Pair.of(pageNo, pageSize))</span>
+        );
+    }
+
+    @GetMapping(&quot;/backoffice/orders/latest/{count}&quot;)
+    public ResponseEntity&lt;List&lt;OrderBriefVm&gt;&gt; getLatestOrders(@PathVariable int count) {
+<span class="fc" id="L102">        return ResponseEntity.ok(orderService.getLatestOrders(count));</span>
+    }
+
+    @PostMapping(&quot;/backoffice/orders/csv&quot;)
+    public ResponseEntity&lt;byte[]&gt; exportCsv(@RequestBody OrderRequest orderRequest) throws IOException {
+<span class="nc" id="L107">        HttpHeaders headers = new HttpHeaders();</span>
+<span class="nc" id="L108">        headers.add(HttpHeaders.CONTENT_DISPOSITION,</span>
+<span class="nc" id="L109">            &quot;attachment; filename=&quot; + CsvExporter.createFileName(OrderItemCsv.class));</span>
+<span class="nc" id="L110">        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);</span>
+<span class="nc" id="L111">        var csvBytes = orderService.exportCsv(orderRequest);</span>
+<span class="nc" id="L112">        return new ResponseEntity&lt;&gt;(csvBytes, headers, HttpStatus.OK);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

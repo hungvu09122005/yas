@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrderAddressVm.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">order</a> &gt; <a href="index.source.html" class="el_package">com.yas.order.viewmodel.orderaddress</a> &gt; <span class="el_source">OrderAddressVm.java</span></div><h1>OrderAddressVm.java</h1><pre class="source lang-java linenums">package com.yas.order.viewmodel.orderaddress;
+
+import com.yas.order.model.OrderAddress;
+import lombok.Builder;
+
+
+@Builder
+<span class="fc" id="L8">public record OrderAddressVm(</span>
+        Long id,
+        String contactName,
+        String phone,
+        String addressLine1,
+        String addressLine2,
+        String city,
+        String zipCode,
+        Long districtId,
+        String districtName,
+        Long stateOrProvinceId,
+        String stateOrProvinceName,
+        Long countryId,
+        String countryName) {
+    public static OrderAddressVm fromModel(OrderAddress orderAddress) {
+<span class="fc" id="L23">        return OrderAddressVm.builder()</span>
+<span class="fc" id="L24">                .id(orderAddress.getId())</span>
+<span class="fc" id="L25">                .phone(orderAddress.getPhone())</span>
+<span class="fc" id="L26">                .contactName(orderAddress.getContactName())</span>
+<span class="fc" id="L27">                .addressLine1(orderAddress.getAddressLine1())</span>
+<span class="fc" id="L28">                .addressLine2(orderAddress.getAddressLine2())</span>
+<span class="fc" id="L29">                .city(orderAddress.getCity())</span>
+<span class="fc" id="L30">                .zipCode(orderAddress.getZipCode())</span>
+<span class="fc" id="L31">                .districtId(orderAddress.getDistrictId())</span>
+<span class="fc" id="L32">                .districtName(orderAddress.getDistrictName())</span>
+<span class="fc" id="L33">                .stateOrProvinceId(orderAddress.getStateOrProvinceId())</span>
+<span class="fc" id="L34">                .stateOrProvinceName(orderAddress.getStateOrProvinceName())</span>
+<span class="fc" id="L35">                .countryId(orderAddress.getCountryId())</span>
+<span class="fc" id="L36">                .countryName(orderAddress.getCountryName())</span>
+<span class="fc" id="L37">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

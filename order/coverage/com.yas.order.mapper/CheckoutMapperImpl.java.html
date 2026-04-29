@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CheckoutMapperImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">order</a> &gt; <a href="index.source.html" class="el_package">com.yas.order.mapper</a> &gt; <span class="el_source">CheckoutMapperImpl.java</span></div><h1>CheckoutMapperImpl.java</h1><pre class="source lang-java linenums">package com.yas.order.mapper;
+
+import com.yas.order.model.Checkout;
+import com.yas.order.model.CheckoutItem;
+import com.yas.order.viewmodel.checkout.CheckoutItemPostVm;
+import com.yas.order.viewmodel.checkout.CheckoutItemVm;
+import com.yas.order.viewmodel.checkout.CheckoutPostVm;
+import com.yas.order.viewmodel.checkout.CheckoutVm;
+import javax.annotation.processing.Generated;
+import org.springframework.stereotype.Component;
+
+@Generated(
+    value = &quot;org.mapstruct.ap.MappingProcessor&quot;,
+    date = &quot;2026-04-29T10:58:35+0000&quot;,
+    comments = &quot;version: 1.6.3, compiler: javac, environment: Java 25.0.2 (Eclipse Adoptium)&quot;
+)
+@Component
+<span class="fc" id="L18">public class CheckoutMapperImpl implements CheckoutMapper {</span>
+
+    @Override
+    public CheckoutItem toModel(CheckoutItemPostVm checkoutItemPostVm) {
+<span class="pc bpc" id="L22" title="1 of 2 branches missed.">        if ( checkoutItemPostVm == null ) {</span>
+<span class="nc" id="L23">            return null;</span>
+        }
+
+<span class="fc" id="L26">        CheckoutItem.CheckoutItemBuilder checkoutItem = CheckoutItem.builder();</span>
+
+<span class="fc" id="L28">        checkoutItem.productId( checkoutItemPostVm.productId() );</span>
+<span class="fc" id="L29">        checkoutItem.description( checkoutItemPostVm.description() );</span>
+<span class="fc" id="L30">        checkoutItem.quantity( checkoutItemPostVm.quantity() );</span>
+
+<span class="fc" id="L32">        return checkoutItem.build();</span>
+    }
+
+    @Override
+    public Checkout toModel(CheckoutPostVm checkoutPostVm) {
+<span class="pc bpc" id="L37" title="1 of 2 branches missed.">        if ( checkoutPostVm == null ) {</span>
+<span class="nc" id="L38">            return null;</span>
+        }
+
+<span class="fc" id="L41">        Checkout.CheckoutBuilder checkout = Checkout.builder();</span>
+
+<span class="fc" id="L43">        checkout.email( checkoutPostVm.email() );</span>
+<span class="fc" id="L44">        checkout.note( checkoutPostVm.note() );</span>
+<span class="fc" id="L45">        checkout.promotionCode( checkoutPostVm.promotionCode() );</span>
+<span class="fc" id="L46">        checkout.shipmentMethodId( checkoutPostVm.shipmentMethodId() );</span>
+<span class="fc" id="L47">        checkout.paymentMethodId( checkoutPostVm.paymentMethodId() );</span>
+<span class="pc bpc" id="L48" title="1 of 2 branches missed.">        if ( checkoutPostVm.shippingAddressId() != null ) {</span>
+<span class="fc" id="L49">            checkout.shippingAddressId( Long.parseLong( checkoutPostVm.shippingAddressId() ) );</span>
+        }
+
+<span class="fc" id="L52">        return checkout.build();</span>
+    }
+
+    @Override
+    public CheckoutItemVm toVm(CheckoutItem checkoutItem) {
+<span class="pc bpc" id="L57" title="1 of 2 branches missed.">        if ( checkoutItem == null ) {</span>
+<span class="nc" id="L58">            return null;</span>
+        }
+
+<span class="fc" id="L61">        CheckoutItemVm.CheckoutItemVmBuilder checkoutItemVm = CheckoutItemVm.builder();</span>
+
+<span class="fc" id="L63">        checkoutItemVm.checkoutId( checkoutItemCheckoutId( checkoutItem ) );</span>
+<span class="fc" id="L64">        checkoutItemVm.id( checkoutItem.getId() );</span>
+<span class="fc" id="L65">        checkoutItemVm.productId( checkoutItem.getProductId() );</span>
+<span class="fc" id="L66">        checkoutItemVm.productName( checkoutItem.getProductName() );</span>
+<span class="fc" id="L67">        checkoutItemVm.description( checkoutItem.getDescription() );</span>
+<span class="fc" id="L68">        checkoutItemVm.quantity( checkoutItem.getQuantity() );</span>
+<span class="fc" id="L69">        checkoutItemVm.productPrice( map( checkoutItem.getProductPrice() ) );</span>
+<span class="fc" id="L70">        checkoutItemVm.taxAmount( map( checkoutItem.getTaxAmount() ) );</span>
+<span class="fc" id="L71">        checkoutItemVm.discountAmount( map( checkoutItem.getDiscountAmount() ) );</span>
+<span class="fc" id="L72">        checkoutItemVm.shipmentFee( map( checkoutItem.getShipmentFee() ) );</span>
+<span class="fc" id="L73">        checkoutItemVm.shipmentTax( map( checkoutItem.getShipmentTax() ) );</span>
+
+<span class="fc" id="L75">        return checkoutItemVm.build();</span>
+    }
+
+    @Override
+    public CheckoutVm toVm(Checkout checkout) {
+<span class="pc bpc" id="L80" title="1 of 2 branches missed.">        if ( checkout == null ) {</span>
+<span class="nc" id="L81">            return null;</span>
+        }
+
+<span class="fc" id="L84">        CheckoutVm.CheckoutVmBuilder checkoutVm = CheckoutVm.builder();</span>
+
+<span class="fc" id="L86">        checkoutVm.id( checkout.getId() );</span>
+<span class="fc" id="L87">        checkoutVm.email( checkout.getEmail() );</span>
+<span class="fc" id="L88">        checkoutVm.note( checkout.getNote() );</span>
+<span class="fc" id="L89">        checkoutVm.promotionCode( checkout.getPromotionCode() );</span>
+<span class="fc" id="L90">        checkoutVm.checkoutState( checkout.getCheckoutState() );</span>
+<span class="fc" id="L91">        checkoutVm.progress( checkout.getProgress() );</span>
+<span class="fc" id="L92">        checkoutVm.totalAmount( map( checkout.getTotalAmount() ) );</span>
+<span class="fc" id="L93">        checkoutVm.totalShipmentFee( map( checkout.getTotalShipmentFee() ) );</span>
+<span class="fc" id="L94">        checkoutVm.totalShipmentTax( map( checkout.getTotalShipmentTax() ) );</span>
+<span class="fc" id="L95">        checkoutVm.totalTax( map( checkout.getTotalTax() ) );</span>
+<span class="fc" id="L96">        checkoutVm.totalDiscountAmount( map( checkout.getTotalDiscountAmount() ) );</span>
+<span class="fc" id="L97">        checkoutVm.shipmentMethodId( checkout.getShipmentMethodId() );</span>
+<span class="fc" id="L98">        checkoutVm.paymentMethodId( checkout.getPaymentMethodId() );</span>
+<span class="fc" id="L99">        checkoutVm.shippingAddressId( checkout.getShippingAddressId() );</span>
+
+<span class="fc" id="L101">        return checkoutVm.build();</span>
+    }
+
+    private String checkoutItemCheckoutId(CheckoutItem checkoutItem) {
+<span class="fc" id="L105">        Checkout checkout = checkoutItem.getCheckout();</span>
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">        if ( checkout == null ) {</span>
+<span class="nc" id="L107">            return null;</span>
+        }
+<span class="fc" id="L109">        return checkout.getId();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

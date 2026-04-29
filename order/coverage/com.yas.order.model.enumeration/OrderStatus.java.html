@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrderStatus.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">order</a> &gt; <a href="index.source.html" class="el_package">com.yas.order.model.enumeration</a> &gt; <span class="el_source">OrderStatus.java</span></div><h1>OrderStatus.java</h1><pre class="source lang-java linenums">package com.yas.order.model.enumeration;
+
+<span class="fc" id="L3">public enum OrderStatus {</span>
+<span class="fc" id="L4">    PENDING(&quot;PENDING&quot;),</span>
+<span class="fc" id="L5">    ACCEPTED(&quot;ACCEPTED&quot;),</span>
+<span class="fc" id="L6">    PENDING_PAYMENT(&quot;PENDING_PAYMENT&quot;),</span>
+<span class="fc" id="L7">    PAID(&quot;PAID&quot;),</span>
+<span class="fc" id="L8">    SHIPPING(&quot;SHIPPING&quot;),</span>
+<span class="fc" id="L9">    COMPLETED(&quot;COMPLETED&quot;),</span>
+<span class="fc" id="L10">    REFUND(&quot;REFUND&quot;),</span>
+<span class="fc" id="L11">    CANCELLED(&quot;CANCELLED&quot;),</span>
+
+<span class="fc" id="L13">    REJECT(&quot;REJECT&quot;);</span>
+
+    private final String name;
+
+<span class="fc" id="L17">    OrderStatus(String name) {</span>
+<span class="fc" id="L18">        this.name = name;</span>
+<span class="fc" id="L19">    }</span>
+
+    public String getName() {
+<span class="fc" id="L22">        return name;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>
