@@ -126,12 +126,12 @@ jobs:
 
   publish-coverage:
     name: Publish coverage report
-    concurrency:
-      group: github-pages-deployment
-      cancel-in-progress: false
     needs: [test]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+    concurrency:
+      group: github-pages-deployment
+      cancel-in-progress: false
     steps:
       - name: Download coverage artifact
         uses: actions/download-artifact@v4
