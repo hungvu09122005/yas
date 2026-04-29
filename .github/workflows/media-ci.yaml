@@ -137,6 +137,7 @@ jobs:
     name: Publish coverage report
     needs: [test]
     runs-on: ubuntu-latest
+    concurrency: gh-pages
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Download coverage artifact
