@@ -149,6 +149,7 @@ jobs:
           path: ./jacoco-report
 
       - name: Deploy JaCoCo report to GitHub Pages
+        continue-on-error: true
         uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
