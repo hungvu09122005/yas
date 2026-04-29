@@ -113,7 +113,11 @@ jobs:
           fi
 
       - name: Build project without tests
-        run: mvn -B install -DskipTests
+        run: |
+          mvn -B install -DskipTests \
+            -Dmaven.wagon.http.retryHandler.count=3 \
+            -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 \
+            -Daether.connector.http.retryHandler.count=3
 
       - name: Analyze pull request with SonarCloud
         if: ${{ github.event_name == 'pull_request' }}
