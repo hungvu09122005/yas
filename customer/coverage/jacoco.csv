@@ -1,0 +1,23 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+customer,com.yas.customer.utils,Constants,3,0,0,0,1,0,1,0,1,0
+customer,com.yas.customer.utils,Constants.ErrorCode,3,0,0,0,1,0,1,0,1,0
+customer,com.yas.customer.utils,MessagesUtils,3,20,0,0,1,7,1,2,1,2
+customer,com.yas.customer.viewmodel,ErrorVm,24,0,0,0,3,0,2,0,2,0
+customer,com.yas.customer.controller,CustomerController,6,66,0,0,1,16,1,8,1,8
+customer,com.yas.customer.controller,UserAddressController,0,30,0,0,0,7,0,5,0,5
+customer,com.yas.customer.viewmodel.useraddress,UserAddressVm,0,29,0,0,0,7,0,2,0,2
+customer,com.yas.customer.viewmodel.customer,GuestUserVm,0,12,0,0,0,1,0,1,0,1
+customer,com.yas.customer.viewmodel.customer,CustomerListVm,0,12,0,0,0,1,0,1,0,1
+customer,com.yas.customer.viewmodel.customer,CustomerAdminVm,0,44,0,0,0,6,0,2,0,2
+customer,com.yas.customer.viewmodel.customer,CustomerProfileRequestVm,0,12,0,0,0,1,0,1,0,1
+customer,com.yas.customer.viewmodel.customer,CustomerVm,0,32,0,0,0,3,0,2,0,2
+customer,com.yas.customer.viewmodel.customer,CustomerPostVm,0,21,0,0,0,1,0,1,0,1
+customer,com.yas.customer.service,UserAddressService,0,229,0,8,0,45,0,14,0,10
+customer,com.yas.customer.service,LocationService.new ParameterizedTypeReference() {...},0,8,0,0,0,1,0,1,0,1
+customer,com.yas.customer.service,LocationService,27,104,0,0,3,35,6,3,6,3
+customer,com.yas.customer.service,CustomerService,81,416,3,13,11,90,3,17,0,12
+customer,com.yas.customer.service,AbstractCircuitBreakFallbackHandler,16,7,0,0,6,2,3,2,3,2
+customer,com.yas.customer.viewmodel.address,AddressVm,0,30,0,0,0,1,0,1,0,1
+customer,com.yas.customer.viewmodel.address,AddressPostVm,0,27,0,0,0,1,0,1,0,1
+customer,com.yas.customer.viewmodel.address,ActiveAddressVm,0,42,0,0,0,1,0,1,0,1
+customer,com.yas.customer.viewmodel.address,AddressDetailVm,0,39,0,0,0,1,0,1,0,1

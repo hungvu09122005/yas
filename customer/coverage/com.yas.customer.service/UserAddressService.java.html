@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserAddressService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">customer</a> &gt; <a href="index.source.html" class="el_package">com.yas.customer.service</a> &gt; <span class="el_source">UserAddressService.java</span></div><h1>UserAddressService.java</h1><pre class="source lang-java linenums">package com.yas.customer.service;
+
+import com.yas.commonlibrary.exception.AccessDeniedException;
+import com.yas.commonlibrary.exception.NotFoundException;
+import com.yas.customer.model.UserAddress;
+import com.yas.customer.repository.UserAddressRepository;
+import com.yas.customer.utils.Constants;
+import com.yas.customer.viewmodel.address.ActiveAddressVm;
+import com.yas.customer.viewmodel.address.AddressDetailVm;
+import com.yas.customer.viewmodel.address.AddressPostVm;
+import com.yas.customer.viewmodel.address.AddressVm;
+import com.yas.customer.viewmodel.useraddress.UserAddressVm;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@Transactional
+public class UserAddressService {
+    private final UserAddressRepository userAddressRepository;
+    private final LocationService locationService;
+
+<span class="fc" id="L27">    public UserAddressService(UserAddressRepository userAddressRepository, LocationService locationService) {</span>
+<span class="fc" id="L28">        this.userAddressRepository = userAddressRepository;</span>
+<span class="fc" id="L29">        this.locationService = locationService;</span>
+<span class="fc" id="L30">    }</span>
+
+    public List&lt;ActiveAddressVm&gt; getUserAddressList() {
+<span class="fc" id="L33">        String userId = SecurityContextHolder.getContext().getAuthentication().getName();</span>
+<span class="fc bfc" id="L34" title="All 2 branches covered.">        if (userId.equals(&quot;anonymousUser&quot;)) {</span>
+<span class="fc" id="L35">            throw new AccessDeniedException(Constants.ErrorCode.UNAUTHENTICATED);</span>
+        }
+
+<span class="fc" id="L38">        List&lt;UserAddress&gt; userAddressList = userAddressRepository.findAllByUserId(userId);</span>
+<span class="fc" id="L39">        List&lt;AddressDetailVm&gt; addressVmList = locationService.getAddressesByIdList(</span>
+<span class="fc" id="L40">            userAddressList.stream().map(UserAddress::getAddressId).collect(Collectors.toList()));</span>
+
+<span class="fc" id="L42">        List&lt;ActiveAddressVm&gt; addressActiveVms = userAddressList.stream().flatMap(userAddress -&gt; addressVmList.stream()</span>
+<span class="fc" id="L43">                .filter(addressDetailVm -&gt; userAddress.getAddressId().equals(addressDetailVm.id())).map(</span>
+<span class="fc" id="L44">                    addressDetailVm -&gt; new ActiveAddressVm(addressDetailVm.id(), addressDetailVm.contactName(),</span>
+<span class="fc" id="L45">                        addressDetailVm.phone(), addressDetailVm.addressLine1(), addressDetailVm.city(),</span>
+<span class="fc" id="L46">                        addressDetailVm.zipCode(), addressDetailVm.districtId(), addressDetailVm.districtName(),</span>
+<span class="fc" id="L47">                        addressDetailVm.stateOrProvinceId(), addressDetailVm.stateOrProvinceName(),</span>
+<span class="fc" id="L48">                        addressDetailVm.countryId(), addressDetailVm.countryName(), userAddress.getIsActive())))</span>
+<span class="fc" id="L49">            .toList();</span>
+
+        //sort by isActive
+<span class="fc" id="L52">        Comparator&lt;ActiveAddressVm&gt; comparator = Comparator.comparing(ActiveAddressVm::isActive).reversed();</span>
+<span class="fc" id="L53">        return addressActiveVms.stream().sorted(comparator).collect(Collectors.toList());</span>
+    }
+
+    public AddressDetailVm getAddressDefault() {
+<span class="fc" id="L57">        String userId = SecurityContextHolder.getContext().getAuthentication().getName();</span>
+<span class="fc bfc" id="L58" title="All 2 branches covered.">        if (userId.equals(&quot;anonymousUser&quot;)) {</span>
+<span class="fc" id="L59">            throw new AccessDeniedException(Constants.ErrorCode.UNAUTHENTICATED);</span>
+        }
+
+<span class="fc" id="L62">        UserAddress userAddress = userAddressRepository.findByUserIdAndIsActiveTrue(userId)</span>
+<span class="fc" id="L63">            .orElseThrow(() -&gt; new NotFoundException(Constants.ErrorCode.USER_ADDRESS_NOT_FOUND));</span>
+
+<span class="fc" id="L65">        return locationService.getAddressById(userAddress.getAddressId());</span>
+    }
+
+    public UserAddressVm createAddress(AddressPostVm addressPostVm) {
+<span class="fc" id="L69">        String userId = SecurityContextHolder.getContext().getAuthentication().getName();</span>
+
+        // Fetch all existing addresses for the user
+<span class="fc" id="L72">        List&lt;UserAddress&gt; userAddressList = userAddressRepository.findAllByUserId(userId);</span>
+<span class="fc" id="L73">        boolean isFirstAddress = userAddressList.isEmpty();</span>
+
+<span class="fc" id="L75">        AddressVm addressGetVm = locationService.createAddress(addressPostVm);</span>
+        UserAddress userAddress =
+<span class="fc" id="L77">            UserAddress.builder().userId(userId).addressId(addressGetVm.id()).isActive(isFirstAddress).build();</span>
+
+<span class="fc" id="L79">        return UserAddressVm.fromModel(userAddressRepository.save(userAddress), addressGetVm);</span>
+
+    }
+
+    public void deleteAddress(Long id) {
+<span class="fc" id="L84">        String userId = SecurityContextHolder.getContext().getAuthentication().getName();</span>
+<span class="fc" id="L85">        UserAddress userAddress = userAddressRepository.findOneByUserIdAndAddressId(userId, id);</span>
+<span class="fc bfc" id="L86" title="All 2 branches covered.">        if (userAddress == null) {</span>
+<span class="fc" id="L87">            throw new NotFoundException(Constants.ErrorCode.USER_ADDRESS_NOT_FOUND);</span>
+        }
+<span class="fc" id="L89">        userAddressRepository.delete(userAddress);</span>
+<span class="fc" id="L90">    }</span>
+
+    public void chooseDefaultAddress(Long id) {
+<span class="fc" id="L93">        String userId = SecurityContextHolder.getContext().getAuthentication().getName();</span>
+<span class="fc" id="L94">        List&lt;UserAddress&gt; userAddressList = userAddressRepository.findAllByUserId(userId);</span>
+<span class="fc bfc" id="L95" title="All 2 branches covered.">        for (UserAddress userAddress : userAddressList) {</span>
+<span class="fc" id="L96">            userAddress.setIsActive(Objects.equals(userAddress.getAddressId(), id));</span>
+<span class="fc" id="L97">        }</span>
+<span class="fc" id="L98">        userAddressRepository.saveAll(userAddressList);</span>
+<span class="fc" id="L99">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

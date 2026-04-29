@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CustomerController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">customer</a> &gt; <a href="index.source.html" class="el_package">com.yas.customer.controller</a> &gt; <span class="el_source">CustomerController.java</span></div><h1>CustomerController.java</h1><pre class="source lang-java linenums">package com.yas.customer.controller;
+
+import com.yas.customer.service.CustomerService;
+import com.yas.customer.viewmodel.ErrorVm;
+import com.yas.customer.viewmodel.customer.CustomerAdminVm;
+import com.yas.customer.viewmodel.customer.CustomerListVm;
+import com.yas.customer.viewmodel.customer.CustomerPostVm;
+import com.yas.customer.viewmodel.customer.CustomerProfileRequestVm;
+import com.yas.customer.viewmodel.customer.CustomerVm;
+import com.yas.customer.viewmodel.customer.GuestUserVm;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
+
+@RestController
+public class CustomerController {
+
+    private final CustomerService customerService;
+
+<span class="fc" id="L33">    public CustomerController(CustomerService customerService) {</span>
+<span class="fc" id="L34">        this.customerService = customerService;</span>
+<span class="fc" id="L35">    }</span>
+
+    @GetMapping(&quot;/backoffice/customers&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access Denied&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;CustomerListVm&gt; getCustomers(
+        @RequestParam(value = &quot;pageNo&quot;, defaultValue = &quot;0&quot;, required = false) int pageNo) {
+<span class="fc" id="L43">        return ResponseEntity.ok(customerService.getCustomers(pageNo));</span>
+    }
+
+    @GetMapping(&quot;/backoffice/customers/{email}&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Ok&quot;,
+            content = @Content(schema = @Schema(implementation = CustomerAdminVm.class))),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Bad request&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class))),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access Denied&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class))),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Not found&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;CustomerAdminVm&gt; getCustomerByEmail(@PathVariable String email) {
+<span class="fc" id="L57">        return ResponseEntity.ok(customerService.getCustomerByEmail(email));</span>
+    }
+
+    @GetMapping(&quot;/backoffice/customers/profile/{id}&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Ok&quot;,
+            content = @Content(schema = @Schema(implementation = CustomerVm.class))),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Bad request&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class))),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access Denied&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class))),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Not found&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;CustomerVm&gt; getCustomerById(@PathVariable String id) {
+<span class="nc" id="L71">        return ResponseEntity.ok(customerService.getCustomerProfile(id));</span>
+    }
+
+    @PutMapping(&quot;/backoffice/customers/profile/{id}&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;204&quot;, description = &quot;No content&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Not found&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class))),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Bad request&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;Void&gt; updateCustomer(
+        @PathVariable String id,
+        @RequestBody CustomerProfileRequestVm requestVm
+    ) {
+<span class="fc" id="L85">        customerService.updateCustomer(id, requestVm);</span>
+<span class="fc" id="L86">        return ResponseEntity.noContent().build();</span>
+    }
+
+    @DeleteMapping(&quot;/backoffice/customers/profile/{id}&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;204&quot;, description = &quot;No content&quot;, content = @Content()),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Not found&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class))),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Bad request&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;Void&gt; deleteCustomer(@PathVariable String id) {
+<span class="fc" id="L97">        customerService.deleteCustomer(id);</span>
+<span class="fc" id="L98">        return ResponseEntity.noContent().build();</span>
+    }
+
+    @PostMapping(&quot;/backoffice/customers&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;201&quot;, description = &quot;Created&quot;,
+            content = @Content(schema = @Schema(implementation = CustomerVm.class))),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Bad request&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;CustomerVm&gt; createCustomer(
+        @Valid @RequestBody CustomerPostVm customerPostVm,
+        UriComponentsBuilder uriComponentsBuilder
+    ) {
+<span class="fc" id="L111">        CustomerVm customer = customerService.create(customerPostVm);</span>
+<span class="fc" id="L112">        return ResponseEntity.created(uriComponentsBuilder.replacePath(&quot;/customers/{id}&quot;)</span>
+<span class="fc" id="L113">                .buildAndExpand(customer.id()).toUri())</span>
+<span class="fc" id="L114">            .body(customer);</span>
+    }
+
+    @GetMapping(&quot;/storefront/customer/profile&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Ok&quot;,
+            content = @Content(schema = @Schema(implementation = CustomerVm.class))),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access Denied&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;CustomerVm&gt; getCustomerProfile() {
+<span class="fc" id="L124">        return ResponseEntity.ok(</span>
+<span class="fc" id="L125">            customerService.getCustomerProfile(SecurityContextHolder.getContext().getAuthentication().getName()));</span>
+    }
+
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;201&quot;, description = &quot;Created&quot;,
+            content = @Content(schema = @Schema(implementation = GuestUserVm.class))),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Bad request&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    @PostMapping(&quot;/storefront/customer/guest-user&quot;)
+    public GuestUserVm createGuestUser() {
+<span class="fc" id="L135">        return customerService.createGuestUser();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

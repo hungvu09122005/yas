@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserAddressController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">customer</a> &gt; <a href="index.source.html" class="el_package">com.yas.customer.controller</a> &gt; <span class="el_source">UserAddressController.java</span></div><h1>UserAddressController.java</h1><pre class="source lang-java linenums">package com.yas.customer.controller;
+
+import com.yas.customer.service.UserAddressService;
+import com.yas.customer.viewmodel.address.ActiveAddressVm;
+import com.yas.customer.viewmodel.address.AddressDetailVm;
+import com.yas.customer.viewmodel.address.AddressPostVm;
+import com.yas.customer.viewmodel.useraddress.UserAddressVm;
+import jakarta.validation.Valid;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequiredArgsConstructor
+public class UserAddressController {
+
+    private final UserAddressService userAddressService;
+
+    @GetMapping(&quot;/storefront/user-address&quot;)
+    public ResponseEntity&lt;List&lt;ActiveAddressVm&gt;&gt; getUserAddresses() {
+<span class="fc" id="L28">        return ResponseEntity.ok(userAddressService.getUserAddressList());</span>
+    }
+
+    @GetMapping(&quot;/storefront/user-address/default-address&quot;)
+    public ResponseEntity&lt;AddressDetailVm&gt; getDefaultAddress() {
+<span class="fc" id="L33">        return ResponseEntity.ok(userAddressService.getAddressDefault());</span>
+    }
+
+    @PostMapping(&quot;/storefront/user-address&quot;)
+    public ResponseEntity&lt;UserAddressVm&gt; createAddress(@Valid @RequestBody AddressPostVm addressPostVm) {
+<span class="fc" id="L38">        return ResponseEntity.ok(userAddressService.createAddress(addressPostVm));</span>
+    }
+
+    @DeleteMapping(&quot;/storefront/user-address/{id}&quot;)
+    public ResponseEntity deleteAddress(@PathVariable Long id) {
+<span class="fc" id="L43">        userAddressService.deleteAddress(id);</span>
+<span class="fc" id="L44">        return ResponseEntity.ok().build();</span>
+    }
+
+    @PutMapping(&quot;/storefront/user-address/{id}&quot;)
+    public ResponseEntity chooseDefaultAddress(@PathVariable Long id) {
+<span class="fc" id="L49">        userAddressService.chooseDefaultAddress(id);</span>
+<span class="fc" id="L50">        return ResponseEntity.ok().build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>
