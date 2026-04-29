@@ -29,9 +29,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: jacoco-report-*
-          merge-multiple: true
+          merge-multiple: false
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build project
+        run: mvn -B install -DskipTests
 
       - name: Build and analyze with SonarCloud
         env:
@@ -40,7 +43,7 @@ jobs:
           SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
           SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
         run: |
-          mvn -B sonar:sonar -DskipTests \
+          mvn -B sonar:sonar \
             -Dsonar.organization=$SONAR_ORGANIZATION \
             -Dsonar.projectKey=$SONAR_PROJECT_KEY \
             -Dsonar.coverage.jacoco.xmlReportPaths=**/jacoco.xml
