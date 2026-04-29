@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WebhookService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">webhook</a> &gt; <a href="index.source.html" class="el_package">com.yas.webhook.service</a> &gt; <span class="el_source">WebhookService.java</span></div><h1>WebhookService.java</h1><pre class="source lang-java linenums">package com.yas.webhook.service;
+
+import com.yas.commonlibrary.exception.NotFoundException;
+import com.yas.webhook.config.constants.MessageCode;
+import com.yas.webhook.integration.api.WebhookApi;
+import com.yas.webhook.model.Webhook;
+import com.yas.webhook.model.WebhookEvent;
+import com.yas.webhook.model.WebhookEventNotification;
+import com.yas.webhook.model.dto.WebhookEventNotificationDto;
+import com.yas.webhook.model.enums.NotificationStatus;
+import com.yas.webhook.model.mapper.WebhookMapper;
+import com.yas.webhook.model.viewmodel.webhook.EventVm;
+import com.yas.webhook.model.viewmodel.webhook.WebhookDetailVm;
+import com.yas.webhook.model.viewmodel.webhook.WebhookListGetVm;
+import com.yas.webhook.model.viewmodel.webhook.WebhookPostVm;
+import com.yas.webhook.model.viewmodel.webhook.WebhookVm;
+import com.yas.webhook.repository.EventRepository;
+import com.yas.webhook.repository.WebhookEventNotificationRepository;
+import com.yas.webhook.repository.WebhookEventRepository;
+import com.yas.webhook.repository.WebhookRepository;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+
+@Service
+@RequiredArgsConstructor
+public class WebhookService {
+
+    private final WebhookRepository webhookRepository;
+    private final EventRepository eventRepository;
+    private final WebhookEventRepository webhookEventRepository;
+    private final WebhookEventNotificationRepository webhookEventNotificationRepository;
+    private final WebhookMapper webhookMapper;
+    private final WebhookApi webHookApi;
+
+    public WebhookListGetVm getPageableWebhooks(int pageNo, int pageSize) {
+<span class="fc" id="L43">        PageRequest pageRequest = PageRequest.of(pageNo, pageSize, Sort.by(Sort.Direction.DESC, &quot;id&quot;));</span>
+<span class="fc" id="L44">        Page&lt;Webhook&gt; webhooks = webhookRepository.findAll(pageRequest);</span>
+<span class="fc" id="L45">        return webhookMapper.toWebhookListGetVm(webhooks, pageNo, pageSize);</span>
+    }
+
+    public List&lt;WebhookVm&gt; findAllWebhooks() {
+<span class="fc" id="L49">        List&lt;Webhook&gt; webhooks = webhookRepository.findAll(Sort.by(Sort.Direction.DESC, &quot;id&quot;));</span>
+<span class="fc" id="L50">        return webhooks.stream().map(webhookMapper::toWebhookVm).toList();</span>
+    }
+
+    public WebhookDetailVm findById(Long id) {
+<span class="fc" id="L54">        return webhookMapper.toWebhookDetailVm(webhookRepository.findById(id).orElseThrow(</span>
+<span class="nc" id="L55">            () -&gt; new NotFoundException(MessageCode.WEBHOOK_NOT_FOUND, id)));</span>
+    }
+
+    public WebhookDetailVm create(WebhookPostVm webhookPostVm) {
+<span class="fc" id="L59">        Webhook createdWebhook = webhookMapper.toCreatedWebhook(webhookPostVm);</span>
+<span class="fc" id="L60">        createdWebhook = webhookRepository.save(createdWebhook);</span>
+<span class="pc bpc" id="L61" title="1 of 2 branches missed.">        if (!CollectionUtils.isEmpty(webhookPostVm.getEvents())) {</span>
+<span class="fc" id="L62">            List&lt;WebhookEvent&gt; webhookEvents</span>
+<span class="fc" id="L63">                = initializeWebhookEvents(createdWebhook.getId(), webhookPostVm.getEvents());</span>
+<span class="fc" id="L64">            webhookEvents = webhookEventRepository.saveAll(webhookEvents);</span>
+<span class="fc" id="L65">            createdWebhook.setWebhookEvents(webhookEvents);</span>
+        }
+<span class="fc" id="L67">        return webhookMapper.toWebhookDetailVm(createdWebhook);</span>
+    }
+
+    public void update(WebhookPostVm webhookPostVm, Long id) {
+<span class="fc" id="L71">        Webhook existedWebHook = webhookRepository.findById(id).orElseThrow(</span>
+<span class="nc" id="L72">            () -&gt; new NotFoundException(MessageCode.WEBHOOK_NOT_FOUND, id));</span>
+<span class="fc" id="L73">        Webhook updatedWebhook = webhookMapper.toUpdatedWebhook(existedWebHook, webhookPostVm);</span>
+<span class="fc" id="L74">        webhookRepository.save(updatedWebhook);</span>
+<span class="fc" id="L75">        webhookEventRepository.deleteAll(existedWebHook.getWebhookEvents().stream().toList());</span>
+<span class="pc bpc" id="L76" title="1 of 2 branches missed.">        if (!CollectionUtils.isEmpty(webhookPostVm.getEvents())) {</span>
+<span class="nc" id="L77">            List&lt;WebhookEvent&gt; webhookEvents = initializeWebhookEvents(id, webhookPostVm.getEvents());</span>
+<span class="nc" id="L78">            webhookEventRepository.saveAll(webhookEvents);</span>
+        }
+<span class="fc" id="L80">    }</span>
+
+    @Transactional
+    public void delete(Long id) {
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">        if (!webhookRepository.existsById(id)) {</span>
+<span class="nc" id="L85">            throw new NotFoundException(MessageCode.WEBHOOK_NOT_FOUND, id);</span>
+        }
+<span class="fc" id="L87">        webhookEventRepository.deleteByWebhookId(id);</span>
+<span class="fc" id="L88">        webhookRepository.deleteById(id);</span>
+<span class="fc" id="L89">    }</span>
+
+    @Async
+    public void notifyToWebhook(WebhookEventNotificationDto notificationDto) {
+
+<span class="fc" id="L94">        webHookApi.notify(notificationDto.getUrl(), notificationDto.getSecret(), notificationDto.getPayload());</span>
+<span class="fc" id="L95">        WebhookEventNotification notification = webhookEventNotificationRepository.findById(</span>
+<span class="fc" id="L96">                notificationDto.getNotificationId())</span>
+<span class="fc" id="L97">            .orElseThrow();</span>
+<span class="fc" id="L98">        notification.setNotificationStatus(NotificationStatus.NOTIFIED);</span>
+<span class="fc" id="L99">        webhookEventNotificationRepository.save(notification);</span>
+<span class="fc" id="L100">    }</span>
+
+    private List&lt;WebhookEvent&gt; initializeWebhookEvents(Long webhookId, List&lt;EventVm&gt; events) {
+<span class="fc" id="L103">        return events.stream().map(hookEventVm -&gt; {</span>
+<span class="fc" id="L104">            WebhookEvent webhookEvent = new WebhookEvent();</span>
+<span class="fc" id="L105">            webhookEvent.setWebhookId(webhookId);</span>
+<span class="fc" id="L106">            long eventId = hookEventVm.getId();</span>
+<span class="fc" id="L107">            eventRepository.findById(eventId)</span>
+<span class="pc" id="L108">                .orElseThrow(() -&gt; new NotFoundException(MessageCode.EVENT_NOT_FOUND, eventId));</span>
+<span class="fc" id="L109">            webhookEvent.setEventId(eventId);</span>
+<span class="fc" id="L110">            return webhookEvent;</span>
+<span class="fc" id="L111">        }).toList();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

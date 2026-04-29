@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WebhookApi.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">webhook</a> &gt; <a href="index.source.html" class="el_package">com.yas.webhook.integration.api</a> &gt; <span class="el_source">WebhookApi.java</span></div><h1>WebhookApi.java</h1><pre class="source lang-java linenums">package com.yas.webhook.integration.api;
+
+import tools.jackson.databind.JsonNode;
+import com.yas.webhook.utils.HmacUtils;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClient.RequestBodySpec;
+
+@Component
+@RequiredArgsConstructor
+public class WebhookApi {
+
+    public static final String X_HUB_SIGNATURE_256 = &quot;X-Hub-Signature-256&quot;;
+
+    private final RestClient restClient;
+
+<span class="pc" id="L20">    @SneakyThrows</span>
+    public void notify(String url, String secret, JsonNode jsonNode) {
+
+<span class="fc" id="L23">        RequestBodySpec requestBodySpec = restClient.post()</span>
+<span class="fc" id="L24">            .uri(url);</span>
+
+<span class="fc bfc" id="L26" title="All 2 branches covered.">        if (StringUtils.isNoneEmpty(secret)) {</span>
+<span class="fc" id="L27">            String secretToken = HmacUtils.hash(jsonNode.toString(), secret);</span>
+<span class="fc" id="L28">            requestBodySpec.header(X_HUB_SIGNATURE_256, secretToken);</span>
+        }
+
+<span class="fc" id="L31">        requestBodySpec.body(jsonNode)</span>
+<span class="fc" id="L32">            .retrieve()</span>
+<span class="fc" id="L33">            .toBodilessEntity();</span>
+<span class="fc" id="L34">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

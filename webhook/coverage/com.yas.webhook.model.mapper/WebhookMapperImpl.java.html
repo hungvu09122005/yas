@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WebhookMapperImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">webhook</a> &gt; <a href="index.source.html" class="el_package">com.yas.webhook.model.mapper</a> &gt; <span class="el_source">WebhookMapperImpl.java</span></div><h1>WebhookMapperImpl.java</h1><pre class="source lang-java linenums">package com.yas.webhook.model.mapper;
+
+import com.yas.webhook.model.Webhook;
+import com.yas.webhook.model.viewmodel.webhook.WebhookDetailVm;
+import com.yas.webhook.model.viewmodel.webhook.WebhookPostVm;
+import com.yas.webhook.model.viewmodel.webhook.WebhookVm;
+import javax.annotation.processing.Generated;
+import org.springframework.stereotype.Component;
+
+@Generated(
+    value = &quot;org.mapstruct.ap.MappingProcessor&quot;,
+    date = &quot;2026-04-29T10:58:28+0000&quot;,
+    comments = &quot;version: 1.6.3, compiler: javac, environment: Java 25.0.2 (Eclipse Adoptium)&quot;
+)
+@Component
+<span class="fc" id="L16">public class WebhookMapperImpl implements WebhookMapper {</span>
+
+    @Override
+    public WebhookVm toWebhookVm(Webhook webhook) {
+<span class="pc bpc" id="L20" title="1 of 2 branches missed.">        if ( webhook == null ) {</span>
+<span class="nc" id="L21">            return null;</span>
+        }
+
+<span class="fc" id="L24">        WebhookVm webhookVm = new WebhookVm();</span>
+
+<span class="fc" id="L26">        webhookVm.setId( webhook.getId() );</span>
+<span class="fc" id="L27">        webhookVm.setPayloadUrl( webhook.getPayloadUrl() );</span>
+<span class="fc" id="L28">        webhookVm.setContentType( webhook.getContentType() );</span>
+<span class="fc" id="L29">        webhookVm.setIsActive( webhook.getIsActive() );</span>
+
+<span class="fc" id="L31">        return webhookVm;</span>
+    }
+
+    @Override
+    public Webhook toUpdatedWebhook(Webhook webhook, WebhookPostVm webhookPostVm) {
+<span class="pc bpc" id="L36" title="1 of 2 branches missed.">        if ( webhookPostVm == null ) {</span>
+<span class="nc" id="L37">            return webhook;</span>
+        }
+
+<span class="fc" id="L40">        webhook.setPayloadUrl( webhookPostVm.getPayloadUrl() );</span>
+<span class="fc" id="L41">        webhook.setSecret( webhookPostVm.getSecret() );</span>
+<span class="fc" id="L42">        webhook.setIsActive( webhookPostVm.getIsActive() );</span>
+
+<span class="fc" id="L44">        return webhook;</span>
+    }
+
+    @Override
+    public Webhook toCreatedWebhook(WebhookPostVm webhookPostVm) {
+<span class="pc bpc" id="L49" title="1 of 2 branches missed.">        if ( webhookPostVm == null ) {</span>
+<span class="nc" id="L50">            return null;</span>
+        }
+
+<span class="fc" id="L53">        Webhook webhook = new Webhook();</span>
+
+<span class="fc" id="L55">        webhook.setPayloadUrl( webhookPostVm.getPayloadUrl() );</span>
+<span class="fc" id="L56">        webhook.setContentType( webhookPostVm.getContentType() );</span>
+<span class="fc" id="L57">        webhook.setSecret( webhookPostVm.getSecret() );</span>
+<span class="fc" id="L58">        webhook.setIsActive( webhookPostVm.getIsActive() );</span>
+
+<span class="fc" id="L60">        return webhook;</span>
+    }
+
+    @Override
+    public WebhookDetailVm toWebhookDetailVm(Webhook createdWebhook) {
+<span class="pc bpc" id="L65" title="1 of 2 branches missed.">        if ( createdWebhook == null ) {</span>
+<span class="nc" id="L66">            return null;</span>
+        }
+
+<span class="fc" id="L69">        WebhookDetailVm webhookDetailVm = new WebhookDetailVm();</span>
+
+<span class="fc" id="L71">        webhookDetailVm.setEvents( toWebhookEventVms( createdWebhook.getWebhookEvents() ) );</span>
+<span class="fc" id="L72">        webhookDetailVm.setId( createdWebhook.getId() );</span>
+<span class="fc" id="L73">        webhookDetailVm.setPayloadUrl( createdWebhook.getPayloadUrl() );</span>
+<span class="fc" id="L74">        webhookDetailVm.setContentType( createdWebhook.getContentType() );</span>
+<span class="fc" id="L75">        webhookDetailVm.setIsActive( createdWebhook.getIsActive() );</span>
+
+<span class="fc" id="L77">        return webhookDetailVm;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

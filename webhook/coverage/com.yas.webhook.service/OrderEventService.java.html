@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrderEventService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">webhook</a> &gt; <a href="index.source.html" class="el_package">com.yas.webhook.service</a> &gt; <span class="el_source">OrderEventService.java</span></div><h1>OrderEventService.java</h1><pre class="source lang-java linenums">package com.yas.webhook.service;
+
+import tools.jackson.databind.JsonNode;
+import com.yas.commonlibrary.exception.NotFoundException;
+import com.yas.webhook.config.constants.MessageCode;
+import com.yas.webhook.model.Event;
+import com.yas.webhook.model.WebhookEvent;
+import com.yas.webhook.model.dto.WebhookEventNotificationDto;
+import com.yas.webhook.model.enums.EventName;
+import com.yas.webhook.model.enums.Operation;
+import com.yas.webhook.repository.EventRepository;
+import com.yas.webhook.repository.WebhookEventNotificationRepository;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class OrderEventService extends AbstractWebhookEventNotificationService {
+
+    private final EventRepository eventRepository;
+    private final WebhookService webhookService;
+    private final WebhookEventNotificationRepository webhookEventNotificationRepository;
+
+    public void onOrderEvent(JsonNode updatedEvent) {
+<span class="fc" id="L28">        Optional&lt;EventName&gt; optionalEventName = getEventName(updatedEvent);</span>
+<span class="fc bfc" id="L29" title="All 2 branches covered.">        if (optionalEventName.isPresent()) {</span>
+<span class="fc" id="L30">            Event event = eventRepository.findByName(optionalEventName.get())</span>
+<span class="pc" id="L31">                .orElseThrow(() -&gt; new NotFoundException(MessageCode.EVENT_NOT_FOUND, optionalEventName.get()));</span>
+<span class="fc" id="L32">            List&lt;WebhookEvent&gt; hookEvents = event.getWebhookEvents();</span>
+<span class="fc" id="L33">            hookEvents.forEach(hookEvent -&gt; {</span>
+<span class="fc" id="L34">                JsonNode payload = updatedEvent.get(&quot;after&quot;);</span>
+<span class="fc" id="L35">                Long notificationId = super.persistNotification(hookEvent.getId(), payload);</span>
+
+<span class="fc" id="L37">                WebhookEventNotificationDto dto = super.createNotificationDto(hookEvent, payload,</span>
+                    notificationId);
+<span class="fc" id="L39">                webhookService.notifyToWebhook(dto);</span>
+<span class="fc" id="L40">            });</span>
+        }
+<span class="fc" id="L42">    }</span>
+
+    private Optional&lt;EventName&gt; getEventName(JsonNode updatedEvent) {
+<span class="fc" id="L45">        String operation = updatedEvent.get(&quot;op&quot;).asText();</span>
+<span class="fc bfc" id="L46" title="All 2 branches covered.">        if (Objects.equals(operation, Operation.CREATE.getName())) {</span>
+<span class="fc" id="L47">            return Optional.of(EventName.ON_ORDER_CREATED);</span>
+        }
+<span class="fc bfc" id="L49" title="All 2 branches covered.">        if (Objects.equals(operation, Operation.UPDATE.getName())) {</span>
+<span class="fc" id="L50">            String orderStatusBefore = updatedEvent.path(&quot;before&quot;).get(&quot;order_status&quot;).asText();</span>
+<span class="fc" id="L51">            String orderStatusAfter = updatedEvent.path(&quot;after&quot;).get(&quot;order_status&quot;).asText();</span>
+<span class="fc bfc" id="L52" title="All 2 branches covered.">            if (!orderStatusBefore.equals(orderStatusAfter)) {</span>
+<span class="fc" id="L53">                return Optional.of(EventName.ON_ORDER_STATUS_UPDATED);</span>
+            }
+        }
+<span class="fc" id="L56">        return Optional.empty();</span>
+    }
+
+    @Override
+    protected WebhookEventNotificationRepository getWebhookEventNotificationRepository() {
+<span class="fc" id="L61">        return webhookEventNotificationRepository;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>
