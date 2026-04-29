@@ -54,7 +54,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: jacoco-report-payment-paypal
-          path: payment-paypal/target/site/jacoco/jacoco.xml
+          path: payment-paypal/target/site/jacoco/
           retention-days: 1
 
       - name: Check coverage threshold (>= 70%)
