@@ -49,9 +49,7 @@ class MediaControllerTest {
 
         mediaVm = new MediaVm(1L, "test caption", "test.png", "image/png", "url");
 
-        mediaDto = new MediaDto();
-        mediaDto.setContent(new ByteArrayInputStream("test data".getBytes()));
-        mediaDto.setMediaType(MediaType.IMAGE_PNG);
+        mediaDto = new MediaDto(new ByteArrayInputStream("test data".getBytes()), MediaType.IMAGE_PNG);
     }
 
     @Test
@@ -84,8 +82,8 @@ class MediaControllerTest {
         ResponseEntity<MediaVm> response = mediaController.get(1L);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(1L, response.getBody().id());
-        assertEquals("test caption", response.getBody().caption());
+        assertEquals(1L, response.getBody().getId());
+        assertEquals("test caption", response.getBody().getCaption());
     }
 
     @Test
@@ -105,7 +103,7 @@ class MediaControllerTest {
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(1, response.getBody().size());
-        assertEquals(1L, response.getBody().get(0).id());
+        assertEquals(1L, response.getBody().get(0).getId());
     }
 
     @Test
