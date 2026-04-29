@@ -162,6 +162,8 @@ jobs:
             -Dsonar.projectKey=$SONAR_PROJECT_KEY \
             $SONAR_COVERAGE_ARGS \
             $SONAR_TEST_ARGS \
+            -Dsonar.exclusions=common-library/**,sampledata/**,delivery/** \
+            -Dsonar.coverage.exclusions=common-library/**,sampledata/**,delivery/** \
             -Dsonar.pullrequest.key=${{ github.event.pull_request.number }} \
             -Dsonar.pullrequest.branch=${{ github.head_ref }} \
             -Dsonar.pullrequest.base=${{ github.base_ref }}
@@ -178,4 +180,6 @@ jobs:
             -Dsonar.organization=$SONAR_ORGANIZATION \
             -Dsonar.projectKey=$SONAR_PROJECT_KEY \
             $SONAR_COVERAGE_ARGS \
-            $SONAR_TEST_ARGS
+            $SONAR_TEST_ARGS \
+            -Dsonar.exclusions=common-library/**,sampledata/**,delivery/** \
+            -Dsonar.coverage.exclusions=common-library/**,sampledata/**,delivery/**
