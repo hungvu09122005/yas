@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WarehouseService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">inventory</a> &gt; <a href="index.source.html" class="el_package">com.yas.inventory.service</a> &gt; <span class="el_source">WarehouseService.java</span></div><h1>WarehouseService.java</h1><pre class="source lang-java linenums">package com.yas.inventory.service;
+
+import com.yas.commonlibrary.exception.DuplicatedException;
+import com.yas.commonlibrary.exception.NotFoundException;
+import com.yas.inventory.constants.MessageCode;
+import com.yas.inventory.model.Warehouse;
+import com.yas.inventory.model.enumeration.FilterExistInWhSelection;
+import com.yas.inventory.repository.StockRepository;
+import com.yas.inventory.repository.WarehouseRepository;
+import com.yas.inventory.viewmodel.address.AddressDetailVm;
+import com.yas.inventory.viewmodel.address.AddressPostVm;
+import com.yas.inventory.viewmodel.address.AddressVm;
+import com.yas.inventory.viewmodel.product.ProductInfoVm;
+import com.yas.inventory.viewmodel.warehouse.WarehouseDetailVm;
+import com.yas.inventory.viewmodel.warehouse.WarehouseGetVm;
+import com.yas.inventory.viewmodel.warehouse.WarehouseListGetVm;
+import com.yas.inventory.viewmodel.warehouse.WarehousePostVm;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+
+@Service
+@Transactional
+@RequiredArgsConstructor
+public class WarehouseService {
+    private final WarehouseRepository warehouseRepository;
+    private final StockRepository stockRepository;
+    private final ProductService productService;
+    private final LocationService locationService;
+
+    @Transactional(readOnly = true)
+    public List&lt;WarehouseGetVm&gt; findAllWarehouses() {
+<span class="fc" id="L38">        return warehouseRepository</span>
+<span class="fc" id="L39">            .findAll()</span>
+<span class="fc" id="L40">            .stream()</span>
+<span class="fc" id="L41">            .map(WarehouseGetVm::fromModel)</span>
+<span class="fc" id="L42">            .toList();</span>
+    }
+
+    public List&lt;ProductInfoVm&gt; getProductWarehouse(
+        Long warehouseId, String productName, String productSku, FilterExistInWhSelection existStatus) {
+<span class="nc" id="L47">        List&lt;Long&gt; productIds = stockRepository.getProductIdsInWarehouse(warehouseId);</span>
+
+<span class="nc" id="L49">        List&lt;ProductInfoVm&gt; productVmList = productService.filterProducts(</span>
+            productName, productSku, productIds, existStatus);
+
+<span class="nc bnc" id="L52" title="All 2 branches missed.">        if (!CollectionUtils.isEmpty(productIds)) {</span>
+<span class="nc" id="L53">            return productVmList.stream().map(productVm -&gt;</span>
+<span class="nc" id="L54">                new ProductInfoVm(productVm.id(), productVm.name(), productVm.sku(),</span>
+<span class="nc" id="L55">                    productIds.contains(productVm.id()))</span>
+<span class="nc" id="L56">            ).toList();</span>
+        }
+
+<span class="nc" id="L59">        return productVmList;</span>
+    }
+
+    @Transactional(readOnly = true)
+    public WarehouseDetailVm findById(final Long id) {
+<span class="fc" id="L64">        final Warehouse warehouse = warehouseRepository</span>
+<span class="fc" id="L65">            .findById(id)</span>
+<span class="fc" id="L66">            .orElseThrow(</span>
+<span class="fc" id="L67">                () -&gt; new NotFoundException(MessageCode.WAREHOUSE_NOT_FOUND, id));</span>
+<span class="fc" id="L68">        AddressDetailVm addressDetailVm = locationService.getAddressById(warehouse.getAddressId());</span>
+<span class="fc" id="L69">        WarehouseDetailVm warehouseDetailVm = new WarehouseDetailVm(</span>
+<span class="fc" id="L70">            warehouse.getId(),</span>
+<span class="fc" id="L71">            warehouse.getName(),</span>
+<span class="fc" id="L72">            addressDetailVm.contactName(),</span>
+<span class="fc" id="L73">            addressDetailVm.phone(),</span>
+<span class="fc" id="L74">            addressDetailVm.addressLine1(),</span>
+<span class="fc" id="L75">            addressDetailVm.addressLine2(),</span>
+<span class="fc" id="L76">            addressDetailVm.city(),</span>
+<span class="fc" id="L77">            addressDetailVm.zipCode(),</span>
+<span class="fc" id="L78">            addressDetailVm.districtId(),</span>
+<span class="fc" id="L79">            addressDetailVm.stateOrProvinceId(),</span>
+<span class="fc" id="L80">            addressDetailVm.countryId()</span>
+
+        );
+<span class="fc" id="L83">        return warehouseDetailVm;</span>
+    }
+
+    @Transactional
+    public Warehouse create(final WarehousePostVm warehousePostVm) {
+<span class="fc bfc" id="L88" title="All 2 branches covered.">        if (warehouseRepository.existsByName(warehousePostVm.name())) {</span>
+<span class="fc" id="L89">            throw new DuplicatedException(MessageCode.NAME_ALREADY_EXITED, warehousePostVm.name());</span>
+        }
+<span class="fc" id="L91">        AddressPostVm addressPostVm = new AddressPostVm(</span>
+<span class="fc" id="L92">            warehousePostVm.contactName(),</span>
+<span class="fc" id="L93">            warehousePostVm.phone(),</span>
+<span class="fc" id="L94">            warehousePostVm.addressLine1(),</span>
+<span class="fc" id="L95">            warehousePostVm.addressLine2(),</span>
+<span class="fc" id="L96">            warehousePostVm.city(),</span>
+<span class="fc" id="L97">            warehousePostVm.zipCode(),</span>
+<span class="fc" id="L98">            warehousePostVm.districtId(),</span>
+<span class="fc" id="L99">            warehousePostVm.stateOrProvinceId(),</span>
+<span class="fc" id="L100">            warehousePostVm.countryId()</span>
+        );
+
+<span class="fc" id="L103">        AddressVm addressVm = locationService.createAddress(addressPostVm);</span>
+<span class="fc" id="L104">        Warehouse warehouse = new Warehouse();</span>
+<span class="fc" id="L105">        warehouse.setName(warehousePostVm.name());</span>
+<span class="fc" id="L106">        warehouse.setAddressId(addressVm.id());</span>
+<span class="fc" id="L107">        return warehouseRepository.save(warehouse);</span>
+    }
+
+    @Transactional
+    public void update(final WarehousePostVm warehousePostVm, final Long id) {
+<span class="fc" id="L112">        final Warehouse warehouse = warehouseRepository</span>
+<span class="fc" id="L113">            .findById(id)</span>
+<span class="fc" id="L114">            .orElseThrow(() -&gt; new NotFoundException(MessageCode.WAREHOUSE_NOT_FOUND, id));</span>
+
+        //For the updating case we don't need to check for the Warehouse being updated
+<span class="pc bpc" id="L117" title="1 of 2 branches missed.">        if (warehouseRepository.existsByNameWithDifferentId(warehousePostVm.name(), id)) {</span>
+<span class="fc" id="L118">            throw new DuplicatedException(MessageCode.NAME_ALREADY_EXITED, warehousePostVm.name());</span>
+        }
+<span class="nc" id="L120">        warehouse.setName(warehousePostVm.name());</span>
+
+<span class="nc" id="L122">        AddressPostVm addressPostVm = new AddressPostVm(</span>
+<span class="nc" id="L123">            warehousePostVm.contactName(),</span>
+<span class="nc" id="L124">            warehousePostVm.phone(),</span>
+<span class="nc" id="L125">            warehousePostVm.addressLine1(),</span>
+<span class="nc" id="L126">            warehousePostVm.addressLine2(),</span>
+<span class="nc" id="L127">            warehousePostVm.city(),</span>
+<span class="nc" id="L128">            warehousePostVm.zipCode(),</span>
+<span class="nc" id="L129">            warehousePostVm.districtId(),</span>
+<span class="nc" id="L130">            warehousePostVm.stateOrProvinceId(),</span>
+<span class="nc" id="L131">            warehousePostVm.countryId()</span>
+        );
+
+<span class="nc" id="L134">        locationService.updateAddress(warehouse.getAddressId(), addressPostVm);</span>
+<span class="nc" id="L135">        warehouseRepository.save(warehouse);</span>
+<span class="nc" id="L136">    }</span>
+
+    @Transactional
+    public void delete(final Long id) {
+<span class="fc" id="L140">        final Warehouse warehouse = warehouseRepository</span>
+<span class="fc" id="L141">            .findById(id)</span>
+<span class="fc" id="L142">            .orElseThrow(() -&gt; new NotFoundException(MessageCode.WAREHOUSE_NOT_FOUND, id));</span>
+
+<span class="fc" id="L144">        warehouseRepository.deleteById(id);</span>
+<span class="fc" id="L145">        locationService.deleteAddress(warehouse.getAddressId());</span>
+<span class="fc" id="L146">    }</span>
+
+    @Transactional(readOnly = true)
+    public WarehouseListGetVm getPageableWarehouses(final int pageNo, final int pageSize) {
+<span class="fc" id="L150">        final Pageable pageable = PageRequest.of(pageNo, pageSize);</span>
+<span class="fc" id="L151">        final Page&lt;Warehouse&gt; warehousePage = warehouseRepository.findAll(pageable);</span>
+<span class="fc" id="L152">        final List&lt;Warehouse&gt; warehouseList = warehousePage.getContent();</span>
+
+<span class="fc" id="L154">        final List&lt;WarehouseGetVm&gt; warehouseVms = warehouseList.stream()</span>
+<span class="fc" id="L155">            .map(WarehouseGetVm::fromModel)</span>
+<span class="fc" id="L156">            .toList();</span>
+
+<span class="fc" id="L158">        return new WarehouseListGetVm(</span>
+            warehouseVms,
+<span class="fc" id="L160">            warehousePage.getNumber(),</span>
+<span class="fc" id="L161">            warehousePage.getSize(),</span>
+<span class="fc" id="L162">            (int) warehousePage.getTotalElements(),</span>
+<span class="fc" id="L163">            warehousePage.getTotalPages(),</span>
+<span class="fc" id="L164">            warehousePage.isLast()</span>
+        );
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StockService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">inventory</a> &gt; <a href="index.source.html" class="el_package">com.yas.inventory.service</a> &gt; <span class="el_source">StockService.java</span></div><h1>StockService.java</h1><pre class="source lang-java linenums">package com.yas.inventory.service;
+
+import com.yas.commonlibrary.exception.BadRequestException;
+import com.yas.commonlibrary.exception.NotFoundException;
+import com.yas.commonlibrary.exception.StockExistingException;
+import com.yas.inventory.constants.ApiConstant;
+import com.yas.inventory.constants.MessageCode;
+import com.yas.inventory.model.Stock;
+import com.yas.inventory.model.Warehouse;
+import com.yas.inventory.model.enumeration.FilterExistInWhSelection;
+import com.yas.inventory.repository.StockRepository;
+import com.yas.inventory.repository.WarehouseRepository;
+import com.yas.inventory.viewmodel.product.ProductInfoVm;
+import com.yas.inventory.viewmodel.product.ProductQuantityPostVm;
+import com.yas.inventory.viewmodel.stock.StockPostVm;
+import com.yas.inventory.viewmodel.stock.StockQuantityUpdateVm;
+import com.yas.inventory.viewmodel.stock.StockQuantityVm;
+import com.yas.inventory.viewmodel.stock.StockVm;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@Transactional
+public class StockService {
+    private final WarehouseRepository warehouseRepository;
+    private final StockRepository stockRepository;
+    private final ProductService productService;
+
+    private final WarehouseService warehouseService;
+
+    private final StockHistoryService stockHistoryService;
+
+    public StockService(WarehouseRepository warehouseRepository,
+                        StockRepository stockRepository,
+                        ProductService productService,
+                        WarehouseService warehouseService,
+<span class="fc" id="L41">                        StockHistoryService stockHistoryService) {</span>
+<span class="fc" id="L42">        this.warehouseRepository = warehouseRepository;</span>
+<span class="fc" id="L43">        this.stockRepository = stockRepository;</span>
+<span class="fc" id="L44">        this.productService = productService;</span>
+<span class="fc" id="L45">        this.warehouseService = warehouseService;</span>
+<span class="fc" id="L46">        this.stockHistoryService = stockHistoryService;</span>
+<span class="fc" id="L47">    }</span>
+
+    public void addProductIntoWarehouse(List&lt;StockPostVm&gt; postVms) {
+
+<span class="fc" id="L51">        List&lt;Stock&gt; stocks = postVms.stream().map(postVM -&gt; {</span>
+<span class="fc" id="L52">            boolean existingInStock = stockRepository.existsByWarehouseIdAndProductId(</span>
+<span class="fc" id="L53">                    postVM.warehouseId(), postVM.productId()</span>
+            );
+
+<span class="fc bfc" id="L56" title="All 2 branches covered.">            if (existingInStock) {</span>
+<span class="fc" id="L57">                throw new StockExistingException(</span>
+<span class="fc" id="L58">                        MessageCode.STOCK_ALREADY_EXISTED, postVM.productId());</span>
+            }
+
+<span class="fc" id="L61">            ProductInfoVm product = productService.getProduct(postVM.productId());</span>
+
+<span class="fc bfc" id="L63" title="All 2 branches covered.">            if (product == null) {</span>
+<span class="fc" id="L64">                throw new NotFoundException(MessageCode.PRODUCT_NOT_FOUND, postVM.productId());</span>
+            }
+
+<span class="fc" id="L67">            Optional&lt;Warehouse&gt; warehouseOp = warehouseRepository.findById(postVM.warehouseId());</span>
+
+<span class="fc bfc" id="L69" title="All 2 branches covered.">            if (warehouseOp.isEmpty()) {</span>
+<span class="fc" id="L70">                throw new NotFoundException(MessageCode.WAREHOUSE_NOT_FOUND, postVM.warehouseId());</span>
+            }
+
+<span class="fc" id="L73">            return Stock.builder()</span>
+<span class="fc" id="L74">                .productId(postVM.productId())</span>
+<span class="fc" id="L75">                .warehouse(warehouseOp.get())</span>
+<span class="fc" id="L76">                .quantity(0L)</span>
+<span class="fc" id="L77">                .reservedQuantity(0L)</span>
+<span class="fc" id="L78">                .build();</span>
+<span class="fc" id="L79">        }).toList();</span>
+
+
+<span class="fc" id="L82">        stockRepository.saveAll(stocks);</span>
+
+<span class="fc" id="L84">    }</span>
+
+    public List&lt;StockVm&gt; getStocksByWarehouseIdAndProductNameAndSku(Long warehouseId,
+                                                                    String productName,
+                                                                    String productSku) {
+<span class="nc" id="L89">        HashMap&lt;Long, ProductInfoVm&gt; productInfoVmHashMap =</span>
+<span class="nc" id="L90">            (HashMap&lt;Long, ProductInfoVm&gt;) warehouseService.getProductWarehouse(</span>
+                    warehouseId,
+                    productName,
+                    productSku,
+                    FilterExistInWhSelection.YES)
+<span class="nc" id="L95">                .parallelStream()</span>
+<span class="nc" id="L96">                .collect(Collectors.toMap(ProductInfoVm::id, productInfoVm -&gt; productInfoVm));</span>
+
+<span class="nc" id="L98">        List&lt;Stock&gt; stocks = stockRepository.findByWarehouseIdAndProductIdIn(</span>
+            warehouseId,
+<span class="nc" id="L100">            productInfoVmHashMap.values().parallelStream().map(ProductInfoVm::id).toList()</span>
+        );
+
+<span class="nc" id="L103">        return stocks.stream().map(</span>
+            stock -&gt; {
+<span class="nc" id="L105">                ProductInfoVm productInfoVm = productInfoVmHashMap.get(stock.getProductId());</span>
+
+<span class="nc" id="L107">                return StockVm.fromModel(stock, productInfoVm);</span>
+            }
+<span class="nc" id="L109">        ).toList();</span>
+    }
+
+    public void updateProductQuantityInStock(final StockQuantityUpdateVm requestBody) {
+<span class="fc" id="L113">        List&lt;StockQuantityVm&gt; stockQuantityVms = requestBody.stockQuantityList();</span>
+<span class="fc" id="L114">        List&lt;Stock&gt; stocks =</span>
+<span class="fc" id="L115">            stockRepository.findAllById(stockQuantityVms.parallelStream().map(StockQuantityVm::stockId).toList());</span>
+
+<span class="fc bfc" id="L117" title="All 2 branches covered.">        for (final Stock stock : stocks) {</span>
+<span class="fc" id="L118">            StockQuantityVm stockQuantityVm = stockQuantityVms</span>
+<span class="fc" id="L119">                .parallelStream()</span>
+<span class="fc" id="L120">                .filter(stockQuantityPostVm -&gt; stockQuantityPostVm.stockId().equals(stock.getId()))</span>
+<span class="fc" id="L121">                .findFirst()</span>
+<span class="fc" id="L122">                .orElse(null);</span>
+
+<span class="pc bpc" id="L124" title="1 of 2 branches missed.">            if (stockQuantityVm == null) {</span>
+<span class="nc" id="L125">                continue;</span>
+            }
+
+<span class="pc bpc" id="L128" title="1 of 2 branches missed.">            Long adjustedQuantity = stockQuantityVm.quantity() != null ? stockQuantityVm.quantity() : 0;</span>
+
+<span class="pc bpc" id="L130" title="3 of 4 branches missed.">            if (adjustedQuantity &lt; 0 &amp;&amp; adjustedQuantity &gt; stock.getQuantity()) {</span>
+<span class="nc" id="L131">                throw new BadRequestException(ApiConstant.INVALID_ADJUSTED_QUANTITY);</span>
+            }
+
+<span class="fc" id="L134">            stock.setQuantity(stock.getQuantity() + adjustedQuantity);</span>
+<span class="fc" id="L135">        }</span>
+<span class="fc" id="L136">        stockRepository.saveAll(stocks);</span>
+<span class="fc" id="L137">        stockHistoryService.createStockHistories(stocks, stockQuantityVms);</span>
+
+        //Update stock quantity for product
+<span class="fc" id="L140">        List&lt;ProductQuantityPostVm&gt; productQuantityPostVms = stocks.parallelStream()</span>
+<span class="fc" id="L141">            .map(ProductQuantityPostVm::fromModel)</span>
+<span class="fc" id="L142">            .toList();</span>
+<span class="fc bfc" id="L143" title="All 2 branches covered.">        if (!productQuantityPostVms.isEmpty()) {</span>
+<span class="fc" id="L144">            productService.updateProductQuantity(productQuantityPostVms);</span>
+        }
+<span class="fc" id="L146">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

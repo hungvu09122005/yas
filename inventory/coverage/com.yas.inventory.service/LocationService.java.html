@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LocationService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">inventory</a> &gt; <a href="index.source.html" class="el_package">com.yas.inventory.service</a> &gt; <span class="el_source">LocationService.java</span></div><h1>LocationService.java</h1><pre class="source lang-java linenums">package com.yas.inventory.service;
+
+import com.yas.inventory.config.ServiceUrlConfig;
+import com.yas.inventory.viewmodel.address.AddressDetailVm;
+import com.yas.inventory.viewmodel.address.AddressPostVm;
+import com.yas.inventory.viewmodel.address.AddressVm;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import java.net.URI;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.util.UriComponentsBuilder;
+
+@Service
+@RequiredArgsConstructor
+public class LocationService extends AbstractCircuitBreakFallbackHandler {
+    private final RestClient restClient;
+    private final ServiceUrlConfig serviceUrlConfig;
+    private static final String ADDRESS_BY_ID_PATH = &quot;/storefront/addresses/{id}&quot;;
+
+    @Retry(name = &quot;restApi&quot;)
+    @CircuitBreaker(name = &quot;restCircuitBreaker&quot;, fallbackMethod = &quot;handleAddressDetailFallback&quot;)
+    public AddressDetailVm getAddressById(Long id) {
+        final String jwt =
+<span class="fc" id="L28">            ((Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getTokenValue();</span>
+<span class="fc" id="L29">        final URI url = UriComponentsBuilder</span>
+<span class="fc" id="L30">            .fromUriString(serviceUrlConfig.location())</span>
+<span class="fc" id="L31">            .path(ADDRESS_BY_ID_PATH)</span>
+<span class="fc" id="L32">            .buildAndExpand(id)</span>
+<span class="fc" id="L33">            .toUri();</span>
+
+<span class="fc" id="L35">        return restClient.get()</span>
+<span class="fc" id="L36">            .uri(url)</span>
+<span class="pc" id="L37">            .headers(h -&gt; h.setBearerAuth(jwt))</span>
+<span class="fc" id="L38">            .retrieve()</span>
+<span class="fc" id="L39">            .body(AddressDetailVm.class);</span>
+    }
+
+    @Retry(name = &quot;restApi&quot;)
+    @CircuitBreaker(name = &quot;restCircuitBreaker&quot;, fallbackMethod = &quot;handleAddressFallback&quot;)
+    public AddressVm createAddress(AddressPostVm addressPostVm) {
+        final String jwt =
+<span class="fc" id="L46">            ((Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getTokenValue();</span>
+<span class="fc" id="L47">        final URI url = UriComponentsBuilder</span>
+<span class="fc" id="L48">            .fromUriString(serviceUrlConfig.location())</span>
+<span class="fc" id="L49">            .path(&quot;/storefront/addresses&quot;)</span>
+<span class="fc" id="L50">            .buildAndExpand()</span>
+<span class="fc" id="L51">            .toUri();</span>
+
+<span class="fc" id="L53">        return restClient.post()</span>
+<span class="fc" id="L54">            .uri(url)</span>
+<span class="pc" id="L55">            .headers(h -&gt; h.setBearerAuth(jwt))</span>
+<span class="fc" id="L56">            .body(addressPostVm)</span>
+<span class="fc" id="L57">            .retrieve()</span>
+<span class="fc" id="L58">            .body(AddressVm.class);</span>
+    }
+
+    @Retry(name = &quot;restApi&quot;)
+    @CircuitBreaker(name = &quot;restCircuitBreaker&quot;, fallbackMethod = &quot;handleBodilessFallback&quot;)
+    public void updateAddress(Long id, AddressPostVm addressPostVm) {
+        final String jwt =
+<span class="fc" id="L65">            ((Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getTokenValue();</span>
+
+<span class="fc" id="L67">        final URI url = UriComponentsBuilder</span>
+<span class="fc" id="L68">            .fromUriString(serviceUrlConfig.location())</span>
+<span class="fc" id="L69">            .path(ADDRESS_BY_ID_PATH)</span>
+<span class="fc" id="L70">            .buildAndExpand(id)</span>
+<span class="fc" id="L71">            .toUri();</span>
+
+<span class="fc" id="L73">        restClient.put()</span>
+<span class="fc" id="L74">            .uri(url)</span>
+<span class="pc" id="L75">            .headers(h -&gt; h.setBearerAuth(jwt))</span>
+<span class="fc" id="L76">            .body(addressPostVm)</span>
+<span class="fc" id="L77">            .retrieve()</span>
+<span class="fc" id="L78">            .body(Void.class);</span>
+<span class="fc" id="L79">    }</span>
+
+    @Retry(name = &quot;restApi&quot;)
+    @CircuitBreaker(name = &quot;restCircuitBreaker&quot;, fallbackMethod = &quot;handleBodilessFallback&quot;)
+    public void deleteAddress(Long addressId) {
+<span class="fc" id="L84">        final URI url = UriComponentsBuilder.fromUriString(serviceUrlConfig.location()).path(ADDRESS_BY_ID_PATH)</span>
+<span class="fc" id="L85">            .buildAndExpand(addressId).toUri();</span>
+        final String jwt =
+<span class="fc" id="L87">            ((Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getTokenValue();</span>
+<span class="fc" id="L88">        restClient.delete()</span>
+<span class="fc" id="L89">            .uri(url)</span>
+<span class="pc" id="L90">            .headers(h -&gt; h.setBearerAuth(jwt))</span>
+<span class="fc" id="L91">            .retrieve()</span>
+<span class="fc" id="L92">            .body(Void.class);</span>
+<span class="fc" id="L93">    }</span>
+
+    private AddressDetailVm handleAddressDetailFallback(Throwable throwable) throws Throwable {
+<span class="nc" id="L96">        return handleTypedFallback(throwable);</span>
+    }
+
+    private AddressVm handleAddressFallback(Throwable throwable) throws Throwable {
+<span class="nc" id="L100">        return handleTypedFallback(throwable);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

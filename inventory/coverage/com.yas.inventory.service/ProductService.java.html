@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">inventory</a> &gt; <a href="index.source.html" class="el_package">com.yas.inventory.service</a> &gt; <span class="el_source">ProductService.java</span></div><h1>ProductService.java</h1><pre class="source lang-java linenums">package com.yas.inventory.service;
+
+import com.yas.inventory.config.ServiceUrlConfig;
+import com.yas.inventory.model.enumeration.FilterExistInWhSelection;
+import com.yas.inventory.utils.AuthenticationUtils;
+import com.yas.inventory.viewmodel.product.ProductInfoVm;
+import com.yas.inventory.viewmodel.product.ProductQuantityPostVm;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import java.net.URI;
+import java.util.List;
+import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.util.UriComponentsBuilder;
+
+@Service
+@RequiredArgsConstructor
+public class ProductService extends AbstractCircuitBreakFallbackHandler {
+    private final RestClient restClient;
+    private final ServiceUrlConfig serviceUrlConfig;
+
+    @Retry(name = &quot;restApi&quot;)
+    @CircuitBreaker(name = &quot;restCircuitBreaker&quot;, fallbackMethod = &quot;handleProductInfoFallback&quot;)
+    public ProductInfoVm getProduct(Long id) {
+<span class="fc" id="L33">        String jwt = AuthenticationUtils.extractJwt();</span>
+
+<span class="fc" id="L35">        final URI url = UriComponentsBuilder</span>
+<span class="fc" id="L36">            .fromUriString(serviceUrlConfig.product())</span>
+<span class="fc" id="L37">            .path(&quot;/backoffice/products/&quot; + id)</span>
+<span class="fc" id="L38">            .build()</span>
+<span class="fc" id="L39">            .toUri();</span>
+<span class="fc" id="L40">        return restClient.get()</span>
+<span class="fc" id="L41">            .uri(url)</span>
+<span class="pc" id="L42">            .headers(h -&gt; h.setBearerAuth(jwt))</span>
+<span class="fc" id="L43">            .retrieve()</span>
+<span class="fc" id="L44">            .body(ProductInfoVm.class);</span>
+    }
+
+    @Retry(name = &quot;restApi&quot;)
+    @CircuitBreaker(name = &quot;restCircuitBreaker&quot;, fallbackMethod = &quot;handleProductInfoListFallback&quot;)
+    public List&lt;ProductInfoVm&gt; filterProducts(String productName, String productSku,
+                                              List&lt;Long&gt; productIds, FilterExistInWhSelection selection) {
+
+<span class="fc" id="L52">        MultiValueMap&lt;String, String&gt; params = new LinkedMultiValueMap&lt;&gt;();</span>
+<span class="fc" id="L53">        params.add(&quot;name&quot;, productName);</span>
+<span class="fc" id="L54">        params.add(&quot;sku&quot;, productSku);</span>
+<span class="fc" id="L55">        params.add(&quot;selection&quot;, selection.name());</span>
+<span class="pc bpc" id="L56" title="1 of 2 branches missed.">        if (!CollectionUtils.isEmpty(productIds)) {</span>
+<span class="fc" id="L57">            params.add(&quot;productIds&quot;, productIds.stream().map(Object::toString).collect(Collectors.joining(&quot;,&quot;)));</span>
+        }
+<span class="fc" id="L59">        String jwt = AuthenticationUtils.extractJwt();</span>
+<span class="fc" id="L60">        final URI url = UriComponentsBuilder</span>
+<span class="fc" id="L61">            .fromUriString(serviceUrlConfig.product())</span>
+<span class="fc" id="L62">            .path(&quot;/backoffice/products/for-warehouse&quot;)</span>
+<span class="fc" id="L63">            .queryParams(params)</span>
+<span class="fc" id="L64">            .build()</span>
+<span class="fc" id="L65">            .toUri();</span>
+<span class="fc" id="L66">        return restClient.get()</span>
+<span class="fc" id="L67">            .uri(url)</span>
+<span class="pc" id="L68">            .headers(h -&gt; h.setBearerAuth(jwt))</span>
+<span class="fc" id="L69">            .retrieve()</span>
+<span class="fc" id="L70">            .toEntity(new ParameterizedTypeReference&lt;List&lt;ProductInfoVm&gt;&gt;() {</span>
+            })
+<span class="fc" id="L72">            .getBody();</span>
+    }
+
+    @Retry(name = &quot;restApi&quot;)
+    @CircuitBreaker(name = &quot;restCircuitBreaker&quot;, fallbackMethod = &quot;handleBodilessFallback&quot;)
+    public void updateProductQuantity(List&lt;ProductQuantityPostVm&gt; productQuantityPostVms) {
+        final String jwt =
+<span class="fc" id="L79">            ((Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getTokenValue();</span>
+
+<span class="fc" id="L81">        final URI url = UriComponentsBuilder</span>
+<span class="fc" id="L82">            .fromUriString(serviceUrlConfig.product())</span>
+<span class="fc" id="L83">            .path(&quot;/backoffice/products/update-quantity&quot;)</span>
+<span class="fc" id="L84">            .buildAndExpand()</span>
+<span class="fc" id="L85">            .toUri();</span>
+
+<span class="fc" id="L87">        restClient.put()</span>
+<span class="fc" id="L88">            .uri(url)</span>
+<span class="pc" id="L89">            .headers(h -&gt; h.setBearerAuth(jwt))</span>
+<span class="fc" id="L90">            .body(productQuantityPostVms)</span>
+<span class="fc" id="L91">            .retrieve()</span>
+<span class="fc" id="L92">            .body(Void.class);</span>
+<span class="fc" id="L93">    }</span>
+
+    protected ProductInfoVm handleProductInfoFallback(Throwable throwable) throws Throwable {
+<span class="nc" id="L96">        return handleTypedFallback(throwable);</span>
+    }
+
+    protected List&lt;ProductInfoVm&gt; handleProductInfoListFallback(Throwable throwable) throws Throwable {
+<span class="nc" id="L100">        return handleTypedFallback(throwable);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>
