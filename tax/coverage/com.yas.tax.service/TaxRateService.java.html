@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TaxRateService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">tax</a> &gt; <a href="index.source.html" class="el_package">com.yas.tax.service</a> &gt; <span class="el_source">TaxRateService.java</span></div><h1>TaxRateService.java</h1><pre class="source lang-java linenums">package com.yas.tax.service;
+
+import com.yas.commonlibrary.exception.NotFoundException;
+import com.yas.tax.constants.MessageCode;
+import com.yas.tax.model.TaxRate;
+import com.yas.tax.repository.TaxClassRepository;
+import com.yas.tax.repository.TaxRateRepository;
+import com.yas.tax.viewmodel.location.StateOrProvinceAndCountryGetNameVm;
+import com.yas.tax.viewmodel.taxrate.TaxRateGetDetailVm;
+import com.yas.tax.viewmodel.taxrate.TaxRateListGetVm;
+import com.yas.tax.viewmodel.taxrate.TaxRatePostVm;
+import com.yas.tax.viewmodel.taxrate.TaxRateVm;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+public class TaxRateService {
+
+    private final TaxRateRepository taxRateRepository;
+    private final TaxClassRepository taxClassRepository;
+
+    private final LocationService locationService;
+
+    public TaxRateService(LocationService locationService, TaxRateRepository taxRateRepository,
+<span class="fc" id="L32">                          TaxClassRepository taxClassRepository) {</span>
+<span class="fc" id="L33">        this.locationService = locationService;</span>
+<span class="fc" id="L34">        this.taxRateRepository = taxRateRepository;</span>
+<span class="fc" id="L35">        this.taxClassRepository = taxClassRepository;</span>
+<span class="fc" id="L36">    }</span>
+
+    /**
+     * handle business and create state or province.
+     *
+     * @param taxRatePostVm The state or province post Dto
+     * @return TaxRate
+     */
+    @Transactional
+    public TaxRate createTaxRate(final TaxRatePostVm taxRatePostVm) {
+
+<span class="fc" id="L47">        final Long taxClassId = taxRatePostVm.taxClassId();</span>
+<span class="fc" id="L48">        final boolean isTaxClassExisted = taxClassRepository.existsById(taxClassId);</span>
+<span class="fc bfc" id="L49" title="All 2 branches covered.">        if (!isTaxClassExisted) {</span>
+<span class="fc" id="L50">            throw new NotFoundException(MessageCode.TAX_CLASS_NOT_FOUND, taxClassId);</span>
+        }
+
+<span class="fc" id="L53">        final TaxRate taxRate = TaxRate.builder()</span>
+<span class="fc" id="L54">            .rate(taxRatePostVm.rate())</span>
+<span class="fc" id="L55">            .zipCode(taxRatePostVm.zipCode())</span>
+<span class="fc" id="L56">            .taxClass(taxClassRepository.getReferenceById(taxClassId))</span>
+<span class="fc" id="L57">            .stateOrProvinceId(taxRatePostVm.stateOrProvinceId())</span>
+<span class="fc" id="L58">            .countryId(taxRatePostVm.countryId())</span>
+<span class="fc" id="L59">            .build();</span>
+
+<span class="fc" id="L61">        return taxRateRepository.save(taxRate);</span>
+    }
+
+    /**
+     * Handle business and update state or province.
+     *
+     * @param taxRatePostVm The state or province post Dto
+     * @param id            The id of TaxRate need to update
+     */
+    @Transactional
+    public void updateTaxRate(final TaxRatePostVm taxRatePostVm,
+                              final Long id) {
+<span class="fc" id="L73">        final TaxRate taxRate = taxRateRepository</span>
+<span class="fc" id="L74">            .findById(id)</span>
+<span class="fc" id="L75">            .orElseThrow(</span>
+<span class="fc" id="L76">                () -&gt; new NotFoundException(MessageCode.TAX_RATE_NOT_FOUND, id));</span>
+
+<span class="fc" id="L78">        final Long taxClassId = taxRatePostVm.taxClassId();</span>
+<span class="fc" id="L79">        final boolean isTaxClassExisted = taxClassRepository.existsById(taxClassId);</span>
+<span class="fc bfc" id="L80" title="All 2 branches covered.">        if (!isTaxClassExisted) {</span>
+<span class="fc" id="L81">            throw new NotFoundException(MessageCode.TAX_CLASS_NOT_FOUND, taxClassId);</span>
+        }
+<span class="fc" id="L83">        taxRate.setRate(taxRatePostVm.rate());</span>
+<span class="fc" id="L84">        taxRate.setZipCode(taxRatePostVm.zipCode());</span>
+<span class="fc" id="L85">        taxRate.setTaxClass(taxClassRepository.getReferenceById(taxClassId));</span>
+<span class="fc" id="L86">        taxRate.setStateOrProvinceId(taxRatePostVm.stateOrProvinceId());</span>
+<span class="fc" id="L87">        taxRate.setCountryId(taxRatePostVm.countryId());</span>
+
+<span class="fc" id="L89">        taxRateRepository.save(taxRate);</span>
+<span class="fc" id="L90">    }</span>
+
+    @Transactional
+    public void delete(final Long id) {
+<span class="fc" id="L94">        final boolean isTaxRateExisted = taxRateRepository.existsById(id);</span>
+<span class="fc bfc" id="L95" title="All 2 branches covered.">        if (!isTaxRateExisted) {</span>
+<span class="fc" id="L96">            throw new NotFoundException(MessageCode.TAX_RATE_NOT_FOUND, id);</span>
+        }
+<span class="fc" id="L98">        taxRateRepository.deleteById(id);</span>
+<span class="fc" id="L99">    }</span>
+
+    @Transactional(readOnly = true)
+    public TaxRateVm findById(final Long id) {
+<span class="fc" id="L103">        final TaxRate taxRate = taxRateRepository</span>
+<span class="fc" id="L104">            .findById(id)</span>
+<span class="fc" id="L105">            .orElseThrow(() -&gt; new NotFoundException(MessageCode.TAX_RATE_NOT_FOUND, id));</span>
+<span class="fc" id="L106">        return TaxRateVm.fromModel(taxRate);</span>
+    }
+
+    @Transactional(readOnly = true)
+    public List&lt;TaxRateVm&gt; findAll() {
+<span class="fc" id="L111">        return taxRateRepository</span>
+<span class="fc" id="L112">            .findAll()</span>
+<span class="fc" id="L113">            .stream()</span>
+<span class="fc" id="L114">            .map(TaxRateVm::fromModel)</span>
+<span class="fc" id="L115">            .toList();</span>
+    }
+
+    /**
+     * Handle business and paging list of tax rates.
+     *
+     * @param pageNo   The number of page
+     * @param pageSize The number of row on every page
+     * @return TaxRateListGetVm
+     */
+    @Transactional(readOnly = true)
+    public TaxRateListGetVm getPageableTaxRates(int pageNo, int pageSize) {
+<span class="fc" id="L127">        final Pageable pageable = PageRequest.of(pageNo, pageSize);</span>
+<span class="fc" id="L128">        final Page&lt;TaxRate&gt; taxRatePage = taxRateRepository.findAll(pageable);</span>
+<span class="fc" id="L129">        final List&lt;TaxRate&gt; taxRates = taxRatePage.getContent();</span>
+<span class="fc" id="L130">        final List&lt;TaxRateGetDetailVm&gt; taxRateGetDetailVms = new ArrayList&lt;&gt;();</span>
+
+        //Filter list of state or province ids
+<span class="fc" id="L133">        final List&lt;Long&gt; stateOrProvinceIds =</span>
+<span class="pc" id="L134">            taxRates.stream().distinct().map(el -&gt; el.getStateOrProvinceId()).collect(Collectors.toList());</span>
+
+<span class="pc bpc" id="L136" title="1 of 2 branches missed.">        if (!stateOrProvinceIds.isEmpty()) {</span>
+            //Call location service to get country names and state or province name by list of state or province ids
+<span class="nc" id="L138">            List&lt;StateOrProvinceAndCountryGetNameVm&gt; stateOrProvinceAndCountryGetNameVms =</span>
+<span class="nc" id="L139">                locationService.getStateOrProvinceAndCountryNames(stateOrProvinceIds);</span>
+<span class="nc" id="L140">            taxRates.forEach(taxRate -&gt; {</span>
+<span class="nc" id="L141">                stateOrProvinceAndCountryGetNameVms.stream()</span>
+<span class="nc" id="L142">                    .filter(x -&gt; x.stateOrProvinceId().equals(taxRate.getStateOrProvinceId()))</span>
+<span class="nc" id="L143">                    .findAny()</span>
+<span class="nc" id="L144">                    .ifPresent(stateOrProvinceAndCountryGetNameVm -&gt; taxRateGetDetailVms.add(new TaxRateGetDetailVm(</span>
+<span class="nc" id="L145">                        taxRate.getId(),</span>
+<span class="nc" id="L146">                        taxRate.getRate(),</span>
+<span class="nc" id="L147">                        taxRate.getZipCode(),</span>
+<span class="nc" id="L148">                        taxRate.getTaxClass().getName(),</span>
+<span class="nc" id="L149">                        stateOrProvinceAndCountryGetNameVm.stateOrProvinceName(),</span>
+<span class="nc" id="L150">                        stateOrProvinceAndCountryGetNameVm.countryName())));</span>
+
+<span class="nc" id="L152">            });</span>
+        }
+
+<span class="fc" id="L155">        return new TaxRateListGetVm(</span>
+            taxRateGetDetailVms,
+<span class="fc" id="L157">            taxRatePage.getNumber(),</span>
+<span class="fc" id="L158">            taxRatePage.getSize(),</span>
+<span class="fc" id="L159">            (int) taxRatePage.getTotalElements(),</span>
+<span class="fc" id="L160">            taxRatePage.getTotalPages(),</span>
+<span class="fc" id="L161">            taxRatePage.isLast()</span>
+        );
+    }
+
+    public double getTaxPercent(Long taxClassId, Long countryId, Long stateOrProvinceId, String zipCode) {
+<span class="fc" id="L166">        Double taxPercent = taxRateRepository.getTaxPercent(countryId, stateOrProvinceId, zipCode, taxClassId);</span>
+<span class="fc bfc" id="L167" title="All 2 branches covered.">        if (taxPercent != null) {</span>
+<span class="fc" id="L168">            return taxPercent;</span>
+        }
+
+<span class="fc" id="L171">        return 0;</span>
+    }
+
+    public List&lt;TaxRateVm&gt; getBulkTaxRate(List&lt;Long&gt; taxClassIds,
+                                          Long countryId,
+                                          Long stateOrProvinceId,
+                                          String zipCode) {
+<span class="fc" id="L178">        return taxRateRepository.getBatchTaxRates(countryId,</span>
+            stateOrProvinceId,
+            zipCode,
+                new HashSet&lt;&gt;(taxClassIds))
+<span class="fc" id="L182">            .stream().map(TaxRateVm::fromModel).toList();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

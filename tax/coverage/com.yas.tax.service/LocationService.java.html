@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LocationService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">tax</a> &gt; <a href="index.source.html" class="el_package">com.yas.tax.service</a> &gt; <span class="el_source">LocationService.java</span></div><h1>LocationService.java</h1><pre class="source lang-java linenums">package com.yas.tax.service;
+
+import com.yas.tax.config.ServiceUrlConfig;
+import com.yas.tax.viewmodel.location.StateOrProvinceAndCountryGetNameVm;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import java.net.URI;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.util.UriComponentsBuilder;
+
+@Service
+@RequiredArgsConstructor
+public class LocationService extends AbstractCircuitBreakFallbackHandler {
+    private final RestClient restClient;
+    private final ServiceUrlConfig serviceUrlConfig;
+
+    @Retry(name = &quot;restApi&quot;)
+    @CircuitBreaker(name = &quot;restCircuitBreaker&quot;, fallbackMethod = &quot;handleLocationNameListFallback&quot;)
+    public List&lt;StateOrProvinceAndCountryGetNameVm&gt; getStateOrProvinceAndCountryNames(List&lt;Long&gt; stateOrProvinceIds) {
+<span class="nc" id="L26">        final URI url = UriComponentsBuilder.fromUriString(serviceUrlConfig.location())</span>
+<span class="nc" id="L27">            .path(&quot;/backoffice/state-or-provinces/state-country-names&quot;)</span>
+<span class="nc" id="L28">            .queryParam(&quot;stateOrProvinceIds&quot;, stateOrProvinceIds).build().toUri();</span>
+        final String jwt =
+<span class="nc" id="L30">            ((Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getTokenValue();</span>
+<span class="nc" id="L31">        return restClient.get()</span>
+<span class="nc" id="L32">            .uri(url)</span>
+<span class="nc" id="L33">            .headers(h -&gt; h.setBearerAuth(jwt))</span>
+<span class="nc" id="L34">            .retrieve()</span>
+<span class="nc" id="L35">            .body(new ParameterizedTypeReference&lt;List&lt;StateOrProvinceAndCountryGetNameVm&gt;&gt;() {</span>
+            });
+    }
+
+    protected List&lt;StateOrProvinceAndCountryGetNameVm&gt; handleLocationNameListFallback(Throwable throwable)
+        throws Throwable {
+<span class="nc" id="L41">        return handleTypedFallback(throwable);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

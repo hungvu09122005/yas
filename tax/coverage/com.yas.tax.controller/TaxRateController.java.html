@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TaxRateController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">tax</a> &gt; <a href="index.source.html" class="el_package">com.yas.tax.controller</a> &gt; <span class="el_source">TaxRateController.java</span></div><h1>TaxRateController.java</h1><pre class="source lang-java linenums">package com.yas.tax.controller;
+
+import com.yas.tax.constants.ApiConstant;
+import com.yas.tax.constants.PageableConstant;
+import com.yas.tax.model.TaxRate;
+import com.yas.tax.service.TaxRateService;
+import com.yas.tax.viewmodel.error.ErrorVm;
+import com.yas.tax.viewmodel.taxrate.TaxRateListGetVm;
+import com.yas.tax.viewmodel.taxrate.TaxRatePostVm;
+import com.yas.tax.viewmodel.taxrate.TaxRateVm;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
+import java.util.List;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
+
+@RestController
+@RequestMapping(ApiConstant.TAX_RATE_URL)
+public class TaxRateController {
+    private final TaxRateService taxRateService;
+
+<span class="fc" id="L34">    public TaxRateController(TaxRateService taxRateService) {</span>
+<span class="fc" id="L35">        this.taxRateService = taxRateService;</span>
+<span class="fc" id="L36">    }</span>
+
+    @GetMapping(&quot;/paging&quot;)
+    public ResponseEntity&lt;TaxRateListGetVm&gt; getPageableTaxRates(
+        @RequestParam(value = &quot;pageNo&quot;, defaultValue = PageableConstant.DEFAULT_PAGE_NUMBER, required = false)
+        final int pageNo,
+        @RequestParam(value = &quot;pageSize&quot;, defaultValue = PageableConstant.DEFAULT_PAGE_SIZE, required = false)
+        final int pageSize) {
+<span class="fc" id="L44">        return ResponseEntity.ok(taxRateService.getPageableTaxRates(pageNo, pageSize));</span>
+    }
+
+    @GetMapping(&quot;/{id}&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = ApiConstant.CODE_200, description = ApiConstant.OK,
+            content = @Content(schema = @Schema(implementation = TaxRateVm.class))),
+        @ApiResponse(responseCode = ApiConstant.CODE_404, description = ApiConstant.NOT_FOUND,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;TaxRateVm&gt; getTaxRate(@PathVariable(&quot;id&quot;) final Long id) {
+<span class="fc" id="L54">        return ResponseEntity.ok(taxRateService.findById(id));</span>
+    }
+
+    @PostMapping
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = ApiConstant.CODE_201, description = ApiConstant.CREATED,
+            content = @Content(schema = @Schema(implementation = TaxRateVm.class))),
+        @ApiResponse(responseCode = ApiConstant.CODE_400, description = ApiConstant.BAD_REQUEST,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;TaxRateVm&gt; createTaxRate(
+        @Valid @RequestBody final TaxRatePostVm taxRatePostVm,
+        final UriComponentsBuilder uriComponentsBuilder) {
+<span class="fc" id="L66">        final TaxRate taxRate = taxRateService.createTaxRate(taxRatePostVm);</span>
+<span class="fc" id="L67">        return ResponseEntity.created(</span>
+                uriComponentsBuilder
+<span class="fc" id="L69">                    .replacePath(&quot;/tax-rates/{id}&quot;)</span>
+<span class="fc" id="L70">                    .buildAndExpand(taxRate.getId())</span>
+<span class="fc" id="L71">                    .toUri())</span>
+<span class="fc" id="L72">            .body(TaxRateVm.fromModel(taxRate));</span>
+    }
+
+    @PutMapping(&quot;/{id}&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = ApiConstant.CODE_204, description = ApiConstant.NO_CONTENT, content = @Content()),
+        @ApiResponse(responseCode = ApiConstant.CODE_404, description = ApiConstant.NOT_FOUND,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class))),
+        @ApiResponse(responseCode = ApiConstant.CODE_400, description = ApiConstant.BAD_REQUEST,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;Void&gt; updateTaxRate(@PathVariable final Long id,
+                                              @Valid @RequestBody final TaxRatePostVm taxRatePostVm) {
+<span class="fc" id="L84">        taxRateService.updateTaxRate(taxRatePostVm, id);</span>
+<span class="fc" id="L85">        return ResponseEntity.noContent().build();</span>
+    }
+
+    @DeleteMapping(&quot;/{id}&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = ApiConstant.CODE_204, description = ApiConstant.NO_CONTENT, content = @Content()),
+        @ApiResponse(responseCode = ApiConstant.CODE_404, description = ApiConstant.NOT_FOUND,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class))),
+        @ApiResponse(responseCode = ApiConstant.CODE_400, description = ApiConstant.BAD_REQUEST,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;Void&gt; deleteTaxRate(@PathVariable(name = &quot;id&quot;) final Long id) {
+<span class="fc" id="L96">        taxRateService.delete(id);</span>
+<span class="fc" id="L97">        return ResponseEntity.noContent().build();</span>
+    }
+
+    @GetMapping(&quot;/tax-percent&quot;)
+    public ResponseEntity&lt;Double&gt; getTaxPercentByAddress(
+        @RequestParam(value = &quot;taxClassId&quot;, required = true) final Long taxClassId,
+        @RequestParam(value = &quot;countryId&quot;, required = true) final Long countryId,
+        @RequestParam(value = &quot;stateOrProvinceId&quot;, required = false) final Long stateOrProvinceId,
+        @RequestParam(value = &quot;zipCode&quot;, required = false) final String zipCode) {
+<span class="fc" id="L106">        return ResponseEntity.ok(taxRateService.getTaxPercent(taxClassId, countryId, stateOrProvinceId, zipCode));</span>
+    }
+
+    @GetMapping(&quot;/location-based-batch&quot;)
+    public ResponseEntity&lt;List&lt;TaxRateVm&gt;&gt; getBatchTaxPercentsByAddress(
+        @RequestParam(value = &quot;taxClassIds&quot;, required = true) final List&lt;Long&gt; taxClassIds,
+        @RequestParam(value = &quot;countryId&quot;, required = true) final Long countryId,
+        @RequestParam(value = &quot;stateOrProvinceId&quot;, required = false) final Long stateOrProvinceId,
+        @RequestParam(value = &quot;zipCode&quot;, required = false) final String zipCode) {
+<span class="fc" id="L115">        return ResponseEntity.ok(taxRateService.getBulkTaxRate(taxClassIds, countryId, stateOrProvinceId, zipCode));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>
