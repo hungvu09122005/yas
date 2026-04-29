@@ -25,6 +25,7 @@ jobs:
       contents: write        # peaceiris/actions-gh-pages cần push lên gh-pages branch
       pull-requests: write   # madrapps/jacoco-report comment lên PR
       checks: write          # dorny/test-reporter upload test results
+      packages: write        # docker/build-push-action push to GHCR
     name: Test
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -60,6 +61,7 @@ jobs:
         run: mvn jacoco:check@check -pl cart
 
       - name: Add coverage report to PR
+        id: jacoco
         uses: madrapps/jacoco-report@db72e7e7c96f98d239967958b0a0a6ca7d3bb45f # v1.6.1
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && github.event_name == 'pull_request' }}
         with:
@@ -69,6 +71,12 @@ jobs:
           min-coverage-changed-files: 60
           title: 'Cart Coverage Report'
           update-comment: true
+
+      - name: Fail PR if overall coverage is less than 70%
+        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && github.event_name == 'pull_request' && steps.jacoco.outputs.coverage-overall < 70.0 }}
+        run: |
+          echo "Coverage is ${{ steps.jacoco.outputs.coverage-overall }}%, which is less than 70%!"
+          exit 1
 
       - name: Run Maven Checkstyle
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
@@ -94,6 +102,7 @@ jobs:
       contents: write        # peaceiris/actions-gh-pages cần push lên gh-pages branch
       pull-requests: write   # madrapps/jacoco-report comment lên PR
       checks: write          # dorny/test-reporter upload test results
+      packages: write        # docker/build-push-action push to GHCR
     name: Build
     needs: [test]
     runs-on: ubuntu-latest
@@ -121,7 +130,7 @@ jobs:
         with:
           context: ./cart
           push: true
-          tags: ghcr.io/nashtech-garage/yas-cart:latest
+          tags: ghcr.io/${{ github.repository_owner }}/yas-cart:latest
 
   publish-coverage:
     name: Publish coverage report
