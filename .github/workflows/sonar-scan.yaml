@@ -1,5 +1,9 @@
 name: SonarCloud Scan
 
+
+concurrency:
+  group: sonar-cloud-analysis
+  cancel-in-progress: false
 on:
   workflow_run:
     workflows: ["payment-ci", "cart-ci", "order-ci", "product-ci", "promotion-ci", "rating-ci", "recommendation-ci", "search-ci", "inventory-ci", "location-ci", "media-ci", "customer-ci", "tax-ci", "webhook-ci", "backoffice-ci", "backoffice-bff-ci", "storefront-ci", "storefront-bff-ci", "sampledata-ci", "payment-paypal-ci"]
