@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RatingController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rating</a> &gt; <a href="index.source.html" class="el_package">com.yas.rating.controller</a> &gt; <span class="el_source">RatingController.java</span></div><h1>RatingController.java</h1><pre class="source lang-java linenums">package com.yas.rating.controller;
+
+import com.yas.rating.service.RatingService;
+import com.yas.rating.viewmodel.RatingListVm;
+import com.yas.rating.viewmodel.RatingPostVm;
+import com.yas.rating.viewmodel.RatingVm;
+import com.yas.rating.viewmodel.ResponeStatusVm;
+import jakarta.validation.Valid;
+import java.time.ZonedDateTime;
+import java.util.List;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class RatingController {
+
+    private final RatingService ratingService;
+
+<span class="fc" id="L26">    public RatingController(RatingService ratingService) {</span>
+<span class="fc" id="L27">        this.ratingService = ratingService;</span>
+<span class="fc" id="L28">    }</span>
+
+    @GetMapping(&quot;/backoffice/ratings&quot;)
+    public ResponseEntity&lt;RatingListVm&gt; getRatingListWithFilter(
+            @RequestParam(value = &quot;productName&quot;, defaultValue = &quot;&quot;, required = false) String productName,
+            @RequestParam(value = &quot;customerName&quot;, defaultValue = &quot;&quot;, required = false) String cusName,
+            @RequestParam(value = &quot;message&quot;, defaultValue = &quot;&quot;, required = false) String message,
+            @RequestParam(value = &quot;createdFrom&quot;, defaultValue = &quot;1970-01-01T00:00:00.000Z&quot;, required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) ZonedDateTime createdFrom,
+            @RequestParam(
+                    value = &quot;createdTo&quot;,
+                    defaultValue = &quot;#{T(java.time.ZonedDateTime).now().toString()}&quot;,
+                    required = false
+            )
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) ZonedDateTime createdTo,
+            @RequestParam(value = &quot;pageNo&quot;, defaultValue = &quot;0&quot;, required = false) int pageNo,
+            @RequestParam(value = &quot;pageSize&quot;, defaultValue = &quot;5&quot;, required = false) int pageSize) {
+<span class="fc" id="L45">        return ResponseEntity.ok(ratingService.getRatingListWithFilter(productName, cusName,</span>
+                message, createdFrom, createdTo,
+                pageNo, pageSize));
+    }
+
+    @GetMapping(&quot;/backoffice/ratings/latest/{count}&quot;)
+    public ResponseEntity&lt;List&lt;RatingVm&gt;&gt; getLatestRatings(@PathVariable int count) {
+<span class="fc" id="L52">        return ResponseEntity.ok(ratingService.getLatestRatings(count));</span>
+    }
+
+    @DeleteMapping(&quot;/backoffice/ratings/{id}&quot;)
+    public ResponseEntity&lt;ResponeStatusVm&gt; deleteRating(@PathVariable Long id) {
+<span class="fc" id="L57">        return ResponseEntity.ok(ratingService.deleteRating(id));</span>
+    }
+
+    @GetMapping({&quot;/storefront/ratings/products/{productId}&quot;})
+    public ResponseEntity&lt;RatingListVm&gt; getRatingList(
+            @PathVariable Long productId,
+            @RequestParam(value = &quot;pageNo&quot;, defaultValue = &quot;0&quot;, required = false) int pageNo,
+            @RequestParam(value = &quot;pageSize&quot;, defaultValue = &quot;5&quot;, required = false) int pageSize) {
+
+<span class="fc" id="L66">        return ResponseEntity.ok(ratingService.getRatingListByProductId(productId, pageNo, pageSize));</span>
+    }
+
+    @PostMapping(&quot;/storefront/ratings&quot;)
+    public ResponseEntity&lt;RatingVm&gt; createRating(@Valid @RequestBody RatingPostVm ratingPostVm) {
+<span class="fc" id="L71">        return ResponseEntity.ok(ratingService.createRating(ratingPostVm));</span>
+    }
+
+    @GetMapping(&quot;/storefront/ratings/product/{productId}/average-star&quot;)
+    public Double getAverageStarOfProduct(@PathVariable Long productId) {
+<span class="fc" id="L76">        return ratingService.calculateAverageStar(productId);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

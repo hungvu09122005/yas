@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RatingService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rating</a> &gt; <a href="index.source.html" class="el_package">com.yas.rating.service</a> &gt; <span class="el_source">RatingService.java</span></div><h1>RatingService.java</h1><pre class="source lang-java linenums">package com.yas.rating.service;
+
+import com.yas.commonlibrary.exception.AccessDeniedException;
+import com.yas.commonlibrary.exception.NotFoundException;
+import com.yas.commonlibrary.exception.ResourceExistedException;
+import com.yas.rating.model.Rating;
+import com.yas.rating.repository.RatingRepository;
+import com.yas.rating.utils.AuthenticationUtils;
+import com.yas.rating.utils.Constants;
+import com.yas.rating.viewmodel.CustomerVm;
+import com.yas.rating.viewmodel.RatingListVm;
+import com.yas.rating.viewmodel.RatingPostVm;
+import com.yas.rating.viewmodel.RatingVm;
+import com.yas.rating.viewmodel.ResponeStatusVm;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
+
+<span class="fc" id="L29">@Slf4j</span>
+@Service
+@Transactional
+public class RatingService {
+
+    private final RatingRepository ratingRepository;
+    private final CustomerService customerService;
+
+    private final OrderService orderService;
+
+    public RatingService(RatingRepository ratingRepository,
+            CustomerService customerService,
+<span class="fc" id="L41">            OrderService orderService) {</span>
+<span class="fc" id="L42">        this.ratingRepository = ratingRepository;</span>
+<span class="fc" id="L43">        this.customerService = customerService;</span>
+<span class="fc" id="L44">        this.orderService = orderService;</span>
+<span class="fc" id="L45">    }</span>
+
+    public RatingListVm getRatingListByProductId(Long id, int pageNo, int pageSize) {
+<span class="fc" id="L48">        Pageable pageable = PageRequest.of(pageNo, pageSize, Sort.by(&quot;createdOn&quot;).descending());</span>
+<span class="fc" id="L49">        Page&lt;Rating&gt; ratings = ratingRepository.findByProductId(id, pageable);</span>
+
+<span class="fc" id="L51">        List&lt;RatingVm&gt; ratingVmList = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L52" title="All 2 branches covered.">        for (Rating rating : ratings.getContent()) {</span>
+<span class="fc" id="L53">            ratingVmList.add(RatingVm.fromModel(rating));</span>
+<span class="fc" id="L54">        }</span>
+
+<span class="fc" id="L56">        return new RatingListVm(ratingVmList, ratings.getTotalElements(), ratings.getTotalPages());</span>
+    }
+
+    public RatingListVm getRatingListWithFilter(String proName, String cusName,
+            String message, ZonedDateTime createdFrom,
+            ZonedDateTime createdTo, int pageNo, int pageSize) {
+<span class="fc" id="L62">        Pageable pageable = PageRequest.of(pageNo, pageSize, Sort.by(&quot;createdOn&quot;).descending());</span>
+<span class="fc" id="L63">        Page&lt;Rating&gt; ratings = ratingRepository.getRatingListWithFilter(</span>
+<span class="fc" id="L64">                proName.toLowerCase(),</span>
+<span class="fc" id="L65">                cusName.toLowerCase(), message.toLowerCase(),</span>
+                createdFrom, createdTo, pageable);
+
+<span class="fc" id="L68">        List&lt;RatingVm&gt; ratingVmList = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L69" title="All 2 branches covered.">        for (Rating rating : ratings.getContent()) {</span>
+<span class="fc" id="L70">            ratingVmList.add(RatingVm.fromModel(rating));</span>
+<span class="fc" id="L71">        }</span>
+
+<span class="fc" id="L73">        return new RatingListVm(ratingVmList, ratings.getTotalElements(), ratings.getTotalPages());</span>
+    }
+
+    public List&lt;RatingVm&gt; getLatestRatings(int count) {
+
+<span class="fc bfc" id="L78" title="All 2 branches covered.">        if (count &lt;= 0) {</span>
+<span class="fc" id="L79">            return List.of();</span>
+        }
+
+<span class="fc" id="L82">        Pageable pageable = PageRequest.of(0, count);</span>
+<span class="fc" id="L83">        List&lt;Rating&gt; ratings =  ratingRepository.getLatestRatings(pageable);</span>
+
+<span class="fc bfc" id="L85" title="All 2 branches covered.">        if (CollectionUtils.isEmpty(ratings)) {</span>
+<span class="fc" id="L86">            return List.of();</span>
+        }
+
+<span class="fc" id="L89">        return ratings.stream()</span>
+<span class="fc" id="L90">                .map(RatingVm::fromModel)</span>
+<span class="fc" id="L91">                .toList();</span>
+    }
+
+    public RatingVm createRating(RatingPostVm ratingPostVm) {
+<span class="fc" id="L95">        String userId = AuthenticationUtils.extractUserId();</span>
+
+<span class="fc" id="L97">        if (!orderService.checkOrderExistsByProductAndUserWithStatus(</span>
+<span class="fc" id="L98">                ratingPostVm.productId()</span>
+<span class="fc bfc" id="L99" title="All 2 branches covered.">        ).isPresent()) {</span>
+<span class="fc" id="L100">            throw new AccessDeniedException(Constants.ErrorCode.ACCESS_DENIED);</span>
+        }
+
+<span class="fc bfc" id="L103" title="All 2 branches covered.">        if (ratingRepository.existsByCreatedByAndProductId(userId, ratingPostVm.productId())) {</span>
+<span class="fc" id="L104">            throw new ResourceExistedException(Constants.ErrorCode.RESOURCE_ALREADY_EXISTED);</span>
+        }
+
+<span class="fc" id="L107">        CustomerVm customerVm = customerService.getCustomer();</span>
+<span class="fc bfc" id="L108" title="All 2 branches covered.">        if (customerVm == null) {</span>
+<span class="fc" id="L109">            throw new NotFoundException(Constants.ErrorCode.CUSTOMER_NOT_FOUND, userId);</span>
+        }
+
+<span class="fc" id="L112">        Rating rating = new Rating();</span>
+<span class="fc" id="L113">        rating.setRatingStar(ratingPostVm.star());</span>
+<span class="fc" id="L114">        rating.setContent(ratingPostVm.content());</span>
+<span class="fc" id="L115">        rating.setProductId(ratingPostVm.productId());</span>
+<span class="fc" id="L116">        rating.setProductName(ratingPostVm.productName());</span>
+
+<span class="fc" id="L118">        rating.setLastName(customerVm.lastName());</span>
+<span class="fc" id="L119">        rating.setFirstName(customerVm.firstName());</span>
+
+<span class="fc" id="L121">        Rating savedRating = ratingRepository.save(rating);</span>
+<span class="fc" id="L122">        return RatingVm.fromModel(savedRating);</span>
+    }
+
+    public ResponeStatusVm deleteRating(long ratingId) {
+<span class="fc" id="L126">        Rating rating = ratingRepository.findById(ratingId)</span>
+<span class="fc" id="L127">                .orElseThrow(() -&gt; new NotFoundException(Constants.ErrorCode.RATING_NOT_FOUND, ratingId));</span>
+
+<span class="fc" id="L129">        ratingRepository.delete(rating);</span>
+<span class="fc" id="L130">        return new ResponeStatusVm(&quot;Delete Rating&quot;, Constants.Message.SUCCESS_MESSAGE, HttpStatus.OK.toString());</span>
+    }
+
+    public Double calculateAverageStar(Long productId) {
+<span class="fc" id="L134">        List&lt;Object[]&gt; totalStarsAndRatings = ratingRepository.getTotalStarsAndTotalRatings(productId);</span>
+<span class="fc bfc" id="L135" title="All 2 branches covered.">        if (ObjectUtils.isEmpty(totalStarsAndRatings.get(0)[0])) {</span>
+<span class="fc" id="L136">            return 0.0;</span>
+        }
+<span class="fc" id="L138">        int totalStars = (Integer.parseInt(totalStarsAndRatings.get(0)[0].toString()));</span>
+<span class="fc" id="L139">        int totalRatings = (Integer.parseInt(totalStarsAndRatings.get(0)[1].toString()));</span>
+<span class="fc" id="L140">        return (totalStars * 1.0) / totalRatings;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>
