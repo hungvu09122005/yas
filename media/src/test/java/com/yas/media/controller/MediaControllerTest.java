@@ -49,7 +49,10 @@ class MediaControllerTest {
 
         mediaVm = new MediaVm(1L, "test caption", "test.png", "image/png", "url");
 
-        mediaDto = new MediaDto(new ByteArrayInputStream("test data".getBytes()), MediaType.IMAGE_PNG);
+        mediaDto = MediaDto.builder()
+                .content(new ByteArrayInputStream("test data".getBytes()))
+                .mediaType(MediaType.IMAGE_PNG)
+                .build();
     }
 
     @Test
