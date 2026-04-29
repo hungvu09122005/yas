@@ -60,6 +60,7 @@ jobs:
         run: mvn jacoco:check@check -pl order
 
       - name: Add coverage report to PR
+        id: jacoco
         uses: madrapps/jacoco-report@db72e7e7c96f98d239967958b0a0a6ca7d3bb45f # v1.6.1
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && github.event_name == 'pull_request' }}
         with:
@@ -69,7 +70,12 @@ jobs:
           min-coverage-changed-files: 60
           title: 'Order Coverage Report'
           update-comment: true
-          pass-build-on-coverage-fail: false
+
+      - name: Fail PR if overall coverage is less than 70%
+        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && github.event_name == 'pull_request' && steps.jacoco.outputs.coverage-overall < 70.0 }}
+        run: |
+          echo "Coverage is ${{ steps.jacoco.outputs.coverage-overall }}%, which is less than 70%!"
+          exit 1
 
       - name: Run Maven Checkstyle
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
