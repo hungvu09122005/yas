@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductGetVm.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">search</a> &gt; <a href="index.source.html" class="el_package">com.yas.search.viewmodel</a> &gt; <span class="el_source">ProductGetVm.java</span></div><h1>ProductGetVm.java</h1><pre class="source lang-java linenums">package com.yas.search.viewmodel;
+
+import com.yas.search.model.Product;
+import java.time.ZonedDateTime;
+
+<span class="fc" id="L6">public record ProductGetVm(Long id,</span>
+                           String name,
+                           String slug,
+                           Long thumbnailId,
+                           Double price,
+                           Boolean isAllowedToOrder,
+                           Boolean isPublished,
+                           Boolean isFeatured,
+                           Boolean isVisibleIndividually,
+                           ZonedDateTime createdOn) {
+    public static ProductGetVm fromModel(Product product) {
+<span class="fc" id="L17">        return new ProductGetVm(</span>
+<span class="fc" id="L18">                product.getId(),</span>
+<span class="fc" id="L19">                product.getName(),</span>
+<span class="fc" id="L20">                product.getSlug(),</span>
+<span class="fc" id="L21">                product.getThumbnailMediaId(),</span>
+<span class="fc" id="L22">                product.getPrice(),</span>
+<span class="fc" id="L23">                product.getIsAllowedToOrder(),</span>
+<span class="fc" id="L24">                product.getIsPublished(),</span>
+<span class="fc" id="L25">                product.getIsFeatured(),</span>
+<span class="fc" id="L26">                product.getIsVisibleIndividually(),</span>
+<span class="fc" id="L27">                product.getCreatedOn()</span>
+        );
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

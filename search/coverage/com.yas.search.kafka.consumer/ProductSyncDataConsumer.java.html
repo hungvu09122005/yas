@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductSyncDataConsumer.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">search</a> &gt; <a href="index.source.html" class="el_package">com.yas.search.kafka.consumer</a> &gt; <span class="el_source">ProductSyncDataConsumer.java</span></div><h1>ProductSyncDataConsumer.java</h1><pre class="source lang-java linenums">package com.yas.search.kafka.consumer;
+
+import static com.yas.commonlibrary.kafka.cdc.message.Operation.DELETE;
+import static com.yas.search.kafka.config.consumer.ProductCdcKafkaListenerConfig.PRODUCT_CDC_LISTENER_CONTAINER_FACTORY;
+
+import com.yas.commonlibrary.kafka.cdc.BaseCdcConsumer;
+import com.yas.commonlibrary.kafka.cdc.RetrySupportDql;
+import com.yas.commonlibrary.kafka.cdc.message.ProductCdcMessage;
+import com.yas.commonlibrary.kafka.cdc.message.ProductMsgKey;
+import com.yas.search.service.ProductSyncDataService;
+import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.MessageHeaders;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.Headers;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.stereotype.Service;
+
+/**
+ * Product synchronize data consumer for elasticsearch.
+ */
+<span class="fc" id="L24">@Slf4j</span>
+@Service
+public class ProductSyncDataConsumer extends BaseCdcConsumer&lt;ProductMsgKey, ProductCdcMessage&gt; {
+
+    private final ProductSyncDataService productSyncDataService;
+
+<span class="fc" id="L30">    public ProductSyncDataConsumer(ProductSyncDataService productSyncDataService) {</span>
+<span class="fc" id="L31">        this.productSyncDataService = productSyncDataService;</span>
+<span class="fc" id="L32">    }</span>
+
+    @KafkaListener(
+        id = &quot;product-sync-es&quot;,
+        groupId = &quot;product-sync-search&quot;,
+        topics = &quot;${product.topic.name}&quot;,
+        containerFactory = PRODUCT_CDC_LISTENER_CONTAINER_FACTORY
+    )
+    @RetrySupportDql(listenerContainerFactory = PRODUCT_CDC_LISTENER_CONTAINER_FACTORY)
+    public void processMessage(
+        @Header(KafkaHeaders.RECEIVED_KEY) ProductMsgKey key,
+        @Payload(required = false) @Valid ProductCdcMessage productCdcMessage,
+        @Headers MessageHeaders headers
+    ) {
+<span class="fc" id="L46">        processMessage(key, productCdcMessage, headers, this::sync);</span>
+<span class="fc" id="L47">    }</span>
+
+    public void sync(ProductMsgKey key, ProductCdcMessage productCdcMessage) {
+<span class="pc bpc" id="L50" title="1 of 4 branches missed.">        boolean isHardDeleteEvent = productCdcMessage == null || DELETE.equals(productCdcMessage.getOp());</span>
+<span class="fc bfc" id="L51" title="All 2 branches covered.">        if (isHardDeleteEvent) {</span>
+<span class="fc" id="L52">            log.warn(&quot;Having hard delete event for product: '{}'&quot;, key.getId());</span>
+<span class="fc" id="L53">            productSyncDataService.deleteProduct(key.getId());</span>
+        } else {
+<span class="fc" id="L55">            var operation = productCdcMessage.getOp();</span>
+<span class="fc" id="L56">            var productId = key.getId();</span>
+<span class="pc bpc" id="L57" title="1 of 3 branches missed.">            switch (operation) {</span>
+<span class="fc" id="L58">                case CREATE, READ -&gt; productSyncDataService.createProduct(productId);</span>
+<span class="fc" id="L59">                case UPDATE -&gt; productSyncDataService.updateProduct(productId);</span>
+<span class="nc" id="L60">                default -&gt; log.warn(&quot;Unsupported operation '{}' for product: '{}'&quot;, operation, productId);</span>
+            }
+        }
+<span class="fc" id="L63">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

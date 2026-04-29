@@ -1,0 +1,15 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+search,com.yas.search.constant,ProductField,7,0,0,0,2,0,1,0,1,0
+search,com.yas.search.service,ProductSyncDataService,5,175,1,3,1,46,1,6,0,5
+search,com.yas.search.service,ProductService,54,399,7,11,10,76,9,32,3,29
+search,com.yas.search.kafka.consumer,ProductSyncDataConsumer,5,64,2,7,1,16,2,7,0,4
+search,com.yas.search.model,ProductCriteriaDto,0,30,0,0,0,1,0,1,0,1
+search,com.yas.search.constant.enums,SortType,0,21,0,0,0,4,0,1,0,1
+search,com.yas.search.viewmodel,ProductNameListVm,0,6,0,0,0,1,0,1,0,1
+search,com.yas.search.viewmodel,ProductNameGetVm,0,12,0,0,0,3,0,2,0,2
+search,com.yas.search.viewmodel,ProductEsDetailVm,0,39,0,0,0,1,0,1,0,1
+search,com.yas.search.viewmodel,ProductListGetVm,0,24,0,0,0,1,0,1,0,1
+search,com.yas.search.viewmodel,ProductGetVm,0,57,0,0,0,12,0,2,0,2
+search,com.yas.search.utils,MessagesUtils,23,0,0,0,9,0,3,0,3,0
+search,com.yas.search.controller,ProductController,0,29,0,0,0,5,0,3,0,3
+search,com.yas.search.viewmodel.error,ErrorVm,24,0,0,0,3,0,2,0,2,0

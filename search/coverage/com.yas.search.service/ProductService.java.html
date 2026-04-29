@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">search</a> &gt; <a href="index.source.html" class="el_package">com.yas.search.service</a> &gt; <span class="el_source">ProductService.java</span></div><h1>ProductService.java</h1><pre class="source lang-java linenums">package com.yas.search.service;
+
+import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
+import co.elastic.clients.elasticsearch._types.aggregations.StringTermsAggregate;
+import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import com.yas.search.constant.ProductField;
+import com.yas.search.constant.enums.SortType;
+import com.yas.search.model.Product;
+import com.yas.search.model.ProductCriteriaDto;
+import com.yas.search.viewmodel.ProductGetVm;
+import com.yas.search.viewmodel.ProductListGetVm;
+import com.yas.search.viewmodel.ProductNameGetVm;
+import com.yas.search.viewmodel.ProductNameListVm;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregation;
+import org.springframework.data.elasticsearch.client.elc.NativeQuery;
+import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.SearchHit;
+import org.springframework.data.elasticsearch.core.SearchHitSupport;
+import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.SearchPage;
+import org.springframework.data.elasticsearch.core.query.FetchSourceFilter;
+import org.springframework.stereotype.Service;
+
+@Service
+public class ProductService {
+    private final ElasticsearchOperations elasticsearchOperations;
+    private static final String FUZZINESS_ONE = &quot;1&quot;;
+
+<span class="fc" id="L39">    public ProductService(ElasticsearchOperations elasticsearchOperations) {</span>
+<span class="fc" id="L40">        this.elasticsearchOperations = elasticsearchOperations;</span>
+<span class="fc" id="L41">    }</span>
+
+    public ProductListGetVm findProductAdvance(ProductCriteriaDto productCriteria) {
+<span class="fc" id="L44">        NativeQueryBuilder nativeQuery = NativeQuery.builder()</span>
+<span class="fc" id="L45">                .withAggregation(&quot;categories&quot;, Aggregation.of(a -&gt; a</span>
+<span class="fc" id="L46">                        .terms(ta -&gt; ta.field(ProductField.CATEGORIES))))</span>
+<span class="fc" id="L47">                .withAggregation(&quot;attributes&quot;, Aggregation.of(a -&gt; a</span>
+<span class="fc" id="L48">                        .terms(ta -&gt; ta.field(ProductField.ATTRIBUTES))))</span>
+<span class="fc" id="L49">                .withAggregation(&quot;brands&quot;, Aggregation.of(a -&gt; a</span>
+<span class="fc" id="L50">                        .terms(ta -&gt; ta.field(ProductField.BRAND))))</span>
+<span class="fc" id="L51">                .withQuery(q -&gt; q</span>
+<span class="fc" id="L52">                        .bool(b -&gt; b</span>
+<span class="fc" id="L53">                                .should(s -&gt; s</span>
+<span class="fc" id="L54">                                        .multiMatch(m -&gt; m</span>
+<span class="fc" id="L55">                                                .fields(ProductField.NAME, ProductField.BRAND, ProductField.CATEGORIES)</span>
+<span class="fc" id="L56">                                                .query(productCriteria.keyword())</span>
+<span class="fc" id="L57">                                                .fuzziness(FUZZINESS_ONE)</span>
+                                        )
+                                )
+                        )
+                )
+<span class="fc" id="L62">                .withPageable(PageRequest.of(productCriteria.page(), productCriteria.size()));</span>
+
+
+<span class="fc" id="L65">        nativeQuery.withFilter(f -&gt; f</span>
+<span class="fc" id="L66">                .bool(b -&gt; {</span>
+<span class="fc" id="L67">                    extractedTermsFilter(productCriteria.brand(), ProductField.BRAND, b);</span>
+<span class="fc" id="L68">                    extractedTermsFilter(productCriteria.category(), ProductField.CATEGORIES, b);</span>
+<span class="fc" id="L69">                    extractedTermsFilter(productCriteria.attribute(), ProductField.ATTRIBUTES, b);</span>
+<span class="fc" id="L70">                    extractedRange(productCriteria.minPrice(), productCriteria.maxPrice(), b);</span>
+<span class="fc" id="L71">                    b.must(m -&gt; m.term(t -&gt; t.field(ProductField.IS_PUBLISHED).value(true)));</span>
+<span class="fc" id="L72">                    return b;</span>
+                })
+        );
+
+<span class="fc bfc" id="L76" title="All 2 branches covered.">        if (productCriteria.sortType() == SortType.PRICE_ASC) {</span>
+<span class="fc" id="L77">            nativeQuery.withSort(Sort.by(Sort.Direction.ASC, ProductField.PRICE));</span>
+<span class="fc bfc" id="L78" title="All 2 branches covered.">        } else if (productCriteria.sortType() == SortType.PRICE_DESC) {</span>
+<span class="fc" id="L79">            nativeQuery.withSort(Sort.by(Sort.Direction.DESC, ProductField.PRICE));</span>
+        } else {
+<span class="fc" id="L81">            nativeQuery.withSort(Sort.by(Sort.Direction.DESC, ProductField.CREATE_ON));</span>
+        }
+
+<span class="fc" id="L84">        SearchHits&lt;Product&gt; searchHitsResult = elasticsearchOperations.search(nativeQuery.build(), Product.class);</span>
+<span class="fc" id="L85">        SearchPage&lt;Product&gt; productPage = SearchHitSupport.searchPageFor(searchHitsResult, nativeQuery.getPageable());</span>
+
+<span class="fc" id="L87">        List&lt;ProductGetVm&gt; productListVmList = searchHitsResult.stream()</span>
+<span class="fc" id="L88">                .map(i -&gt; ProductGetVm.fromModel(i.getContent())).toList();</span>
+
+<span class="fc" id="L90">        return new ProductListGetVm(</span>
+                productListVmList,
+<span class="fc" id="L92">                productPage.getNumber(),</span>
+<span class="fc" id="L93">                productPage.getSize(),</span>
+<span class="fc" id="L94">                productPage.getTotalElements(),</span>
+<span class="fc" id="L95">                productPage.getTotalPages(),</span>
+<span class="fc" id="L96">                productPage.isLast(),</span>
+<span class="fc" id="L97">                getAggregations(searchHitsResult));</span>
+    }
+
+    private void extractedTermsFilter(String fieldValues, String productField, BoolQuery.Builder b) {
+<span class="pc bpc" id="L101" title="1 of 2 branches missed.">        if (StringUtils.isBlank(fieldValues)) {</span>
+<span class="nc" id="L102">            return;</span>
+        }
+<span class="fc" id="L104">        String[] valuesArray = fieldValues.split(&quot;,&quot;);</span>
+<span class="fc" id="L105">        b.must(m -&gt; {</span>
+<span class="fc" id="L106">            BoolQuery.Builder innerBool = new BoolQuery.Builder();</span>
+<span class="fc bfc" id="L107" title="All 2 branches covered.">            for (String value : valuesArray) {</span>
+<span class="fc" id="L108">                innerBool.should(s -&gt; s</span>
+<span class="fc" id="L109">                    .term(t -&gt; t</span>
+<span class="fc" id="L110">                        .field(productField)</span>
+<span class="fc" id="L111">                        .value(value)</span>
+<span class="fc" id="L112">                        .caseInsensitive(true)</span>
+                    )
+                );
+            }
+<span class="fc" id="L116">            return new Query.Builder().bool(innerBool.build());</span>
+        });
+<span class="fc" id="L118">    }</span>
+
+    private void extractedRange(Number min, Number max, BoolQuery.Builder bool) {
+<span class="pc bpc" id="L121" title="3 of 4 branches missed.">        if (min != null || max != null) {</span>
+<span class="fc" id="L122">            bool.must(m -&gt; m.range(r -&gt; r</span>
+<span class="fc" id="L123">                    .number(n -&gt; n</span>
+<span class="fc" id="L124">                        .field(ProductField.PRICE)</span>
+<span class="pc bpc" id="L125" title="1 of 2 branches missed.">                        .gte(min != null ? min.doubleValue() : null)</span>
+<span class="pc bpc" id="L126" title="1 of 2 branches missed.">                        .lte(max != null ? max.doubleValue() : null)</span>
+                    )
+            ));
+        }
+<span class="fc" id="L130">    }</span>
+
+    private Map&lt;String, Map&lt;String, Long&gt;&gt; getAggregations(SearchHits&lt;Product&gt; searchHits) {
+<span class="fc" id="L133">        List&lt;org.springframework.data.elasticsearch.client.elc.Aggregation&gt; aggregations = new ArrayList&lt;&gt;();</span>
+<span class="pc bpc" id="L134" title="1 of 2 branches missed.">        if (searchHits.hasAggregations()) {</span>
+<span class="nc" id="L135">            ((List&lt;ElasticsearchAggregation&gt;) searchHits.getAggregations().aggregations()) //NOSONAR</span>
+<span class="nc" id="L136">                    .forEach(elsAgg -&gt; aggregations.add(elsAgg.aggregation()));</span>
+        }
+
+<span class="fc" id="L139">        Map&lt;String, Map&lt;String, Long&gt;&gt; aggregationsMap = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L140">        aggregations.forEach(agg -&gt; {</span>
+<span class="nc" id="L141">            Map&lt;String, Long&gt; aggregation = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L142">            StringTermsAggregate stringTermsAggregate = (StringTermsAggregate) agg.getAggregate()._get();</span>
+<span class="nc" id="L143">            List&lt;StringTermsBucket&gt; stringTermsBuckets</span>
+<span class="nc" id="L144">                    = (List&lt;StringTermsBucket&gt;) stringTermsAggregate.buckets()._get();</span>
+<span class="nc" id="L145">            stringTermsBuckets.forEach(bucket -&gt; aggregation.put(bucket.key()._get().toString(), bucket.docCount()));</span>
+<span class="nc" id="L146">            aggregationsMap.put(agg.getName(), aggregation);</span>
+<span class="nc" id="L147">        });</span>
+
+<span class="fc" id="L149">        return aggregationsMap;</span>
+    }
+
+    public ProductNameListVm autoCompleteProductName(final String keyword) {
+<span class="fc" id="L153">        NativeQuery matchQuery = NativeQuery.builder()</span>
+<span class="fc" id="L154">                .withQuery(</span>
+<span class="fc" id="L155">                        q -&gt; q.matchPhrasePrefix(</span>
+<span class="fc" id="L156">                                matchPhrasePrefix -&gt; matchPhrasePrefix.field(&quot;name&quot;).query(keyword)</span>
+                        )
+                )
+<span class="fc" id="L159">                .withSourceFilter(new FetchSourceFilter(</span>
+<span class="fc" id="L160">                        true,</span>
+                        new String[]{&quot;name&quot;},
+                        null)
+                )
+<span class="fc" id="L164">                .build();</span>
+<span class="fc" id="L165">        SearchHits&lt;Product&gt; result = elasticsearchOperations.search(matchQuery, Product.class);</span>
+<span class="fc" id="L166">        List&lt;Product&gt; products = result.stream().map(SearchHit::getContent).toList();</span>
+
+<span class="fc" id="L168">        return new ProductNameListVm(products.stream().map(ProductNameGetVm::fromModel).toList());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>
