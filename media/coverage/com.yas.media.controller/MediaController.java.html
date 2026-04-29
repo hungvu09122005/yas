@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MediaController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">media</a> &gt; <a href="index.source.html" class="el_package">com.yas.media.controller</a> &gt; <span class="el_source">MediaController.java</span></div><h1>MediaController.java</h1><pre class="source lang-java linenums">package com.yas.media.controller;
+
+import com.yas.media.model.Media;
+import com.yas.media.model.dto.MediaDto;
+import com.yas.media.service.MediaService;
+import com.yas.media.viewmodel.ErrorVm;
+import com.yas.media.viewmodel.MediaPostVm;
+import com.yas.media.viewmodel.MediaVm;
+import com.yas.media.viewmodel.NoFileMediaVm;
+import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@Validated
+@RestController
+@CrossOrigin(origins = &quot;*&quot;, maxAge = 3600)
+@RequiredArgsConstructor
+public class MediaController {
+    private final MediaService mediaService;
+
+    @PostMapping(path = &quot;/medias&quot;, consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Ok&quot;,
+            content = @Content(schema = @Schema(implementation = NoFileMediaVm.class))),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Bad request&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;Object&gt; create(@ModelAttribute @Valid MediaPostVm mediaPostVm) {
+<span class="fc" id="L47">        Media media = mediaService.saveMedia(mediaPostVm);</span>
+<span class="fc" id="L48">        NoFileMediaVm noFileMediaVm =</span>
+<span class="fc" id="L49">            new NoFileMediaVm(media.getId(), media.getCaption(), media.getFileName(), media.getMediaType());</span>
+<span class="fc" id="L50">        return ResponseEntity.ok().body(noFileMediaVm);</span>
+    }
+
+    @DeleteMapping(&quot;/medias/{id}&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;204&quot;, description = &quot;Deleted&quot;,
+            content = @Content(schema = @Schema(implementation = MediaVm.class))),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Bad request&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))
+    })
+    public ResponseEntity&lt;Void&gt; delete(@PathVariable Long id) {
+<span class="fc" id="L61">        mediaService.removeMedia(id);</span>
+<span class="fc" id="L62">        return ResponseEntity.noContent().build();</span>
+    }
+
+    @GetMapping(&quot;/medias/{id}&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Ok&quot;,
+            content = @Content(schema = @Schema(implementation = MediaVm.class)))})
+    public ResponseEntity&lt;MediaVm&gt; get(@PathVariable Long id) {
+<span class="fc" id="L70">        MediaVm media = mediaService.getMediaById(id);</span>
+<span class="fc bfc" id="L71" title="All 2 branches covered.">        if (media == null) {</span>
+<span class="fc" id="L72">            return ResponseEntity.notFound().build();</span>
+        }
+<span class="fc" id="L74">        return ResponseEntity.ok().body(media);</span>
+    }
+
+    @GetMapping(&quot;/medias&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Ok&quot;,
+            content = @Content(schema = @Schema(implementation = MediaVm.class)))})
+    public ResponseEntity&lt;List&lt;MediaVm&gt;&gt; getByIds(@RequestParam @NotEmpty List&lt;Long&gt; ids) {
+<span class="fc" id="L82">        var medias = mediaService.getMediaByIds(ids);</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">        if (medias.isEmpty()) {</span>
+<span class="fc" id="L84">            return ResponseEntity.notFound().build();</span>
+        }
+<span class="fc" id="L86">        return ResponseEntity.ok().body(medias);</span>
+    }
+
+    @Hidden
+    @GetMapping(&quot;/medias/{id}/file/{fileName}&quot;)
+    public ResponseEntity&lt;InputStreamResource&gt; getFile(@PathVariable Long id, @PathVariable String fileName) {
+<span class="fc" id="L92">        MediaDto mediaDto = mediaService.getFile(id, fileName);</span>
+
+<span class="fc" id="L94">        return ResponseEntity.ok()</span>
+<span class="fc" id="L95">            .header(HttpHeaders.CONTENT_DISPOSITION, &quot;attachment; filename=\&quot;&quot; + fileName + &quot;\&quot;&quot;)</span>
+<span class="fc" id="L96">            .contentType(mediaDto.getMediaType())</span>
+<span class="fc" id="L97">            .body(new InputStreamResource(mediaDto.getContent()));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

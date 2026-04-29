@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FileSystemRepository.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">media</a> &gt; <a href="index.source.html" class="el_package">com.yas.media.repository</a> &gt; <span class="el_source">FileSystemRepository.java</span></div><h1>FileSystemRepository.java</h1><pre class="source lang-java linenums">package com.yas.media.repository;
+
+import com.yas.media.config.FilesystemConfig;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Repository;
+
+<span class="fc" id="L15">@Slf4j</span>
+@Repository
+@RequiredArgsConstructor
+public class FileSystemRepository {
+
+    private static final String DIRECTORY_DOES_NOT_EXIST = &quot;Directory %s does not exist.&quot;;
+
+    private final FilesystemConfig filesystemConfig;
+
+    public String persistFile(String filename, byte[] content) throws IOException {
+
+<span class="fc" id="L26">        File directory = new File(filesystemConfig.getDirectory());</span>
+<span class="fc" id="L27">        checkExistingDirectory(directory);</span>
+<span class="fc" id="L28">        checkPermissions(directory);</span>
+
+<span class="fc" id="L30">        Path filePath = buildFilePath(filename);</span>
+<span class="fc" id="L31">        Files.write(filePath, content);</span>
+<span class="fc" id="L32">        log.info(&quot;File saved: {}&quot;, filename);</span>
+<span class="fc" id="L33">        return filePath.toString();</span>
+    }
+
+<span class="fc" id="L36">    @SneakyThrows</span>
+    public InputStream getFile(String filePath) {
+<span class="fc" id="L38">        Path path = Paths.get(filePath);</span>
+<span class="fc bfc" id="L39" title="All 2 branches covered.">        if (!Files.exists(path)) {</span>
+<span class="fc" id="L40">            throw new IllegalStateException(String.format(DIRECTORY_DOES_NOT_EXIST, filesystemConfig.getDirectory()));</span>
+        }
+
+        try {
+<span class="fc" id="L44">            return Files.newInputStream(path);</span>
+<span class="nc" id="L45">        } catch (IOException e) {</span>
+<span class="nc" id="L46">            throw new RuntimeException(&quot;Failed to read file: &quot; + filePath, e);</span>
+        }
+    }
+
+    private Path buildFilePath(String filename) {
+        // Validate the filename
+<span class="pc bpc" id="L52" title="2 of 6 branches missed.">        if (filename.contains(&quot;..&quot;) || filename.contains(&quot;/&quot;) || filename.contains(&quot;\\&quot;)) {</span>
+<span class="fc" id="L53">            throw new IllegalArgumentException(&quot;Invalid filename&quot;);</span>
+        }
+        // Normalize the path
+<span class="fc" id="L56">        Path filePath = Paths.get(filesystemConfig.getDirectory(), filename).toAbsolutePath().normalize();</span>
+
+        // Ensure the file is within the base directory
+<span class="fc bfc" id="L59" title="All 2 branches covered.">        if (!filePath.startsWith(filesystemConfig.getDirectory())) {</span>
+<span class="fc" id="L60">            throw new IllegalArgumentException(&quot;Invalid file path&quot;);</span>
+        }
+<span class="fc" id="L62">        return filePath;</span>
+    }
+
+    private void checkExistingDirectory(File directory) {
+<span class="fc bfc" id="L66" title="All 2 branches covered.">        if (!directory.exists()) {</span>
+<span class="fc" id="L67">            throw new IllegalStateException(String.format(DIRECTORY_DOES_NOT_EXIST, filesystemConfig.getDirectory()));</span>
+        }
+<span class="fc" id="L69">    }</span>
+
+    private void checkPermissions(File directory) {
+<span class="pc bpc" id="L72" title="2 of 4 branches missed.">        if (!directory.canRead() || !directory.canWrite()) {</span>
+<span class="nc" id="L73">            throw new IllegalStateException(&quot;Directory &quot; + directory.getAbsolutePath() + &quot; is not accessible.&quot;);</span>
+        }
+<span class="fc" id="L75">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

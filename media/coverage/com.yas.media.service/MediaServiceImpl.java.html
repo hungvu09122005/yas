@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MediaServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">media</a> &gt; <a href="index.source.html" class="el_package">com.yas.media.service</a> &gt; <span class="el_source">MediaServiceImpl.java</span></div><h1>MediaServiceImpl.java</h1><pre class="source lang-java linenums">package com.yas.media.service;
+
+import com.yas.commonlibrary.exception.NotFoundException;
+import com.yas.media.config.YasConfig;
+import com.yas.media.mapper.MediaVmMapper;
+import com.yas.media.model.Media;
+import com.yas.media.model.dto.MediaDto;
+import com.yas.media.model.dto.MediaDto.MediaDtoBuilder;
+import com.yas.media.repository.FileSystemRepository;
+import com.yas.media.repository.MediaRepository;
+import com.yas.media.utils.StringUtils;
+import com.yas.media.viewmodel.MediaPostVm;
+import com.yas.media.viewmodel.MediaVm;
+import com.yas.media.viewmodel.NoFileMediaVm;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriComponentsBuilder;
+
+@RequiredArgsConstructor
+@Service
+public class MediaServiceImpl implements MediaService {
+
+    private final MediaVmMapper mediaVmMapper;
+    private final MediaRepository mediaRepository;
+    private final FileSystemRepository fileSystemRepository;
+    private final YasConfig yasConfig;
+
+    @Override
+<span class="nc" id="L34">    @SneakyThrows</span>
+    public Media saveMedia(MediaPostVm mediaPostVm) {
+<span class="fc" id="L36">        Media media = new Media();</span>
+<span class="fc" id="L37">        media.setCaption(mediaPostVm.caption());</span>
+<span class="fc" id="L38">        media.setMediaType(mediaPostVm.multipartFile().getContentType());</span>
+
+<span class="fc bfc" id="L40" title="All 2 branches covered.">        if (StringUtils.hasText(mediaPostVm.fileNameOverride())) {</span>
+<span class="fc" id="L41">            media.setFileName(mediaPostVm.fileNameOverride().trim());</span>
+        } else {
+<span class="fc" id="L43">            media.setFileName(mediaPostVm.multipartFile().getOriginalFilename());</span>
+        }
+<span class="fc" id="L45">        String filePath = fileSystemRepository.persistFile(media.getFileName(),</span>
+<span class="fc" id="L46">            mediaPostVm.multipartFile().getBytes());</span>
+<span class="fc" id="L47">        media.setFilePath(filePath);</span>
+
+<span class="fc" id="L49">        return mediaRepository.save(media);</span>
+    }
+
+    @Override
+    public void removeMedia(Long id) {
+<span class="fc" id="L54">        NoFileMediaVm noFileMediaVm = mediaRepository.findByIdWithoutFileInReturn(id);</span>
+<span class="fc bfc" id="L55" title="All 2 branches covered.">        if (noFileMediaVm == null) {</span>
+<span class="fc" id="L56">            throw new NotFoundException(String.format(&quot;Media %s is not found&quot;, id));</span>
+        }
+<span class="fc" id="L58">        mediaRepository.deleteById(id);</span>
+<span class="fc" id="L59">    }</span>
+
+    @Override
+    public MediaVm getMediaById(Long id) {
+<span class="fc" id="L63">        NoFileMediaVm noFileMediaVm = mediaRepository.findByIdWithoutFileInReturn(id);</span>
+<span class="fc bfc" id="L64" title="All 2 branches covered.">        if (noFileMediaVm == null) {</span>
+<span class="fc" id="L65">            return null;</span>
+        }
+<span class="fc" id="L67">        String url = getMediaUrl(noFileMediaVm.id(), noFileMediaVm.fileName());</span>
+
+<span class="fc" id="L69">        return new MediaVm(</span>
+<span class="fc" id="L70">            noFileMediaVm.id(),</span>
+<span class="fc" id="L71">            noFileMediaVm.caption(),</span>
+<span class="fc" id="L72">            noFileMediaVm.fileName(),</span>
+<span class="fc" id="L73">            noFileMediaVm.mediaType(),</span>
+            url
+        );
+    }
+
+    @Override
+    public MediaDto getFile(Long id, String fileName) {
+
+<span class="fc" id="L81">        MediaDtoBuilder builder = MediaDto.builder();</span>
+
+<span class="fc" id="L83">        Media media = mediaRepository.findById(id).orElse(null);</span>
+<span class="pc bpc" id="L84" title="1 of 4 branches missed.">        if (media == null || !fileName.equalsIgnoreCase(media.getFileName())) {</span>
+<span class="fc" id="L85">            return builder.build();</span>
+        }
+<span class="nc" id="L87">        MediaType mediaType = MediaType.valueOf(media.getMediaType());</span>
+<span class="nc" id="L88">        InputStream fileContent = fileSystemRepository.getFile(media.getFilePath());</span>
+
+<span class="nc" id="L90">        return builder</span>
+<span class="nc" id="L91">            .content(fileContent)</span>
+<span class="nc" id="L92">            .mediaType(mediaType)</span>
+<span class="nc" id="L93">            .build();</span>
+    }
+
+    @Override
+    public List&lt;MediaVm&gt; getMediaByIds(List&lt;Long&gt; ids) {
+<span class="fc" id="L98">        return mediaRepository.findAllById(ids).stream()</span>
+<span class="fc" id="L99">                .map(mediaVmMapper::toVm)</span>
+<span class="fc" id="L100">                .map(media -&gt; {</span>
+<span class="fc" id="L101">                    String url = getMediaUrl(media.getId(), media.getFileName());</span>
+<span class="fc" id="L102">                    media.setUrl(url);</span>
+<span class="fc" id="L103">                    return media;</span>
+<span class="fc" id="L104">                }).toList();</span>
+    }
+
+    private String getMediaUrl(Long mediaId, String fileName) {
+<span class="fc" id="L108">        return UriComponentsBuilder.fromUriString(yasConfig.publicUrl())</span>
+<span class="fc" id="L109">                .path(String.format(&quot;/medias/%1$s/file/%2$s&quot;, mediaId, fileName))</span>
+<span class="fc" id="L110">                .build().toUriString();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

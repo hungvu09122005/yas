@@ -1,0 +1,12 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+media,com.yas.media.repository,FileSystemRepository,15,134,4,12,3,24,4,10,0,6
+media,com.yas.media.model,Media,0,3,0,0,0,1,0,1,0,1
+media,com.yas.media.mapper,MediaVmMapperImpl,60,38,13,1,20,13,9,2,2,2
+media,com.yas.media.viewmodel,NoFileMediaVm,0,15,0,0,0,1,0,1,0,1
+media,com.yas.media.viewmodel,MediaVm,0,18,0,0,0,7,0,1,0,1
+media,com.yas.media.viewmodel,ErrorVm,24,0,0,0,3,0,2,0,2,0
+media,com.yas.media.viewmodel,MediaPostVm,0,12,0,0,0,1,0,1,0,1
+media,com.yas.media.service,MediaServiceImpl,20,170,1,9,7,38,1,11,0,7
+media,com.yas.media.controller,MediaController,0,84,0,4,0,19,0,7,0,5
+media,com.yas.media.utils,StringUtils,0,10,0,4,0,1,0,3,0,1
+media,com.yas.media.utils,FileTypeValidator,8,67,1,9,3,15,1,7,0,3
