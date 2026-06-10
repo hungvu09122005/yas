@@ -1,4 +1,4 @@
-name: inventory-ci
+﻿name: inventory-ci
 
 on:
   push:
@@ -116,21 +116,29 @@ jobs:
       - name: Build JAR
         run: mvn package -DskipTests -pl inventory -am
 
-      - name: Log in to the Container registry
-        if: ${{ github.ref == 'refs/heads/main' }}
+      - name: Compute image tags
+        id: meta
+        run: |
+          SHORT_SHA=$(git rev-parse --short=7 HEAD)
+          BRANCH_TAG=$(echo "${GITHUB_REF_NAME}" | sed 's/[^a-zA-Z0-9._-]/-/g')
+          echo "short_sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "branch_tag=${BRANCH_TAG}" >> $GITHUB_OUTPUT
+
+      - name: Log in to Docker Hub
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push Docker image
-        if: ${{ github.ref == 'refs/heads/main' }}
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: ./inventory
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/yas-inventory:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/yas-inventory:${{ steps.meta.outputs.short_sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/yas-inventory:${{ steps.meta.outputs.branch_tag }}
+            ${{ github.ref_name == 'main' && format('{0}/yas-inventory:latest', secrets.DOCKERHUB_USERNAME) || '' }}
 
   publish-coverage:
     name: Publish coverage report
