@@ -1,0 +1,38 @@
+services:
+  jenkins-controller:
+    image: jenkins/jenkins:lts-jdk21
+    container_name: jenkins-controller
+
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+
+    volumes:
+      - jenkins_home:/var/jenkins_home
+
+    restart: unless-stopped
+
+  yas-cd-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+
+    container_name: yas-cd-agent
+
+    environment:
+      JENKINS_URL: http://jenkins-controller:8080
+      JENKINS_SECRET: ${JENKINS_AGENT_SECRET}
+      JENKINS_AGENT_NAME: yas-cd-agent
+      JENKINS_AGENT_WORKDIR: /home/jenkins/agent
+
+    volumes:
+      - agent_workdir:/home/jenkins/agent
+
+    depends_on:
+      - jenkins-controller
+
+    restart: unless-stopped
+
+volumes:
+  jenkins_home:
+  agent_workdir:
