@@ -1,4 +1,4 @@
-name: release charts ci
+﻿name: release charts ci
 
 on:
   push:

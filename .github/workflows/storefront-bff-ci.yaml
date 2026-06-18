@@ -17,6 +17,10 @@ on:
       - 'pom.xml'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 
 jobs:
   test:
@@ -139,6 +143,8 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/yas-storefront-bff:${{ steps.meta.outputs.short_sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/yas-storefront-bff:${{ steps.meta.outputs.branch_tag }}
             ${{ github.ref_name == 'main' && format('{0}/yas-storefront-bff:latest', secrets.DOCKERHUB_USERNAME) || '' }}
+          cache-from: type=gha,scope=${{ github.workflow }}
+          cache-to: type=gha,mode=max,scope=${{ github.workflow }}
 
   publish-coverage:
     name: Publish coverage report

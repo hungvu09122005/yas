@@ -15,6 +15,10 @@ on:
       - '.github/workflows/backoffice-ci.yaml'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 
 jobs:
   test:
@@ -105,3 +109,5 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/yas-backoffice:${{ steps.meta.outputs.short_sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/yas-backoffice:${{ steps.meta.outputs.branch_tag }}
             ${{ github.ref_name == 'main' && format('{0}/yas-backoffice:latest', secrets.DOCKERHUB_USERNAME) || '' }}
+          cache-from: type=gha,scope=${{ github.workflow }}
+          cache-to: type=gha,mode=max,scope=${{ github.workflow }}
