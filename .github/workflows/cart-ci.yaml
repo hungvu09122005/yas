@@ -1,4 +1,4 @@
-name: cart-ci
+﻿name: cart-ci
 
 on:
   push:
@@ -17,13 +17,17 @@ on:
       - 'pom.xml'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 
 jobs:
   test:
 
     permissions:
-      contents: write        # peaceiris/actions-gh-pages cần push lên gh-pages branch
-      pull-requests: write   # madrapps/jacoco-report comment lên PR
+      contents: write        # peaceiris/actions-gh-pages cáº§n push lĂªn gh-pages branch
+      pull-requests: write   # madrapps/jacoco-report comment lĂªn PR
       checks: write          # dorny/test-reporter upload test results
       packages: write        # docker/build-push-action push to GHCR
     name: Test
@@ -99,8 +103,8 @@ jobs:
   build:
 
     permissions:
-      contents: write        # peaceiris/actions-gh-pages cần push lên gh-pages branch
-      pull-requests: write   # madrapps/jacoco-report comment lên PR
+      contents: write        # peaceiris/actions-gh-pages cáº§n push lĂªn gh-pages branch
+      pull-requests: write   # madrapps/jacoco-report comment lĂªn PR
       checks: write          # dorny/test-reporter upload test results
       packages: write        # docker/build-push-action push to GHCR
     name: Build
@@ -116,21 +120,34 @@ jobs:
       - name: Build JAR
         run: mvn package -DskipTests -pl cart -am
 
-      - name: Log in to the Container registry
-        if: ${{ github.ref == 'refs/heads/main' }}
+      - name: Compute image tags
+        id: meta
+        run: |
+          SHORT_SHA=$(git rev-parse --short=7 HEAD)
+          BRANCH_TAG=$(echo "${GITHUB_REF_NAME}" | sed 's/[^a-zA-Z0-9._-]/-/g')
+          echo "short_sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "branch_tag=${BRANCH_TAG}" >> $GITHUB_OUTPUT
+
+      - name: Log in to Docker Hub
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Build and push Docker image
-        if: ${{ github.ref == 'refs/heads/main' }}
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: ./cart
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/yas-cart:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/yas-cart:${{ steps.meta.outputs.short_sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/yas-cart:${{ steps.meta.outputs.branch_tag }}
+            ${{ github.ref_name == 'main' && format('{0}/yas-cart:latest', secrets.DOCKERHUB_USERNAME) || '' }}
+          cache-from: type=gha,scope=${{ github.workflow }}
+          cache-to: type=gha,mode=max,scope=${{ github.workflow }}
 
   publish-coverage:
     name: Publish coverage report
