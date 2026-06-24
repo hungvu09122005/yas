@@ -16,8 +16,8 @@ location,com.yas.location.utils,Constants.PageableConstant,8,0,0,0,1,0,1,0,1,0
 location,com.yas.location.viewmodel.address,AddressDetailVm,0,90,0,0,0,16,0,2,0,2
 location,com.yas.location.viewmodel.address,AddressPostVm,0,51,0,0,0,9,0,2,0,2
 location,com.yas.location.viewmodel.address,AddressGetVm,0,69,0,0,0,13,0,2,0,2
-location,com.yas.location.mapper,CountryMapperImpl,33,143,11,11,10,44,11,4,0,4
 location,com.yas.location.mapper,StateOrProvinceMapperImpl,4,50,2,2,2,17,2,3,0,3
+location,com.yas.location.mapper,CountryMapperImpl,33,143,11,11,10,44,11,4,0,4
 location,com.yas.location.viewmodel.error,ErrorVm,24,0,0,0,3,0,2,0,2,0
 location,com.yas.location.viewmodel.stateorprovince,StateOrProvinceAndCountryGetNameVm,0,23,0,0,0,3,0,2,0,2
 location,com.yas.location.viewmodel.stateorprovince,StateOrProvinceListGetVm,0,21,0,0,0,1,0,1,0,1
