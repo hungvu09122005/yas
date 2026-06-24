@@ -33,7 +33,7 @@ jobs:
         # || true ensures pipeline passes despite the 403 platform limitation.
         run: |
           set +e
-          snyk test --file=pom.xml --severity-threshold=high --no-monitor
+          snyk test --all-projects --severity-threshold=high --no-monitor
           EXIT_CODE=$?
           set -e
           if [ $EXIT_CODE -eq 0 ]; then
