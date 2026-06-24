@@ -11,8 +11,8 @@ rating,com.yas.rating.service,RatingService,0,303,0,16,0,60,0,17,0,9
 rating,com.yas.rating.viewmodel,CustomerVm,0,15,0,0,0,1,0,1,0,1
 rating,com.yas.rating.viewmodel,RatingPostVm,0,15,0,0,0,1,0,1,0,1
 rating,com.yas.rating.viewmodel,RatingListVm,0,12,0,0,0,1,0,1,0,1
-rating,com.yas.rating.viewmodel,ResponeStatusVm,0,12,0,0,0,1,0,1,0,1
 rating,com.yas.rating.viewmodel,ErrorVm,24,0,0,0,3,0,2,0,2,0
+rating,com.yas.rating.viewmodel,ResponeStatusVm,0,12,0,0,0,1,0,1,0,1
 rating,com.yas.rating.viewmodel,RatingVm,0,60,0,0,0,12,0,2,0,2
 rating,com.yas.rating.viewmodel,OrderExistsByProductAndUserGetVm,0,6,0,0,0,1,0,1,0,1
 rating,com.yas.rating.model,Rating,28,0,8,0,6,0,6,0,2,0
