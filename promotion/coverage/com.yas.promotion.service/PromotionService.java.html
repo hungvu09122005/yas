@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PromotionService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">promotion</a> &gt; <a href="index.source.html" class="el_package">com.yas.promotion.service</a> &gt; <span class="el_source">PromotionService.java</span></div><h1>PromotionService.java</h1><pre class="source lang-java linenums">package com.yas.promotion.service;
+
+import com.yas.commonlibrary.exception.BadRequestException;
+import com.yas.commonlibrary.exception.DuplicatedException;
+import com.yas.commonlibrary.exception.NotFoundException;
+import com.yas.promotion.model.Promotion;
+import com.yas.promotion.model.PromotionApply;
+import com.yas.promotion.model.PromotionUsage;
+import com.yas.promotion.model.enumeration.DiscountType;
+import com.yas.promotion.model.enumeration.UsageType;
+import com.yas.promotion.repository.PromotionRepository;
+import com.yas.promotion.repository.PromotionUsageRepository;
+import com.yas.promotion.utils.AuthenticationUtils;
+import com.yas.promotion.utils.Constants;
+import com.yas.promotion.viewmodel.BrandVm;
+import com.yas.promotion.viewmodel.CategoryGetVm;
+import com.yas.promotion.viewmodel.ProductVm;
+import com.yas.promotion.viewmodel.PromotionDetailVm;
+import com.yas.promotion.viewmodel.PromotionListVm;
+import com.yas.promotion.viewmodel.PromotionPostVm;
+import com.yas.promotion.viewmodel.PromotionPutVm;
+import com.yas.promotion.viewmodel.PromotionUsageVm;
+import com.yas.promotion.viewmodel.PromotionVerifyResultDto;
+import com.yas.promotion.viewmodel.PromotionVerifyVm;
+import lombok.RequiredArgsConstructor;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+@Transactional
+@RequiredArgsConstructor
+public class PromotionService {
+    private final PromotionRepository promotionRepository;
+    private final PromotionUsageRepository promotionUsageRepository;
+    private final ProductService productService;
+
+    public PromotionDetailVm createPromotion(PromotionPostVm promotionPostVm) {
+<span class="fc" id="L49">        validateNewPromotion(promotionPostVm);</span>
+
+<span class="fc" id="L51">        Promotion promotion = Promotion.builder()</span>
+<span class="fc" id="L52">                .name(promotionPostVm.getName())</span>
+<span class="fc" id="L53">                .slug(promotionPostVm.getSlug())</span>
+<span class="fc" id="L54">                .description(promotionPostVm.getDescription())</span>
+<span class="fc" id="L55">                .couponCode(promotionPostVm.getCouponCode())</span>
+<span class="fc" id="L56">                .applyTo(promotionPostVm.getApplyTo())</span>
+<span class="fc" id="L57">                .usageType(promotionPostVm.getUsageType())</span>
+<span class="fc" id="L58">                .usageLimit(promotionPostVm.getUsageLimit())</span>
+<span class="fc" id="L59">                .discountType(promotionPostVm.getDiscountType())</span>
+<span class="fc" id="L60">                .discountPercentage(promotionPostVm.getDiscountPercentage())</span>
+<span class="fc" id="L61">                .discountAmount(promotionPostVm.getDiscountAmount())</span>
+<span class="fc" id="L62">                .isActive(promotionPostVm.isActive())</span>
+<span class="fc" id="L63">                .startDate(promotionPostVm.getStartDate().toInstant())</span>
+<span class="fc" id="L64">                .endDate(promotionPostVm.getEndDate().toInstant())</span>
+<span class="fc" id="L65">                .minimumOrderPurchaseAmount(promotionPostVm.getMinimumOrderPurchaseAmount())</span>
+<span class="fc" id="L66">                .build();</span>
+
+<span class="fc" id="L68">        List&lt;PromotionApply&gt; promotionApplies =</span>
+<span class="fc" id="L69">                PromotionPostVm.createPromotionApplies(promotionPostVm, promotion);</span>
+<span class="fc" id="L70">        promotion.setPromotionApplies(promotionApplies);</span>
+
+<span class="fc" id="L72">        return PromotionDetailVm.fromModel(promotionRepository.save(promotion));</span>
+    }
+
+    private void validateNewPromotion(PromotionPostVm promotionPostVm) {
+<span class="fc" id="L76">        validateIfPromotionExistedSlug(promotionPostVm.getSlug());</span>
+<span class="fc" id="L77">        validateIfCouponCodeIsExisted(promotionPostVm.getCouponCode());</span>
+<span class="fc" id="L78">        validateIfPromotionEndDateIsBeforeStartDate(</span>
+<span class="fc" id="L79">                promotionPostVm.getStartDate().toInstant(),</span>
+<span class="fc" id="L80">                promotionPostVm.getEndDate().toInstant());</span>
+<span class="fc" id="L81">    }</span>
+
+    public PromotionDetailVm updatePromotion(PromotionPutVm promotionPutVm) {
+<span class="fc" id="L84">        Optional&lt;Promotion&gt; promotionOp = promotionRepository.findById(promotionPutVm.getId());</span>
+
+<span class="pc bpc" id="L86" title="1 of 2 branches missed.">        if (promotionOp.isEmpty()) {</span>
+<span class="nc" id="L87">            throw new NotFoundException(Constants.ErrorCode.PROMOTION_NOT_FOUND_ERROR_MESSAGE, promotionPutVm.getId());</span>
+        }
+
+<span class="fc" id="L90">        Promotion promotion = promotionOp.get();</span>
+
+<span class="fc" id="L92">        promotion.setApplyTo(promotionPutVm.getApplyTo());</span>
+<span class="fc" id="L93">        promotion.setName(promotionPutVm.getName());</span>
+<span class="fc" id="L94">        promotion.setDescription(promotionPutVm.getDescription());</span>
+<span class="fc" id="L95">        promotion.setCouponCode(promotionPutVm.getCouponCode());</span>
+<span class="fc" id="L96">        promotion.setUsageType(promotionPutVm.getUsageType());</span>
+<span class="fc" id="L97">        promotion.setUsageLimit(promotionPutVm.getUsageLimit());</span>
+<span class="fc" id="L98">        promotion.setSlug(promotionPutVm.getSlug());</span>
+<span class="fc" id="L99">        promotion.setDiscountType(promotionPutVm.getDiscountType());</span>
+<span class="fc" id="L100">        promotion.setDiscountPercentage(promotionPutVm.getDiscountPercentage());</span>
+<span class="fc" id="L101">        promotion.setDiscountAmount(promotionPutVm.getDiscountAmount());</span>
+<span class="fc" id="L102">        promotion.setIsActive(promotionPutVm.getIsActive());</span>
+<span class="fc" id="L103">        promotion.setStartDate(promotionPutVm.getStartDate().toInstant());</span>
+<span class="fc" id="L104">        promotion.setEndDate(promotionPutVm.getEndDate().toInstant());</span>
+<span class="fc" id="L105">        promotion.setMinimumOrderPurchaseAmount(promotionPutVm.getMinimumOrderPurchaseAmount());</span>
+
+<span class="fc" id="L107">        promotion.setPromotionApplies(PromotionPutVm.createPromotionApplies(promotionPutVm, promotion));</span>
+
+<span class="fc" id="L109">        promotion = promotionRepository.save(promotion);</span>
+<span class="fc" id="L110">        return PromotionDetailVm.fromModel(promotion);</span>
+    }
+
+    public PromotionListVm getPromotions(
+            int pageNo,
+            int pageSize,
+            String promotionName,
+            String couponCode,
+            Instant startDate,
+            Instant endDate
+    ) {
+<span class="fc" id="L121">        Pageable pageable = PageRequest.of(pageNo, pageSize);</span>
+
+        Page&lt;Promotion&gt; promotionPage;
+
+<span class="fc" id="L125">        promotionPage = promotionRepository.findPromotions(</span>
+<span class="fc" id="L126">                promotionName.trim(),</span>
+<span class="fc" id="L127">                couponCode.trim(),</span>
+                startDate,
+                endDate,
+                pageable
+        );
+
+<span class="fc" id="L133">        List&lt;PromotionDetailVm&gt; promotionDetailVmList = promotionPage</span>
+<span class="fc" id="L134">                .getContent()</span>
+<span class="fc" id="L135">                .stream()</span>
+<span class="fc" id="L136">                .map(this::toPromotionDetail)</span>
+<span class="fc" id="L137">                .toList();</span>
+
+<span class="fc" id="L139">        return PromotionListVm.builder()</span>
+<span class="fc" id="L140">                .promotionDetailVmList(promotionDetailVmList)</span>
+<span class="fc" id="L141">                .pageNo(promotionPage.getNumber())</span>
+<span class="fc" id="L142">                .pageSize(promotionPage.getSize())</span>
+<span class="fc" id="L143">                .totalElements(promotionPage.getTotalElements())</span>
+<span class="fc" id="L144">                .totalPages(promotionPage.getTotalPages())</span>
+<span class="fc" id="L145">                .build();</span>
+    }
+
+    private PromotionDetailVm toPromotionDetail(Promotion promotion) {
+<span class="fc" id="L149">        List&lt;BrandVm&gt; brandVms = null;</span>
+<span class="fc" id="L150">        List&lt;CategoryGetVm&gt; categoryGetVms = null;</span>
+<span class="fc" id="L151">        List&lt;ProductVm&gt; productVms = null;</span>
+<span class="fc" id="L152">        List&lt;PromotionApply&gt; promotionApplies = promotion.getPromotionApplies();</span>
+<span class="pc bpc" id="L153" title="3 of 4 branches missed.">        switch (promotion.getApplyTo()) {</span>
+<span class="nc" id="L154">            case CATEGORY -&gt; categoryGetVms = productService.getCategoryByIds(promotionApplies.stream()</span>
+<span class="nc" id="L155">                    .map(PromotionApply::getCategoryId).toList());</span>
+<span class="fc" id="L156">            case BRAND -&gt; brandVms = productService.getBrandByIds(promotionApplies.stream()</span>
+<span class="fc" id="L157">                    .map(PromotionApply::getBrandId).toList());</span>
+<span class="nc" id="L158">            case PRODUCT -&gt; productVms = productService.getProductByIds(promotionApplies.stream()</span>
+<span class="nc" id="L159">                    .map(PromotionApply::getProductId).toList());</span>
+            default -&gt; {
+                break;
+            }
+        }
+<span class="fc" id="L164">        return PromotionDetailVm.fromModel(promotion, brandVms, categoryGetVms, productVms);</span>
+    }
+
+    private void validateIfPromotionExistedSlug(String slug) {
+<span class="fc bfc" id="L168" title="All 2 branches covered.">        if (promotionRepository.findBySlugAndIsActiveTrue(slug).isPresent()) {</span>
+<span class="fc" id="L169">            throw new DuplicatedException(String.format(Constants.ErrorCode.SLUG_ALREADY_EXITED, slug));</span>
+        }
+<span class="fc" id="L171">    }</span>
+
+    private void validateIfPromotionEndDateIsBeforeStartDate(Instant startDate, Instant endDate) {
+<span class="pc bpc" id="L174" title="2 of 6 branches missed.">        if (endDate != null &amp;&amp; startDate != null &amp;&amp; endDate.isBefore(startDate)) {</span>
+<span class="fc" id="L175">            throw new BadRequestException(String.format(Constants.ErrorCode.DATE_RANGE_INVALID));</span>
+        }
+<span class="fc" id="L177">    }</span>
+
+    private void validateIfCouponCodeIsExisted(String couponCode) {
+<span class="fc bfc" id="L180" title="All 2 branches covered.">        if (promotionRepository.findByCouponCodeAndIsActiveTrue(couponCode).isPresent()) {</span>
+<span class="fc" id="L181">            throw new DuplicatedException(Constants.ErrorCode.COUPON_CODE_ALREADY_EXISTED, couponCode);</span>
+        }
+<span class="fc" id="L183">    }</span>
+
+    public void deletePromotion(Long id) {
+<span class="fc bfc" id="L186" title="All 2 branches covered.">        if (promotionUsageRepository.existsByPromotionId(id)) {</span>
+<span class="fc" id="L187">            throw new BadRequestException(Constants.ErrorCode.PROMOTION_IN_USE_ERROR_MESSAGE, id);</span>
+        }
+<span class="fc" id="L189">        promotionRepository.deleteById(id);</span>
+<span class="fc" id="L190">    }</span>
+
+    public PromotionDetailVm getPromotion(Long promotionId) {
+<span class="fc" id="L193">        Optional&lt;Promotion&gt; promotionOp = promotionRepository.findById(promotionId);</span>
+<span class="fc bfc" id="L194" title="All 2 branches covered.">        if (promotionOp.isEmpty()) {</span>
+<span class="fc" id="L195">            throw new NotFoundException(Constants.ErrorCode.PROMOTION_NOT_FOUND_ERROR_MESSAGE, promotionId);</span>
+        }
+<span class="fc" id="L197">        return toPromotionDetail(promotionOp.get());</span>
+    }
+
+    public PromotionVerifyResultDto verifyPromotion(PromotionVerifyVm promotionVerifyData) {
+<span class="fc" id="L201">        Optional&lt;Promotion&gt; promotionOp =</span>
+<span class="fc" id="L202">                promotionRepository.findByCouponCodeAndIsActiveTrue(promotionVerifyData.couponCode());</span>
+<span class="fc bfc" id="L203" title="All 2 branches covered.">        if (promotionOp.isEmpty()) {</span>
+<span class="fc" id="L204">            throw new NotFoundException(Constants.ErrorCode.PROMOTION_NOT_FOUND_ERROR_MESSAGE,</span>
+<span class="fc" id="L205">                    promotionVerifyData.couponCode());</span>
+        }
+
+<span class="fc" id="L208">        Promotion promotion = promotionOp.get();</span>
+
+<span class="fc bfc" id="L210" title="All 2 branches covered.">        if (isExhaustedUsageQuantity(promotion)) {</span>
+<span class="fc" id="L211">            throw new BadRequestException(Constants.ErrorCode.EXHAUSTED_USAGE_QUANTITY);</span>
+        }
+
+<span class="fc bfc" id="L214" title="All 2 branches covered.">        if (isInvalidOrderPrice(promotionVerifyData, promotion)) {</span>
+<span class="fc" id="L215">            throw new BadRequestException(Constants.ErrorCode.INVALID_MINIMUM_ORDER_PURCHASE_AMOUNT);</span>
+        }
+
+<span class="fc" id="L218">        List&lt;ProductVm&gt; products = getProductsCanApplyPromotion(promotion);</span>
+<span class="fc bfc" id="L219" title="All 2 branches covered.">        if (CollectionUtils.isEmpty(products)) {</span>
+<span class="fc" id="L220">            throw new NotFoundException(Constants.ErrorCode.PRODUCT_NOT_FOUND_TO_APPLY_PROMOTION);</span>
+        }
+
+<span class="fc" id="L223">        List&lt;Long&gt; productInPromotionIds = products.stream().map(ProductVm::id).toList();</span>
+<span class="fc" id="L224">        List&lt;Long&gt; commonProductIds = new ArrayList&lt;&gt;(promotionVerifyData.productIds());</span>
+<span class="fc" id="L225">        commonProductIds.retainAll(productInPromotionIds);</span>
+<span class="pc bpc" id="L226" title="1 of 2 branches missed.">        if (CollectionUtils.isEmpty(commonProductIds)) {</span>
+<span class="nc" id="L227">            throw new NotFoundException(Constants.ErrorCode.PRODUCT_NOT_FOUND_TO_APPLY_PROMOTION);</span>
+        }
+
+<span class="fc" id="L230">        List&lt;ProductVm&gt; productsCanApply = products.stream()</span>
+<span class="fc" id="L231">                .filter(product -&gt; commonProductIds.contains(product.id()))</span>
+<span class="fc" id="L232">                .sorted(Comparator.comparing(ProductVm::price)).toList();</span>
+
+<span class="fc" id="L234">        return new PromotionVerifyResultDto(true, productsCanApply.getFirst().id(),</span>
+<span class="fc" id="L235">                promotion.getCouponCode(),</span>
+<span class="fc" id="L236">                promotion.getDiscountType(),</span>
+<span class="fc bfc" id="L237" title="All 2 branches covered.">                DiscountType.FIXED.equals(promotion.getDiscountType())</span>
+<span class="fc" id="L238">                        ? promotion.getDiscountAmount() : promotion.getDiscountPercentage());</span>
+    }
+
+    private boolean isInvalidOrderPrice(PromotionVerifyVm promotionVerifyData, Promotion promotion) {
+<span class="pc bpc" id="L242" title="1 of 2 branches missed.">        return promotionVerifyData.orderPrice() &lt;= 0</span>
+<span class="fc bfc" id="L243" title="All 2 branches covered.">                || promotionVerifyData.orderPrice() &lt; promotion.getMinimumOrderPurchaseAmount();</span>
+    }
+
+    private boolean isExhaustedUsageQuantity(Promotion promotion) {
+<span class="fc bfc" id="L247" title="All 2 branches covered.">        return UsageType.LIMITED.equals(promotion.getUsageType())</span>
+<span class="pc bpc" id="L248" title="1 of 2 branches missed.">                &amp;&amp; promotion.getUsageLimit() &lt;= promotion.getUsageCount();</span>
+    }
+
+    private List&lt;ProductVm&gt; getProductsCanApplyPromotion(Promotion promotion) {
+<span class="pc bpc" id="L252" title="1 of 4 branches missed.">        switch (promotion.getApplyTo()) {</span>
+            case CATEGORY -&gt; {
+<span class="fc" id="L254">                List&lt;Long&gt; categoryIds = promotion.getPromotionApplies().stream()</span>
+<span class="fc" id="L255">                        .map(PromotionApply::getCategoryId)</span>
+<span class="fc" id="L256">                        .toList();</span>
+<span class="fc" id="L257">                return productService.getProductByCategoryIds(categoryIds);</span>
+            }
+            case BRAND -&gt; {
+<span class="fc" id="L260">                List&lt;Long&gt; brandIds = promotion.getPromotionApplies().stream()</span>
+<span class="fc" id="L261">                        .map(PromotionApply::getBrandId)</span>
+<span class="fc" id="L262">                        .toList();</span>
+<span class="fc" id="L263">                return productService.getProductByBrandIds(brandIds);</span>
+            }
+            case PRODUCT -&gt; {
+<span class="fc" id="L266">                List&lt;Long&gt; productIds = promotion.getPromotionApplies().stream()</span>
+<span class="fc" id="L267">                        .map(PromotionApply::getProductId)</span>
+<span class="fc" id="L268">                        .toList();</span>
+<span class="fc" id="L269">                return productService.getProductByIds(productIds);</span>
+            }
+            default -&gt; {
+<span class="nc" id="L272">                return Collections.emptyList();</span>
+            }
+        }
+    }
+
+    public void updateUsagePromotion(List&lt;PromotionUsageVm&gt; promotionUsageVms) {
+<span class="fc bfc" id="L278" title="All 2 branches covered.">        for (PromotionUsageVm promotionUsageVm : promotionUsageVms) {</span>
+<span class="fc" id="L279">            Optional&lt;Promotion&gt; promotion =</span>
+<span class="fc" id="L280">                    promotionRepository.findByCouponCodeAndIsActiveTrue(promotionUsageVm.promotionCode());</span>
+
+<span class="pc bpc" id="L282" title="1 of 2 branches missed.">            if (!promotion.isPresent()) {</span>
+<span class="nc" id="L283">                throw new NotFoundException(Constants.ErrorCode.PROMOTION_NOT_FOUND_ERROR_MESSAGE,</span>
+<span class="nc" id="L284">                        promotionUsageVm.promotionCode());</span>
+            }
+
+<span class="fc" id="L287">            PromotionUsage promotionUsage = PromotionUsage.builder()</span>
+<span class="fc" id="L288">                    .promotion(promotion.get())</span>
+<span class="fc" id="L289">                    .userId(AuthenticationUtils.extractUserId())</span>
+<span class="fc" id="L290">                    .productId(promotionUsageVm.productId())</span>
+<span class="fc" id="L291">                    .orderId(promotionUsageVm.orderId())</span>
+<span class="fc" id="L292">                    .build();</span>
+
+<span class="fc" id="L294">            promotionUsageRepository.save(promotionUsage);</span>
+
+<span class="fc" id="L296">            Promotion existingPromotion = promotion.get();</span>
+<span class="fc" id="L297">            existingPromotion.setUsageCount(existingPromotion.getUsageCount() + 1);</span>
+<span class="fc" id="L298">            promotionRepository.save(existingPromotion);</span>
+<span class="fc" id="L299">        }</span>
+<span class="fc" id="L300">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

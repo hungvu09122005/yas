@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PromotionPutVm.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">promotion</a> &gt; <a href="index.source.html" class="el_package">com.yas.promotion.viewmodel</a> &gt; <span class="el_source">PromotionPutVm.java</span></div><h1>PromotionPutVm.java</h1><pre class="source lang-java linenums">package com.yas.promotion.viewmodel;
+
+import com.yas.promotion.model.Promotion;
+import com.yas.promotion.model.PromotionApply;
+import com.yas.promotion.validation.PromotionConstraint;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+
+@EqualsAndHashCode(callSuper = true)
+@SuperBuilder
+@PromotionConstraint
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class PromotionPutVm extends PromotionDto {
+    @NotNull
+    private Long id;
+    @Size(min = 1, max = 450)
+    private String name;
+    @NotBlank
+    private String slug;
+    private String description;
+    @NotBlank
+    private String couponCode;
+    private Long minimumOrderPurchaseAmount;
+    private Boolean isActive;
+    @NotNull
+    private Date startDate;
+    @NotNull
+    private Date endDate;
+
+    public static List&lt;PromotionApply&gt; createPromotionApplies(PromotionPutVm promotionPutVm, Promotion promotion) {
+<span class="pc bpc" id="L42" title="2 of 3 branches missed.">        return switch (promotion.getApplyTo()) {</span>
+<span class="fc" id="L43">            case PRODUCT -&gt; new ArrayList&lt;&gt;(promotionPutVm.getProductIds().stream()</span>
+<span class="fc" id="L44">                    .map(productId -&gt; PromotionApply.builder().productId(productId).promotion(promotion)</span>
+<span class="fc" id="L45">                            .build())</span>
+<span class="fc" id="L46">                    .toList());</span>
+<span class="nc" id="L47">            case BRAND -&gt; promotionPutVm.getBrandIds().stream()</span>
+<span class="nc" id="L48">                    .map(brandId -&gt; PromotionApply.builder().brandId(brandId).promotion(promotion)</span>
+<span class="nc" id="L49">                            .build())</span>
+<span class="nc" id="L50">                    .toList();</span>
+<span class="nc" id="L51">            case CATEGORY -&gt; promotionPutVm.getCategoryIds().stream()</span>
+<span class="nc" id="L52">                    .map(categoryId -&gt; PromotionApply.builder().categoryId(categoryId).promotion(promotion)</span>
+<span class="nc" id="L53">                            .build())</span>
+<span class="nc" id="L54">                    .toList();</span>
+        };
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

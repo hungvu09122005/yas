@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PromotionVm.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">promotion</a> &gt; <a href="index.source.html" class="el_package">com.yas.promotion.viewmodel</a> &gt; <span class="el_source">PromotionVm.java</span></div><h1>PromotionVm.java</h1><pre class="source lang-java linenums">package com.yas.promotion.viewmodel;
+
+import com.yas.promotion.model.Promotion;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import lombok.Builder;
+
+@Builder
+<span class="nc" id="L9">public record PromotionVm(Long id,</span>
+                          String name,
+                          String slug,
+                          String couponCode,
+                          Long discountPercentage,
+                          Long discountAmount,
+                          Boolean isActive,
+                          Instant startDate,
+                          Instant endDate
+) {
+    public static PromotionVm fromModel(Promotion promotion) {
+<span class="nc" id="L20">        return PromotionVm.builder()</span>
+<span class="nc" id="L21">                .id(promotion.getId())</span>
+<span class="nc" id="L22">                .name(promotion.getName())</span>
+<span class="nc" id="L23">                .slug(promotion.getSlug())</span>
+<span class="nc" id="L24">                .discountPercentage(promotion.getDiscountPercentage())</span>
+<span class="nc" id="L25">                .discountAmount(promotion.getDiscountAmount())</span>
+<span class="nc" id="L26">                .isActive(promotion.getIsActive())</span>
+<span class="nc" id="L27">                .startDate(promotion.getStartDate())</span>
+<span class="nc" id="L28">                .endDate(promotion.getEndDate())</span>
+<span class="nc" id="L29">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

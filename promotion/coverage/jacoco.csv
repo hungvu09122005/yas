@@ -1,0 +1,32 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+promotion,com.yas.promotion.viewmodel,CategoryGetVm,0,15,0,0,0,1,0,1,0,1
+promotion,com.yas.promotion.viewmodel,PromotionPutVm,29,25,2,1,8,5,4,2,2,2
+promotion,com.yas.promotion.viewmodel,PromotionVerifyVm,0,12,0,0,0,1,0,1,0,1
+promotion,com.yas.promotion.viewmodel,BrandVm,0,15,0,0,0,1,0,1,0,1
+promotion,com.yas.promotion.viewmodel,PromotionUsageVm,0,15,0,0,0,1,0,1,0,1
+promotion,com.yas.promotion.viewmodel,ProductVm,0,33,0,0,0,1,0,1,0,1
+promotion,com.yas.promotion.viewmodel,PromotionDetailVm,0,168,0,0,0,40,0,3,0,3
+promotion,com.yas.promotion.viewmodel,PromotionListVm,0,18,0,0,0,1,0,1,0,1
+promotion,com.yas.promotion.viewmodel,PromotionVerifyResultDto,0,18,0,0,0,1,0,1,0,1
+promotion,com.yas.promotion.viewmodel,PromotionPostVm,29,22,2,1,8,5,4,2,2,2
+promotion,com.yas.promotion.viewmodel,PromotionVm,57,0,0,0,11,0,2,0,2,0
+promotion,com.yas.promotion.service,AbstractCircuitBreakFallbackHandler,19,7,0,0,6,2,3,2,3,2
+promotion,com.yas.promotion.service,ProductService.new ParameterizedTypeReference() {...},0,8,0,0,0,1,0,1,0,1
+promotion,com.yas.promotion.service,ProductService.new ParameterizedTypeReference() {...},0,8,0,0,0,1,0,1,0,1
+promotion,com.yas.promotion.service,ProductService.new ParameterizedTypeReference() {...},0,8,0,0,0,1,0,1,0,1
+promotion,com.yas.promotion.service,ProductService.new ParameterizedTypeReference() {...},0,8,0,0,0,1,0,1,0,1
+promotion,com.yas.promotion.service,ProductService.new ParameterizedTypeReference() {...},0,8,0,0,0,1,0,1,0,1
+promotion,com.yas.promotion.service,ProductService,20,173,0,0,0,68,5,7,5,7
+promotion,com.yas.promotion.service,PromotionService,53,585,11,37,9,146,11,31,0,16
+promotion,com.yas.promotion.viewmodel.error,ErrorVm,24,0,0,0,3,0,2,0,2,0
+promotion,com.yas.promotion.validation,PromotionValidator,0,103,3,30,0,16,3,19,0,5
+promotion,com.yas.promotion.model.enumeration,ApplyTo,0,21,0,0,0,2,0,1,0,1
+promotion,com.yas.promotion.model.enumeration,UsageType,0,15,0,0,0,2,0,1,0,1
+promotion,com.yas.promotion.model.enumeration,DiscountType,0,15,0,0,0,2,0,1,0,1
+promotion,com.yas.promotion.utils,Constants,3,0,0,0,1,0,1,0,1,0
+promotion,com.yas.promotion.utils,Constants.Pageable,8,0,0,0,1,0,1,0,1,0
+promotion,com.yas.promotion.utils,AuthenticationUtils,19,6,2,0,5,1,2,1,1,1
+promotion,com.yas.promotion.utils,MessagesUtils,23,0,0,0,8,0,3,0,3,0
+promotion,com.yas.promotion.utils,Constants.ErrorCode,8,0,0,0,1,0,1,0,1,0
+promotion,com.yas.promotion.controller,PromotionController,18,46,0,0,3,9,2,5,2,5
+promotion,com.yas.promotion.model,Promotion,28,17,8,2,6,5,6,2,2,1

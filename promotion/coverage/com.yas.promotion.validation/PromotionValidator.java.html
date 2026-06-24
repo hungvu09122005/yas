@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PromotionValidator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">promotion</a> &gt; <a href="index.source.html" class="el_package">com.yas.promotion.validation</a> &gt; <span class="el_source">PromotionValidator.java</span></div><h1>PromotionValidator.java</h1><pre class="source lang-java linenums">package com.yas.promotion.validation;
+
+import com.yas.promotion.model.enumeration.DiscountType;
+import com.yas.promotion.model.enumeration.UsageType;
+import com.yas.promotion.viewmodel.PromotionDto;
+import com.yas.promotion.viewmodel.PromotionPostVm;
+import com.yas.promotion.viewmodel.PromotionPutVm;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
+import org.apache.commons.collections4.CollectionUtils;
+
+<span class="fc" id="L12">public class PromotionValidator implements ConstraintValidator&lt;PromotionConstraint, PromotionDto&gt; {</span>
+
+    private boolean isCreate;
+
+    @Override
+    public void initialize(PromotionConstraint constraintAnnotation) {
+<span class="fc" id="L18">        ConstraintValidator.super.initialize(constraintAnnotation);</span>
+<span class="fc" id="L19">    }</span>
+
+    @Override
+    public boolean isValid(PromotionDto promotionDto, ConstraintValidatorContext constraintValidatorContext) {
+<span class="fc" id="L23">        boolean isValid = true;</span>
+<span class="fc bfc" id="L24" title="All 2 branches covered.">        if (UsageType.LIMITED.equals(promotionDto.getUsageType())) {</span>
+<span class="fc bfc" id="L25" title="All 2 branches covered.">            isValid = promotionDto.getUsageLimit() &gt; 0;</span>
+        }
+
+<span class="fc bfc" id="L28" title="All 4 branches covered.">        isValid = isValid &amp;&amp; isValidDiscountType(promotionDto);</span>
+
+<span class="fc bfc" id="L30" title="All 4 branches covered.">        isValid = isValid &amp;&amp; isValidApplyToItems(promotionDto, isValid);</span>
+
+<span class="fc" id="L32">        return isValid;</span>
+    }
+
+    private static boolean isValidDiscountType(PromotionDto promotion) {
+<span class="fc bfc" id="L36" title="All 2 branches covered.">        if (DiscountType.FIXED.equals(promotion.getDiscountType())) {</span>
+<span class="fc bfc" id="L37" title="All 2 branches covered.">            return promotion.getDiscountAmount() &gt; 0;</span>
+        } else {
+<span class="fc bfc" id="L39" title="All 2 branches covered.">            return promotion.getDiscountPercentage() &gt; 0;</span>
+        }
+    }
+
+    private static boolean isValidApplyToItems(PromotionDto promotion, boolean isValid) {
+<span class="fc bfc" id="L44" title="All 3 branches covered.">        return switch (promotion.getApplyTo()) {</span>
+<span class="pc bpc" id="L45" title="1 of 4 branches missed.">            case PRODUCT -&gt; isValid &amp;&amp; CollectionUtils.isNotEmpty(promotion.getProductIds());</span>
+<span class="pc bpc" id="L46" title="1 of 4 branches missed.">            case BRAND -&gt; isValid &amp;&amp; CollectionUtils.isNotEmpty(promotion.getBrandIds());</span>
+<span class="pc bpc" id="L47" title="1 of 4 branches missed.">            case CATEGORY -&gt; isValid &amp;&amp; CollectionUtils.isNotEmpty(promotion.getCategoryIds());</span>
+        };
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>
