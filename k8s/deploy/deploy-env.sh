@@ -43,6 +43,16 @@ image_name_for() {
 # Sinh các cờ --set cho image. $1=chart, $2=prefix values (backend|ui)
 image_set_args() {
   local chart="$1" prefix="$2"
+
+  # payment-paypal: image upstream (ghcr.io/.../yas-payment-paypal:latest) hỏng -> "no main manifest".
+  # Khi KHÔNG có registry riêng, dùng image build tay đã nạp vào minikube (yas-payment-paypal:local).
+  if [[ "$chart" == "payment-paypal" && -z "$IMAGE_REGISTRY" ]]; then
+    printf '%s\n' "--set" "${prefix}.image.repository=${PAYPAL_LOCAL_IMAGE:-yas-payment-paypal}" \
+                  "--set" "${prefix}.image.tag=${PAYPAL_LOCAL_TAG:-local}" \
+                  "--set" "${prefix}.image.pullPolicy=IfNotPresent"
+    return
+  fi
+
   local args=("--set" "${prefix}.image.tag=${IMAGE_TAG}")
   if [[ -n "$IMAGE_REGISTRY" ]]; then
     args+=("--set" "${prefix}.image.repository=${IMAGE_REGISTRY}/$(image_name_for "$chart")")
