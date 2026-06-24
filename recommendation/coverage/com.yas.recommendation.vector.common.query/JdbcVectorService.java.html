@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JdbcVectorService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">recommendation</a> &gt; <a href="index.source.html" class="el_package">com.yas.recommendation.vector.common.query</a> &gt; <span class="el_source">JdbcVectorService.java</span></div><h1>JdbcVectorService.java</h1><pre class="source lang-java linenums">package com.yas.recommendation.vector.common.query;
+
+import tools.jackson.databind.ObjectMapper;
+import com.yas.recommendation.configuration.EmbeddingSearchConfiguration;
+import com.yas.recommendation.vector.common.document.BaseDocument;
+import com.yas.recommendation.vector.common.document.DocumentMetadata;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import org.springframework.ai.document.Document;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementSetter;
+import org.springframework.jdbc.core.StatementCreatorUtils;
+import org.springframework.stereotype.Service;
+
+/**
+ * Jdbc Vector service support native query vector search for document.
+ */
+@Service
+class JdbcVectorService {
+
+    public static final String DEFAULT_DOCID_PREFIX = &quot;PRODUCT&quot;;
+
+    @Value(&quot;${spring.ai.vectorstore.pgvector.table-name:vector_store}&quot;)
+    private String vectorTableName;
+
+    /* Using JdbcTemplate to keep consistency with Spring AI implementation, instead of using JPA, JdbcClient */
+    private final JdbcTemplate jdbcClient;
+    private final DocumentRowMapper documentRowMapper;
+    private final EmbeddingSearchConfiguration embeddingSearchConfiguration;
+
+    public JdbcVectorService(
+            JdbcTemplate jdbcClient,
+            ObjectMapper objectMapper,
+            EmbeddingSearchConfiguration embeddingSearchConfiguration
+<span class="fc" id="L37">    ) {</span>
+<span class="fc" id="L38">        this.jdbcClient = jdbcClient;</span>
+<span class="fc" id="L39">        this.documentRowMapper = new DocumentRowMapper(objectMapper);</span>
+<span class="fc" id="L40">        this.embeddingSearchConfiguration = embeddingSearchConfiguration;</span>
+<span class="fc" id="L41">    }</span>
+
+    public &lt;D extends BaseDocument&gt; List&lt;Document&gt; similarityProduct(Long id, Class&lt;D&gt; docType) {
+<span class="fc" id="L44">        String docIdPrefix = getDocIdPrefix(docType);</span>
+<span class="fc" id="L45">        UUID idStr = generateUuid(docIdPrefix, id);</span>
+
+<span class="fc" id="L47">        return jdbcClient.query(getFormattedQuery(), getPreparedStatementSetter(idStr), documentRowMapper);</span>
+    }
+
+    private String getDocIdPrefix(Class&lt;?&gt; docType) {
+<span class="fc" id="L51">        return Optional.ofNullable(docType)</span>
+<span class="fc" id="L52">                .map(dt -&gt; dt.getAnnotation(DocumentMetadata.class))</span>
+<span class="fc" id="L53">                .map(DocumentMetadata::docIdPrefix)</span>
+<span class="fc" id="L54">                .orElse(DEFAULT_DOCID_PREFIX);</span>
+    }
+
+    private UUID generateUuid(String docIdPrefix, Long id) {
+<span class="fc" id="L58">        return UUID.nameUUIDFromBytes(&quot;%s-%s&quot;.formatted(docIdPrefix, id).getBytes());</span>
+    }
+
+    private PreparedStatementSetter getPreparedStatementSetter(UUID idStr) {
+<span class="fc" id="L62">        return ps -&gt; {</span>
+<span class="fc" id="L63">            StatementCreatorUtils.setParameterValue(ps, 1, Integer.MIN_VALUE, idStr);</span>
+<span class="fc" id="L64">            StatementCreatorUtils.setParameterValue(ps, 2, Integer.MIN_VALUE, idStr);</span>
+<span class="fc" id="L65">            StatementCreatorUtils.setParameterValue(ps, 3, Integer.MIN_VALUE,</span>
+<span class="fc" id="L66">                    embeddingSearchConfiguration.similarityThreshold());</span>
+<span class="fc" id="L67">            StatementCreatorUtils.setParameterValue(ps, 4, Integer.MIN_VALUE,</span>
+<span class="fc" id="L68">                    embeddingSearchConfiguration.topK());</span>
+<span class="fc" id="L69">        };</span>
+    }
+
+    private String getFormattedQuery() {
+<span class="fc" id="L73">        return &quot;&quot;&quot;</span>
+                WITH entity AS (
+                    SELECT
+                        id,
+                        content,
+                        metadata,
+                        embedding
+                    FROM
+                        %s
+                    WHERE
+                        id = ?
+                )
+                SELECT
+                    vs.id,
+                    vs.content,
+                    vs.metadata,
+                    (vs.embedding &lt;=&gt; entity.embedding) AS similarity
+                FROM
+                    vector_store vs
+                JOIN
+                    entity ON true
+                WHERE vs.id &lt;&gt; ? AND (vs.embedding &lt;=&gt; entity.embedding) &gt; ?
+                ORDER BY
+                    similarity
+                LIMIT ?
+<span class="fc" id="L98">                &quot;&quot;&quot;.formatted(vectorTableName);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

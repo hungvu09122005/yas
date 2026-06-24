@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductVectorRepository.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">recommendation</a> &gt; <a href="index.source.html" class="el_package">com.yas.recommendation.vector.product.store</a> &gt; <span class="el_source">ProductVectorRepository.java</span></div><h1>ProductVectorRepository.java</h1><pre class="source lang-java linenums">package com.yas.recommendation.vector.product.store;
+
+import com.yas.recommendation.service.ProductService;
+import com.yas.recommendation.vector.common.store.SimpleVectorRepository;
+import com.yas.recommendation.vector.product.document.ProductDocument;
+import com.yas.recommendation.viewmodel.ProductDetailVm;
+import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.stereotype.Component;
+
+/**
+ * Component for managing vector store operations specifically for {@link ProductDocument}.
+ */
+@Component
+public class ProductVectorRepository extends SimpleVectorRepository&lt;ProductDocument, ProductDetailVm&gt; {
+
+    private final ProductService productService;
+
+    public ProductVectorRepository(VectorStore vectorStore, ProductService productService) {
+<span class="fc" id="L19">        super(ProductDocument.class, vectorStore);</span>
+<span class="fc" id="L20">        this.productService = productService;</span>
+<span class="fc" id="L21">    }</span>
+
+    @Override
+    public ProductDetailVm getEntity(Long id) {
+<span class="fc" id="L25">        return productService.getProductDetail(id);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

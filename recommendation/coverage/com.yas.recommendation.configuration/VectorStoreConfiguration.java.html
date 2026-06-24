@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>VectorStoreConfiguration.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">recommendation</a> &gt; <a href="index.source.html" class="el_package">com.yas.recommendation.configuration</a> &gt; <span class="el_source">VectorStoreConfiguration.java</span></div><h1>VectorStoreConfiguration.java</h1><pre class="source lang-java linenums">package com.yas.recommendation.configuration;
+
+import lombok.AllArgsConstructor;
+import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.ai.vectorstore.PgVectorStore;
+import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+/**
+ * VectorStore configuration that provides VectorStore bean for Spring Boot 4 compatibility.
+ * This replaces the excluded PgVectorStoreAutoConfiguration which references removed classes.
+ * Remove this class and enable auto-config after upgrading Spring AI to a newer version that is compatible with Spring Boot 4.
+ */
+@Configuration
+@EnableConfigurationProperties(VectorStoreProperties.class)
+@AllArgsConstructor
+public class VectorStoreConfiguration {
+
+    private final VectorStoreProperties vectorStoreProperties;
+
+    /**
+     * Manually create PgVectorStore bean compatible with Spring Boot 4.
+     * Using constructor compatible with Spring AI 1.0.0-M2
+     */
+    @Bean
+    @ConditionalOnMissingBean(VectorStore.class)
+    public VectorStore vectorStore(JdbcTemplate jdbcTemplate, EmbeddingModel embeddingModel) {
+<span class="fc" id="L32">        return new PgVectorStore(</span>
+            jdbcTemplate,
+            embeddingModel,
+<span class="fc" id="L35">            vectorStoreProperties.getDimensions(),</span>
+<span class="fc" id="L36">            vectorStoreProperties.getDistanceType(),</span>
+            false,
+<span class="fc" id="L38">            vectorStoreProperties.getIndexType(),</span>
+<span class="fc" id="L39">            vectorStoreProperties.isInitializeSchema()</span>
+        );
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

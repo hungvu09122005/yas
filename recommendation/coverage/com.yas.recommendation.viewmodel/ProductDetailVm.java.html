@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductDetailVm.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">recommendation</a> &gt; <a href="index.source.html" class="el_package">com.yas.recommendation.viewmodel</a> &gt; <span class="el_source">ProductDetailVm.java</span></div><h1>ProductDetailVm.java</h1><pre class="source lang-java linenums">package com.yas.recommendation.viewmodel;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import java.util.List;
+
+/**
+ * A record that represents detailed information about a product.
+ **/
+
+@JsonInclude(Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
+<span class="fc" id="L14">public record ProductDetailVm(</span>
+        long id,
+        String name,
+        String shortDescription,
+        String description,
+        String specification,
+        String sku,
+        String gtin,
+        String slug,
+        Boolean isAllowedToOrder,
+        Boolean isPublished,
+        Boolean isFeatured,
+        Boolean isVisible,
+        Boolean stockTrackingEnabled,
+        Double price,
+        Long brandId,
+        List&lt;CategoryVm&gt; categories,
+        String metaTitle,
+        String metaKeyword,
+        String metaDescription,
+        Long taxClassId,
+        String brandName,
+        List&lt;ProductAttributeValueVm&gt; attributeValues,
+        List&lt;ProductVariationVm&gt; variations,
+        ImageVm thumbnail,
+        List&lt;ImageVm&gt; productImages
+) {
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

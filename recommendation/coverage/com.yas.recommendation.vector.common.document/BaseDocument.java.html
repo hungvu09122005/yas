@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BaseDocument.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">recommendation</a> &gt; <a href="index.source.html" class="el_package">com.yas.recommendation.vector.common.document</a> &gt; <span class="el_source">BaseDocument.java</span></div><h1>BaseDocument.java</h1><pre class="source lang-java linenums">package com.yas.recommendation.vector.common.document;
+
+import java.util.Map;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.ai.document.ContentFormatter;
+import org.springframework.ai.document.DefaultContentFormatter;
+import org.springframework.ai.document.Document;
+import org.springframework.ai.document.id.IdGenerator;
+import org.springframework.util.Assert;
+
+/**
+ * Represent for base vector document structure.
+ */
+@Getter
+@Setter
+<span class="fc" id="L17">public abstract class BaseDocument {</span>
+
+    private Long entityId;
+    private String content;
+    private Map&lt;String, Object&gt; metadata;
+    private ContentFormatter contentFormatter;
+
+<span class="fc" id="L24">    public static final ContentFormatter DEFAULT_CONTENT_FORMATTER = DefaultContentFormatter.builder()</span>
+<span class="fc" id="L25">        .from(DefaultContentFormatter.defaultConfig())</span>
+<span class="fc" id="L26">        .withTextTemplate(DocumentMetadata.DEFAULT_CONTENT_FORMATTER)</span>
+<span class="fc" id="L27">        .build();</span>
+
+    /**
+     * Convert {@link BaseDocument} base document type to {@link Document}
+     * including content formatter and id generator (define metadata {@link DocumentMetadata}
+     * in class extends {@link BaseDocument}).
+     *
+     * @param idGenerator id generator.
+     * @return {@link Document} to save in db
+     */
+    public Document toDocument(IdGenerator idGenerator) {
+<span class="fc" id="L38">        Assert.isTrue(</span>
+<span class="fc" id="L39">            this.getClass().isAnnotationPresent(DocumentMetadata.class),</span>
+            &quot;Document must annotated by '@DocumentMetadata'&quot;
+        );
+<span class="fc" id="L42">        Assert.notNull(content, &quot;Document's content cannot be null&quot;);</span>
+<span class="fc" id="L43">        Assert.notNull(metadata, &quot;Document's metadata cannot be null&quot;);</span>
+<span class="fc" id="L44">        Document document = new Document(content, metadata, idGenerator);</span>
+<span class="pc bpc" id="L45" title="1 of 2 branches missed.">        document.setContentFormatter(contentFormatter == null ? DEFAULT_CONTENT_FORMATTER : contentFormatter);</span>
+<span class="fc" id="L46">        return document;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

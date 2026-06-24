@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>VectorQuery.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">recommendation</a> &gt; <a href="index.source.html" class="el_package">com.yas.recommendation.vector.common.query</a> &gt; <span class="el_source">VectorQuery.java</span></div><h1>VectorQuery.java</h1><pre class="source lang-java linenums">package com.yas.recommendation.vector.common.query;
+
+import tools.jackson.databind.ObjectMapper;
+import com.yas.recommendation.vector.common.document.BaseDocument;
+import com.yas.recommendation.vector.common.document.DocumentMetadata;
+import java.util.List;
+import lombok.Getter;
+import lombok.SneakyThrows;
+import org.springframework.ai.document.Document;
+import org.springframework.beans.factory.annotation.Autowired;
+
+/**
+ * Abstract service for performing similarity searches on a vector store.
+ *
+ * @param &lt;D&gt; the document type, must be annotated with {@link DocumentMetadata},
+ *            to know how the query will be formatted
+ * @param &lt;P&gt; the product result type handled by the service.
+ */
+public abstract class VectorQuery&lt;D extends BaseDocument, P&gt; {
+
+    private ObjectMapper objectMapper;
+    private JdbcVectorService jdbcVectorService;
+
+    @Getter
+    private final Class&lt;D&gt; docType;
+
+    @Getter
+    private final Class&lt;P&gt; resultType;
+
+    /**
+     * Constructor for VectorQueryService.
+     *
+     * @param docType    the document class type.
+     * @param resultType the result class type.
+     */
+<span class="pc" id="L36">    @SneakyThrows</span>
+<span class="fc" id="L37">    protected VectorQuery(Class&lt;D&gt; docType, Class&lt;P&gt; resultType) {</span>
+<span class="fc" id="L38">        this.docType = docType;</span>
+<span class="fc" id="L39">        this.resultType = resultType;</span>
+<span class="fc" id="L40">    }</span>
+
+    /**
+     * Performs a similarity search based on a product ID stored in db.
+     *
+     * @param id the ID of the product for which to perform the similarity search.
+     * @return a list of product results that are similar to the specified product in db,
+     *      result will not include specified product.
+     */
+    public List&lt;P&gt; similaritySearch(Long id) {
+<span class="fc" id="L50">        return toResult(jdbcVectorService.similarityProduct(id, this.getDocType()));</span>
+    }
+
+    /**
+     * Converts a list of documents to a list of product results.
+     *
+     * @param documents the list of documents to convert.
+     * @return a list of product results corresponding to the provided documents.
+     */
+    protected List&lt;P&gt; toResult(List&lt;Document&gt; documents) {
+<span class="fc" id="L60">        return documents</span>
+<span class="fc" id="L61">            .stream()</span>
+<span class="pc bpc" id="L62" title="1 of 2 branches missed.">            .filter(doc -&gt; doc.getMetadata() != null)</span>
+<span class="fc" id="L63">            .map(doc -&gt; objectMapper.convertValue(doc.getMetadata(), resultType))</span>
+<span class="fc" id="L64">            .toList();</span>
+    }
+
+    @Autowired
+    private void setObjectMapper(ObjectMapper objectMapper) {
+<span class="fc" id="L69">        this.objectMapper = objectMapper;</span>
+<span class="fc" id="L70">    }</span>
+
+    @Autowired
+    private void setJdbcVectorService(JdbcVectorService jdbcVectorService) {
+<span class="fc" id="L74">        this.jdbcVectorService = jdbcVectorService;</span>
+<span class="fc" id="L75">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>
