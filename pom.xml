@@ -54,6 +54,7 @@
         <logstash-logback-encoder.version>8.0</logstash-logback-encoder.version>
         <opentelemetry-logback.vesion>2.9.0-alpha</opentelemetry-logback.vesion>
         <opentelemetry-semconv.version>1.37.0</opentelemetry-semconv.version>
+        <opentelemetry.version>1.62.0</opentelemetry.version>
         <spring-cloud.version>2025.1.1</spring-cloud.version>
         <springdoc-openapi-starter-webmvc-ui.version>3.0.1</springdoc-openapi-starter-webmvc-ui.version>
         <keycloak-spring-security-adapter.version>25.0.3</keycloak-spring-security-adapter.version>
@@ -81,6 +82,11 @@
                 <groupId>io.opentelemetry.instrumentation</groupId>
                 <artifactId>opentelemetry-logback-mdc-1.0</artifactId>
                 <version>${opentelemetry-logback.vesion}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.opentelemetry</groupId>
+                <artifactId>opentelemetry-api</artifactId>
+                <version>${opentelemetry.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
