@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Category.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product</a> &gt; <a href="index.source.html" class="el_package">com.yas.product.model</a> &gt; <span class="el_source">Category.java</span></div><h1>Category.java</h1><pre class="source lang-java linenums">package com.yas.product.model;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.yas.commonlibrary.model.AbstractAuditEntity;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = &quot;category&quot;)
+public class Category extends AbstractAuditEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+
+    private String description;
+
+    private String slug;
+
+    private String metaKeyword;
+
+    private String metaDescription;
+
+    private Short displayOrder;
+
+    private Boolean isPublished;
+
+    private Long imageId;
+
+    @ManyToOne
+    @JoinColumn(name = &quot;parent_id&quot;)
+    private Category parent;
+
+    @OneToMany(mappedBy = &quot;parent&quot;, cascade = CascadeType.REMOVE)
+    @JsonIgnore
+    private List&lt;Category&gt; categories = new ArrayList&lt;&gt;();
+
+    @OneToMany(mappedBy = &quot;category&quot;)
+    @JsonIgnore
+    private List&lt;ProductCategory&gt; productCategories = new ArrayList&lt;&gt;();
+
+    @Override
+    public boolean equals(Object o) {
+<span class="nc bnc" id="L64" title="All 2 branches missed.">        if (this == o) {</span>
+<span class="nc" id="L65">            return true;</span>
+        }
+<span class="nc bnc" id="L67" title="All 2 branches missed.">        if (!(o instanceof Category)) {</span>
+<span class="nc" id="L68">            return false;</span>
+        }
+<span class="nc bnc" id="L70" title="All 4 branches missed.">        return id != null &amp;&amp; id.equals(((Category) o).id);</span>
+    }
+
+    @Override
+    public int hashCode() {
+        // see https://vladmihalcea.com/how-to-implement-equals-and-hashcode-using-the-jpa-entity-identifier/
+<span class="nc" id="L76">        return getClass().hashCode();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

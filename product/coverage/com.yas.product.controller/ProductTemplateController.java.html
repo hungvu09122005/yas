@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductTemplateController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product</a> &gt; <a href="index.source.html" class="el_package">com.yas.product.controller</a> &gt; <span class="el_source">ProductTemplateController.java</span></div><h1>ProductTemplateController.java</h1><pre class="source lang-java linenums">package com.yas.product.controller;
+
+import com.yas.product.constants.PageableConstant;
+import com.yas.product.repository.ProductTemplateRepository;
+import com.yas.product.service.ProductTemplateService;
+import com.yas.product.viewmodel.error.ErrorVm;
+import com.yas.product.viewmodel.producttemplate.ProductTemplateGetVm;
+import com.yas.product.viewmodel.producttemplate.ProductTemplateListGetVm;
+import com.yas.product.viewmodel.producttemplate.ProductTemplatePostVm;
+import com.yas.product.viewmodel.producttemplate.ProductTemplateVm;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
+import java.security.Principal;
+import java.util.List;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
+
+@RestController
+public class ProductTemplateController {
+    private final ProductTemplateService productTemplateService;
+    private final ProductTemplateRepository productTemplateRepository;
+
+    public ProductTemplateController(
+            ProductTemplateService productTemplateService,
+            ProductTemplateRepository productTemplateRepository
+<span class="fc" id="L36">    ) {</span>
+<span class="fc" id="L37">        this.productTemplateService = productTemplateService;</span>
+<span class="fc" id="L38">        this.productTemplateRepository = productTemplateRepository;</span>
+<span class="fc" id="L39">    }</span>
+
+    @GetMapping(&quot;/backoffice/product-template&quot;)
+    public ResponseEntity&lt;List&lt;ProductTemplateGetVm&gt;&gt; listProductTemplate() {
+<span class="fc" id="L43">        List&lt;ProductTemplateGetVm&gt; productTemplateVms = productTemplateRepository</span>
+<span class="fc" id="L44">                .findAll()</span>
+<span class="fc" id="L45">                .stream()</span>
+<span class="fc" id="L46">                .map(ProductTemplateGetVm::fromModel)</span>
+<span class="fc" id="L47">                .toList();</span>
+<span class="fc" id="L48">        return ResponseEntity.ok(productTemplateVms);</span>
+    }
+
+    @GetMapping(&quot;/backoffice/product-template/paging&quot;)
+    public ResponseEntity&lt;ProductTemplateListGetVm&gt; getPageableProductTemplates(
+        @RequestParam(value = &quot;pageNo&quot;,
+            defaultValue = PageableConstant.DEFAULT_PAGE_NUMBER, required = false) int pageNo,
+        @RequestParam(value = &quot;pageSize&quot;,
+            defaultValue = PageableConstant.DEFAULT_PAGE_SIZE, required = false) int pageSize) {
+
+<span class="fc" id="L58">        return ResponseEntity.ok(productTemplateService.getPageableProductTemplate(pageNo, pageSize));</span>
+    }
+
+    @GetMapping(&quot;/backoffice/product-template/{id}&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;OK&quot;,
+            content = @Content(schema = @Schema(implementation = ProductTemplateVm.class))),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Not found&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class))),
+    })
+    public ResponseEntity&lt;ProductTemplateVm&gt; getProductTemplate(@PathVariable(&quot;id&quot;) Long id) {
+<span class="fc" id="L69">        return ResponseEntity.ok(productTemplateService.getProductTemplate(id));</span>
+    }
+
+    @PostMapping(&quot;/backoffice/product-template&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;201&quot;, description = &quot;Created&quot;,
+            content = @Content(schema = @Schema(implementation = ProductTemplateVm.class))),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Bad request&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;ProductTemplateVm&gt; createProductTemplate(
+            @Valid @RequestBody ProductTemplatePostVm productTemplatePostVm,
+            UriComponentsBuilder uriComponentsBuilder,
+            Principal principal
+    ) {
+<span class="fc" id="L83">        ProductTemplateVm saveProductTemplate = productTemplateService.saveProductTemplate(productTemplatePostVm);</span>
+<span class="fc" id="L84">        return ResponseEntity.created(uriComponentsBuilder.replacePath(&quot;/product-template/{id}&quot;)</span>
+<span class="fc" id="L85">            .buildAndExpand(saveProductTemplate.id()).toUri())</span>
+<span class="fc" id="L86">                .body(saveProductTemplate);</span>
+    }
+
+    @PutMapping(path = &quot;/backoffice/product-template/{id}&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;204&quot;, description = &quot;Updated&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Not found&quot;,
+                content = @Content(schema = @Schema(implementation = ErrorVm.class))),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Bad request&quot;,
+                content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;Void&gt; updateProduct(
+            @PathVariable long id,
+            @Valid @RequestBody ProductTemplatePostVm productTemplatePostVm
+    ) {
+<span class="fc" id="L100">        productTemplateService.updateProductTemplate(id, productTemplatePostVm);</span>
+<span class="fc" id="L101">        return ResponseEntity.noContent().build();</span>
+    }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

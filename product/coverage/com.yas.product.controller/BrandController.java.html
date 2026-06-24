@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BrandController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product</a> &gt; <a href="index.source.html" class="el_package">com.yas.product.controller</a> &gt; <span class="el_source">BrandController.java</span></div><h1>BrandController.java</h1><pre class="source lang-java linenums">package com.yas.product.controller;
+
+import com.yas.commonlibrary.exception.BadRequestException;
+import com.yas.commonlibrary.exception.NotFoundException;
+import com.yas.product.constants.PageableConstant;
+import com.yas.product.model.Brand;
+import com.yas.product.repository.BrandRepository;
+import com.yas.product.service.BrandService;
+import com.yas.product.utils.Constants;
+import com.yas.product.viewmodel.brand.BrandListGetVm;
+import com.yas.product.viewmodel.brand.BrandPostVm;
+import com.yas.product.viewmodel.brand.BrandVm;
+import com.yas.product.viewmodel.error.ErrorVm;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
+
+@RestController
+public class BrandController {
+<span class="fc" id="L35">    private static final Logger log = LoggerFactory.getLogger(BrandController.class);</span>
+    private final BrandRepository brandRepository;
+    private final BrandService brandService;
+
+<span class="fc" id="L39">    public BrandController(BrandRepository brandRepository, BrandService brandService) {</span>
+<span class="fc" id="L40">        this.brandRepository = brandRepository;</span>
+<span class="fc" id="L41">        this.brandService = brandService;</span>
+<span class="fc" id="L42">    }</span>
+
+    @GetMapping({&quot;/backoffice/brands&quot;, &quot;/storefront/brands&quot;})
+    public ResponseEntity&lt;List&lt;BrandVm&gt;&gt; listBrands(
+        @RequestParam(required = false, defaultValue = &quot;&quot;) String brandName) {
+<span class="fc" id="L47">        log.info(&quot;[Test logging with trace] Got a request&quot;);</span>
+<span class="fc" id="L48">        List&lt;BrandVm&gt; brandVms = brandRepository.findByNameContainingIgnoreCase(brandName).stream()</span>
+<span class="fc" id="L49">                .map(BrandVm::fromModel)</span>
+<span class="fc" id="L50">                .toList();</span>
+<span class="fc" id="L51">        return ResponseEntity.ok(brandVms);</span>
+    }
+
+    @GetMapping({&quot;/backoffice/brands/paging&quot;, &quot;/storefront/brands/paging&quot;})
+    public ResponseEntity&lt;BrandListGetVm&gt; getPageableBrands(
+            @RequestParam(value = &quot;pageNo&quot;, defaultValue = PageableConstant.DEFAULT_PAGE_NUMBER, required = false)
+            int pageNo,
+            @RequestParam(value = &quot;pageSize&quot;, defaultValue = PageableConstant.DEFAULT_PAGE_SIZE, required = false)
+            int pageSize
+    ) {
+
+<span class="nc" id="L62">        return ResponseEntity.ok(brandService.getBrands(pageNo, pageSize));</span>
+    }
+
+    @GetMapping(&quot;/backoffice/brands/{id}&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Ok&quot;,
+            content = @Content(schema = @Schema(implementation = BrandVm.class))),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Not found&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;BrandVm&gt; getBrand(@PathVariable(&quot;id&quot;) Long id) {
+<span class="fc" id="L72">        Brand brand = brandRepository</span>
+<span class="fc" id="L73">                .findById(id)</span>
+<span class="fc" id="L74">                .orElseThrow(() -&gt; new NotFoundException(Constants.ErrorCode.BRAND_NOT_FOUND, id));</span>
+<span class="fc" id="L75">        return ResponseEntity.ok(BrandVm.fromModel(brand));</span>
+    }
+
+    @PostMapping(&quot;/backoffice/brands&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;201&quot;, description = &quot;Created&quot;,
+            content = @Content(schema = @Schema(implementation = BrandVm.class))),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Bad request&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;BrandVm&gt; createBrand(
+            @Valid @RequestBody BrandPostVm brandPostVm,
+            UriComponentsBuilder uriComponentsBuilder
+    ) {
+<span class="fc" id="L88">        Brand brand = brandService.create(brandPostVm);</span>
+<span class="fc" id="L89">        return ResponseEntity.created(uriComponentsBuilder.replacePath(&quot;/brands/{id}&quot;)</span>
+<span class="fc" id="L90">            .buildAndExpand(brand.getId()).toUri())</span>
+<span class="fc" id="L91">                .body(BrandVm.fromModel(brand));</span>
+    }
+
+    @PutMapping(&quot;/backoffice/brands/{id}&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;204&quot;, description = &quot;No content&quot;, content = @Content()),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Not found&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class))),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Bad request&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;Void&gt; updateBrand(@PathVariable Long id, @Valid @RequestBody final BrandPostVm brandPostVm) {
+<span class="fc" id="L102">        brandService.update(brandPostVm, id);</span>
+<span class="fc" id="L103">        return ResponseEntity.noContent().build();</span>
+    }
+
+    @DeleteMapping(&quot;/backoffice/brands/{id}&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;204&quot;, description = &quot;No content&quot;, content = @Content()),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Not found&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class))),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Bad request&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;Void&gt; deleteBrand(@PathVariable long id) {
+<span class="fc" id="L114">        brandService.delete(id);</span>
+<span class="fc" id="L115">        return ResponseEntity.noContent().build();</span>
+    }
+
+    @GetMapping(&quot;/backoffice/brands/by-ids&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;204&quot;, description = &quot;No content&quot;, content = @Content()),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Not found&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;List&lt;BrandVm&gt;&gt; getBrandsByIds(@RequestParam List&lt;Long&gt; ids) {
+<span class="nc" id="L124">        return ResponseEntity.ok(brandService.getBrandsByIds(ids));</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

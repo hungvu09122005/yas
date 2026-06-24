@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductAttributeService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product</a> &gt; <a href="index.source.html" class="el_package">com.yas.product.service</a> &gt; <span class="el_source">ProductAttributeService.java</span></div><h1>ProductAttributeService.java</h1><pre class="source lang-java linenums">package com.yas.product.service;
+
+import com.yas.commonlibrary.exception.BadRequestException;
+import com.yas.commonlibrary.exception.DuplicatedException;
+import com.yas.commonlibrary.exception.NotFoundException;
+import com.yas.product.model.attribute.ProductAttribute;
+import com.yas.product.model.attribute.ProductAttributeGroup;
+import com.yas.product.repository.ProductAttributeGroupRepository;
+import com.yas.product.repository.ProductAttributeRepository;
+import com.yas.product.utils.Constants;
+import com.yas.product.viewmodel.productattribute.ProductAttributeGetVm;
+import com.yas.product.viewmodel.productattribute.ProductAttributeListGetVm;
+import com.yas.product.viewmodel.productattribute.ProductAttributePostVm;
+import java.util.ArrayList;
+import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@Transactional
+public class ProductAttributeService {
+    private final ProductAttributeRepository productAttributeRepository;
+    private final ProductAttributeGroupRepository productAttributeGroupRepository;
+
+    public ProductAttributeService(ProductAttributeRepository productAttributeRepository,
+<span class="fc" id="L29">                                   ProductAttributeGroupRepository productAttributeGroupRepository) {</span>
+<span class="fc" id="L30">        this.productAttributeRepository = productAttributeRepository;</span>
+<span class="fc" id="L31">        this.productAttributeGroupRepository = productAttributeGroupRepository;</span>
+<span class="fc" id="L32">    }</span>
+
+    public ProductAttributeListGetVm getPageableProductAttributes(int pageNo, int pageSize) {
+<span class="fc" id="L35">        List&lt;ProductAttributeGetVm&gt; productAttributeGetVms = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L36">        Pageable pageable = PageRequest.of(pageNo, pageSize);</span>
+<span class="fc" id="L37">        Page&lt;ProductAttribute&gt; productAttributePage = productAttributeRepository.findAll(pageable);</span>
+<span class="fc" id="L38">        List&lt;ProductAttribute&gt; productAttributes = productAttributePage.getContent();</span>
+<span class="fc bfc" id="L39" title="All 2 branches covered.">        for (ProductAttribute productAttribute : productAttributes) {</span>
+<span class="fc" id="L40">            productAttributeGetVms.add(ProductAttributeGetVm.fromModel(productAttribute));</span>
+<span class="fc" id="L41">        }</span>
+
+<span class="fc" id="L43">        return new ProductAttributeListGetVm(</span>
+                productAttributeGetVms,
+<span class="fc" id="L45">                productAttributePage.getNumber(),</span>
+<span class="fc" id="L46">                productAttributePage.getSize(),</span>
+<span class="fc" id="L47">                (int) productAttributePage.getTotalElements(),</span>
+<span class="fc" id="L48">                productAttributePage.getTotalPages(),</span>
+<span class="fc" id="L49">                productAttributePage.isLast()</span>
+        );
+    }
+
+    public ProductAttribute save(ProductAttributePostVm productAttributePostVm) {
+<span class="fc" id="L54">        validateExistedName(productAttributePostVm.name(), null);</span>
+<span class="fc" id="L55">        ProductAttribute productAttribute = new ProductAttribute();</span>
+<span class="fc" id="L56">        productAttribute.setName(productAttributePostVm.name());</span>
+
+<span class="fc bfc" id="L58" title="All 2 branches covered.">        if (productAttributePostVm.productAttributeGroupId() != null) {</span>
+<span class="fc" id="L59">            ProductAttributeGroup productAttributeGroup = productAttributeGroupRepository</span>
+<span class="fc" id="L60">                    .findById(productAttributePostVm.productAttributeGroupId())</span>
+<span class="pc" id="L61">                    .orElseThrow(() -&gt; new BadRequestException(</span>
+<span class="nc" id="L62">                        String.format(Constants.ErrorCode.PRODUCT_ATTRIBUTE_GROUP_NOT_FOUND,</span>
+<span class="nc" id="L63">                            productAttributePostVm.productAttributeGroupId())));</span>
+<span class="fc" id="L64">            productAttribute.setProductAttributeGroup(productAttributeGroup);</span>
+        }
+
+<span class="fc" id="L67">        return productAttributeRepository.save(productAttribute);</span>
+    }
+
+    public ProductAttribute update(ProductAttributePostVm productAttributePostVm, Long id) {
+<span class="fc" id="L71">        validateExistedName(productAttributePostVm.name(), id);</span>
+<span class="fc" id="L72">        ProductAttribute productAttribute = productAttributeRepository</span>
+<span class="fc" id="L73">                .findById(id)</span>
+<span class="fc" id="L74">                .orElseThrow(</span>
+<span class="nc" id="L75">                    () -&gt; new NotFoundException(String.format(Constants.ErrorCode.PRODUCT_ATTRIBUTE_NOT_FOUND, id)));</span>
+<span class="fc" id="L76">        productAttribute.setName(productAttributePostVm.name());</span>
+
+
+<span class="fc bfc" id="L79" title="All 2 branches covered.">        if (productAttributePostVm.productAttributeGroupId() != null) {</span>
+<span class="fc" id="L80">            ProductAttributeGroup productAttributeGroup = productAttributeGroupRepository</span>
+<span class="fc" id="L81">                    .findById(productAttributePostVm.productAttributeGroupId())</span>
+<span class="fc" id="L82">                    .orElseThrow(()</span>
+<span class="nc" id="L83">                        -&gt; new BadRequestException(String.format(Constants.ErrorCode.PRODUCT_ATTRIBUTE_GROUP_NOT_FOUND,</span>
+<span class="nc" id="L84">                            productAttributePostVm.productAttributeGroupId())));</span>
+<span class="fc" id="L85">            productAttribute.setProductAttributeGroup(productAttributeGroup);</span>
+        }
+
+<span class="fc" id="L88">        return productAttributeRepository.save(productAttribute);</span>
+    }
+
+    private void validateExistedName(String name, Long id) {
+<span class="fc bfc" id="L92" title="All 2 branches covered.">        if (checkExistedName(name, id)) {</span>
+<span class="fc" id="L93">            throw new DuplicatedException(Constants.ErrorCode.NAME_ALREADY_EXITED, name);</span>
+        }
+<span class="fc" id="L95">    }</span>
+
+    private boolean checkExistedName(String name, Long id) {
+<span class="fc bfc" id="L98" title="All 2 branches covered.">        return productAttributeRepository.findExistedName(name, id) != null;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

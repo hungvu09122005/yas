@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product</a> &gt; <a href="index.source.html" class="el_package">com.yas.product.controller</a> &gt; <span class="el_source">ProductController.java</span></div><h1>ProductController.java</h1><pre class="source lang-java linenums">package com.yas.product.controller;
+
+import com.yas.product.model.enumeration.FilterExistInWhSelection;
+import com.yas.product.service.ProductDetailService;
+import com.yas.product.service.ProductService;
+import com.yas.product.viewmodel.error.ErrorVm;
+import com.yas.product.viewmodel.product.ProductDetailGetVm;
+import com.yas.product.viewmodel.product.ProductDetailInfoVm;
+import com.yas.product.viewmodel.product.ProductDetailVm;
+import com.yas.product.viewmodel.product.ProductEsDetailVm;
+import com.yas.product.viewmodel.product.ProductExportingDetailVm;
+import com.yas.product.viewmodel.product.ProductFeatureGetVm;
+import com.yas.product.viewmodel.product.ProductGetCheckoutListVm;
+import com.yas.product.viewmodel.product.ProductGetDetailVm;
+import com.yas.product.viewmodel.product.ProductInfoVm;
+import com.yas.product.viewmodel.product.ProductListGetFromCategoryVm;
+import com.yas.product.viewmodel.product.ProductListGetVm;
+import com.yas.product.viewmodel.product.ProductListVm;
+import com.yas.product.viewmodel.product.ProductPostVm;
+import com.yas.product.viewmodel.product.ProductPutVm;
+import com.yas.product.viewmodel.product.ProductQuantityPostVm;
+import com.yas.product.viewmodel.product.ProductQuantityPutVm;
+import com.yas.product.viewmodel.product.ProductSlugGetVm;
+import com.yas.product.viewmodel.product.ProductThumbnailGetVm;
+import com.yas.product.viewmodel.product.ProductThumbnailVm;
+import com.yas.product.viewmodel.product.ProductVariationGetVm;
+import com.yas.product.viewmodel.product.ProductsGetVm;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
+import java.util.List;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@Validated
+@RestController
+public class ProductController {
+    private final ProductService productService;
+    private final ProductDetailService productDetailService;
+
+<span class="fc" id="L54">    public ProductController(ProductService productService, ProductDetailService productDetailService) {</span>
+<span class="fc" id="L55">        this.productService = productService;</span>
+<span class="fc" id="L56">        this.productDetailService = productDetailService;</span>
+<span class="fc" id="L57">    }</span>
+
+    @GetMapping(&quot;/backoffice/products&quot;)
+    public ResponseEntity&lt;ProductListGetVm&gt; listProducts(
+            @RequestParam(value = &quot;pageNo&quot;, defaultValue = &quot;0&quot;, required = false) int pageNo,
+            @RequestParam(value = &quot;pageSize&quot;, defaultValue = &quot;5&quot;, required = false) int pageSize,
+            @RequestParam(value = &quot;product-name&quot;, defaultValue = &quot;&quot;, required = false) String productName,
+            @RequestParam(value = &quot;brand-name&quot;, defaultValue = &quot;&quot;, required = false) String brandName
+    ) {
+<span class="fc" id="L66">        return ResponseEntity.ok(productService.getProductsWithFilter(pageNo, pageSize, productName, brandName));</span>
+    }
+
+    @GetMapping(&quot;/backoffice/export/products&quot;)
+    public ResponseEntity&lt;List&lt;ProductExportingDetailVm&gt;&gt; exportProducts(
+            @RequestParam(value = &quot;product-name&quot;, defaultValue = &quot;&quot;, required = false) String productName,
+            @RequestParam(value = &quot;brand-name&quot;, defaultValue = &quot;&quot;, required = false) String brandName
+    ) {
+<span class="fc" id="L74">        return ResponseEntity.ok(productService.exportProducts(productName, brandName));</span>
+    }
+
+    @PostMapping(path = &quot;/backoffice/products&quot;, consumes = {MediaType.APPLICATION_JSON_VALUE})
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;201&quot;, description = &quot;Created&quot;,
+                content = @Content(schema = @Schema(implementation = ProductGetDetailVm.class))),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Bad request&quot;,
+                content = @Content(schema = @Schema(implementation = ErrorVm.class)))
+    })
+    public ResponseEntity&lt;ProductGetDetailVm&gt; createProduct(@Valid @RequestBody ProductPostVm productPostVm) {
+<span class="fc" id="L85">        ProductGetDetailVm productGetDetailVm = productService.createProduct(productPostVm);</span>
+<span class="fc" id="L86">        return new ResponseEntity&lt;&gt;(productGetDetailVm, HttpStatus.CREATED);</span>
+    }
+
+    @PutMapping(path = &quot;/backoffice/products/{id}&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;204&quot;, description = &quot;Updated&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Not found&quot;,
+                content = @Content(schema = @Schema(implementation = ErrorVm.class))),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Bad request&quot;,
+                content = @Content(schema = @Schema(implementation = ErrorVm.class)))
+    })
+    public ResponseEntity&lt;Void&gt; updateProduct(@PathVariable long id, @Valid @RequestBody ProductPutVm productPutVm) {
+<span class="fc" id="L98">        productService.updateProduct(id, productPutVm);</span>
+<span class="fc" id="L99">        return ResponseEntity.noContent().build();</span>
+    }
+
+    @GetMapping(&quot;/storefront/products/featured&quot;)
+    public ResponseEntity&lt;ProductFeatureGetVm&gt; getFeaturedProducts(
+            @RequestParam(value = &quot;pageNo&quot;, defaultValue = &quot;0&quot;, required = false) int pageNo,
+            @RequestParam(value = &quot;pageSize&quot;, defaultValue = &quot;10&quot;, required = false) int pageSize
+    ) {
+<span class="fc" id="L107">        return ResponseEntity.ok(productService.getListFeaturedProducts(pageNo, pageSize));</span>
+    }
+
+    @GetMapping(&quot;/storefront/brand/{brandSlug}/products&quot;)
+    public ResponseEntity&lt;List&lt;ProductThumbnailVm&gt;&gt; getProductsByBrand(@PathVariable String brandSlug) {
+<span class="fc" id="L112">        return ResponseEntity.ok(productService.getProductsByBrand(brandSlug));</span>
+    }
+
+    @GetMapping({&quot;/storefront/category/{categorySlug}/products&quot;, &quot;/backoffice/category/{categorySlug}/products&quot;})
+    public ResponseEntity&lt;ProductListGetFromCategoryVm&gt; getProductsByCategory(
+            @RequestParam(value = &quot;pageNo&quot;, defaultValue = &quot;0&quot;, required = false) int pageNo,
+            @RequestParam(value = &quot;pageSize&quot;, defaultValue = &quot;2&quot;, required = false) int pageSize,
+            @PathVariable String categorySlug
+    ) {
+<span class="fc" id="L121">        return ResponseEntity.ok(productService.getProductsFromCategory(pageNo, pageSize, categorySlug));</span>
+    }
+
+    @GetMapping(&quot;/backoffice/products/{productId}&quot;)
+    public ResponseEntity&lt;ProductDetailVm&gt; getProductById(@PathVariable long productId) {
+<span class="fc" id="L126">        return ResponseEntity.ok(productService.getProductById(productId));</span>
+    }
+
+    @GetMapping(&quot;/storefront/products/list-featured&quot;)
+    public ResponseEntity&lt;List&lt;ProductThumbnailGetVm&gt;&gt; getFeaturedProductsById(
+            @RequestParam(&quot;productId&quot;) List&lt;Long&gt; productIds
+    ) {
+<span class="fc" id="L133">        return ResponseEntity.ok(productService.getFeaturedProductsById(productIds));</span>
+    }
+
+    @GetMapping(&quot;/storefront/product/{slug}&quot;)
+    public ResponseEntity&lt;ProductDetailGetVm&gt; getProductDetail(@PathVariable(&quot;slug&quot;) String slug) {
+<span class="fc" id="L138">        return ResponseEntity.ok(productService.getProductDetail(slug));</span>
+    }
+
+    @DeleteMapping(&quot;/backoffice/products/{id}&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;204&quot;, description = &quot;No content&quot;, content = @Content()),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Not found&quot;,
+                content = @Content(schema = @Schema(implementation = ErrorVm.class))),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Bad request&quot;,
+                content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;Void&gt; deleteProduct(@PathVariable Long id) {
+<span class="fc" id="L149">        productService.deleteProduct(id);</span>
+<span class="fc" id="L150">        return ResponseEntity.noContent().build();</span>
+    }
+
+    @GetMapping(&quot;/storefront/products&quot;)
+    public ResponseEntity&lt;ProductsGetVm&gt; getProductsByMultiQuery(
+            @RequestParam(value = &quot;pageNo&quot;, defaultValue = &quot;0&quot;, required = false) int pageNo,
+            @RequestParam(value = &quot;pageSize&quot;, defaultValue = &quot;5&quot;, required = false) int pageSize,
+            @RequestParam(value = &quot;productName&quot;, defaultValue = &quot;&quot;, required = false) String productName,
+            @RequestParam(value = &quot;categorySlug&quot;, defaultValue = &quot;&quot;, required = false) String categorySlug,
+            @RequestParam(value = &quot;startPrice&quot;, defaultValue = &quot;&quot;, required = false) Double startPrice,
+            @RequestParam(value = &quot;endPrice&quot;, defaultValue = &quot;&quot;, required = false) Double endPrice
+    ) {
+<span class="fc" id="L162">        return ResponseEntity.ok(productService.getProductsByMultiQuery(</span>
+                pageNo, pageSize, productName, categorySlug, startPrice, endPrice
+        ));
+    }
+
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Get product variations by parent id successfully&quot;,
+                content = @Content(mediaType = &quot;application/json&quot;,
+                        array = @ArraySchema(schema = @Schema(implementation = ProductVariationGetVm.class)))),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Bad request&quot;,
+                content = @Content(mediaType = &quot;application/json&quot;, schema = @Schema(implementation = ErrorVm.class))),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Not found&quot;,
+                content = @Content(mediaType = &quot;application/json&quot;, schema = @Schema(implementation = ErrorVm.class)))
+    })
+    @GetMapping({&quot;/storefront/product-variations/{id}&quot;, &quot;/backoffice/product-variations/{id}&quot;})
+    public ResponseEntity&lt;List&lt;ProductVariationGetVm&gt;&gt; getProductVariationsByParentId(@PathVariable Long id) {
+<span class="fc" id="L178">        return ResponseEntity.ok(productService.getProductVariationsByParentId(id));</span>
+    }
+
+    @GetMapping(&quot;/storefront/productions/{id}/slug&quot;)
+    public ResponseEntity&lt;ProductSlugGetVm&gt; getProductSlug(@PathVariable Long id) {
+<span class="fc" id="L183">        return ResponseEntity.ok(productService.getProductSlug(id));</span>
+    }
+
+    @GetMapping(&quot;/storefront/products-es/{productId}&quot;)
+    public ResponseEntity&lt;ProductEsDetailVm&gt; getProductEsDetailById(@PathVariable long productId) {
+<span class="fc" id="L188">        return ResponseEntity.ok(productService.getProductEsDetailById(productId));</span>
+    }
+
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Get related products by product id successfully&quot;,
+                content = @Content(mediaType = &quot;application/json&quot;,
+                        array = @ArraySchema(schema = @Schema(implementation = ProductVariationGetVm.class)))),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Not found&quot;,
+                content = @Content(mediaType = &quot;application/json&quot;, schema = @Schema(implementation = ErrorVm.class)))
+    })
+    @GetMapping(&quot;/backoffice/products/related-products/{id}&quot;)
+    public ResponseEntity&lt;List&lt;ProductListVm&gt;&gt; getRelatedProductsBackoffice(@PathVariable Long id) {
+<span class="fc" id="L200">        return ResponseEntity.ok(productService.getRelatedProductsBackoffice(id));</span>
+    }
+
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Get related products by product id successfully&quot;,
+                content = @Content(mediaType = &quot;application/json&quot;,
+                        array = @ArraySchema(schema = @Schema(implementation = ProductVariationGetVm.class)))),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Not found&quot;,
+                content = @Content(mediaType = &quot;application/json&quot;, schema = @Schema(implementation = ErrorVm.class)))
+    })
+    @GetMapping(&quot;/storefront/products/related-products/{id}&quot;)
+    public ResponseEntity&lt;ProductsGetVm&gt; getRelatedProductsStorefront(
+            @PathVariable Long id,
+            @RequestParam(value = &quot;pageNo&quot;, defaultValue = &quot;0&quot;, required = false) int pageNo,
+            @RequestParam(value = &quot;pageSize&quot;, defaultValue = &quot;5&quot;, required = false) int pageSize
+    ) {
+<span class="fc" id="L216">        return ResponseEntity.ok(productService.getRelatedProductsStorefront(id, pageNo, pageSize));</span>
+    }
+
+    @GetMapping(&quot;/backoffice/products/for-warehouse&quot;)
+    public ResponseEntity&lt;List&lt;ProductInfoVm&gt;&gt; getProductsForWarehouse(
+            @RequestParam String name, @RequestParam String sku,
+            @RequestParam(required = false) List&lt;Long&gt; productIds,
+            @RequestParam(required = false) FilterExistInWhSelection selection
+    ) {
+<span class="fc" id="L225">        return ResponseEntity.ok(productService.getProductsForWarehouse(name, sku, productIds, selection));</span>
+    }
+
+    @PutMapping(path = &quot;/backoffice/products/update-quantity&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;204&quot;, description = &quot;Updated&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Not found&quot;,
+                content = @Content(schema = @Schema(implementation = ErrorVm.class))),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Bad request&quot;,
+                content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;Void&gt; updateProductQuantity(
+            @Valid @RequestBody List&lt;ProductQuantityPostVm&gt; productQuantityPostVms
+    ) {
+<span class="fc" id="L238">        productService.updateProductQuantity(productQuantityPostVms);</span>
+
+<span class="fc" id="L240">        return ResponseEntity.noContent().build();</span>
+    }
+
+    @PutMapping(path = &quot;/backoffice/products/subtract-quantity&quot;, consumes = {MediaType.APPLICATION_JSON_VALUE})
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;204&quot;, description = &quot;Updated&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Not found&quot;,
+                content = @Content(schema = @Schema(implementation = ErrorVm.class))),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Bad request&quot;,
+                content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;Void&gt; subtractProductQuantity(
+            @Valid @RequestBody List&lt;ProductQuantityPutVm&gt; productQuantityPutVm
+    ) {
+<span class="fc" id="L253">        productService.subtractStockQuantity(productQuantityPutVm);</span>
+<span class="fc" id="L254">        return ResponseEntity.noContent().build();</span>
+    }
+
+    @GetMapping(&quot;/backoffice/products/by-ids&quot;)
+    public ResponseEntity&lt;List&lt;ProductListVm&gt;&gt; getProductByIds(@RequestParam List&lt;Long&gt; ids) {
+<span class="nc" id="L259">        return ResponseEntity.ok(productService.getProductByIds(ids));</span>
+    }
+
+    @GetMapping(&quot;/backoffice/products/by-categories&quot;)
+    public ResponseEntity&lt;List&lt;ProductListVm&gt;&gt; getProductByCategories(
+            @RequestParam(&quot;ids&quot;) List&lt;Long&gt; categoryIds) {
+<span class="fc" id="L265">        return ResponseEntity.ok(productService.getProductByCategoryIds(categoryIds));</span>
+    }
+
+    @GetMapping(&quot;/backoffice/products/by-brands&quot;)
+    public ResponseEntity&lt;List&lt;ProductListVm&gt;&gt; getProductByBrands(
+            @RequestParam(&quot;ids&quot;) List&lt;Long&gt; brandIds) {
+<span class="fc" id="L271">        return ResponseEntity.ok(productService.getProductByBrandIds(brandIds));</span>
+    }
+
+    @GetMapping(&quot;/backoffice/products/latest/{count}&quot;)
+    public ResponseEntity&lt;List&lt;ProductListVm&gt;&gt; getLatestProducts(@PathVariable int count) {
+<span class="fc" id="L276">        return ResponseEntity.ok(productService.getLatestProducts(count));</span>
+    }
+
+    @GetMapping(&quot;/storefront/products/detail/{productId}&quot;)
+    public ResponseEntity&lt;ProductDetailInfoVm&gt; getProductDetailById(@PathVariable(&quot;productId&quot;) long productId) {
+<span class="fc" id="L281">        return ResponseEntity.ok(productDetailService.getProductDetailById(productId));</span>
+    }
+
+    @GetMapping(&quot;/products&quot;)
+    public ResponseEntity&lt;ProductGetCheckoutListVm&gt; getProductCheckoutList(
+        @RequestParam(value = &quot;pageNo&quot;, defaultValue = &quot;0&quot;, required = false) int pageNo,
+        @RequestParam(value = &quot;pageSize&quot;, defaultValue = &quot;20&quot;, required = false) int pageSize,
+        @RequestParam(value = &quot;ids&quot;, required = false) List&lt;Long&gt; productIds) {
+<span class="fc" id="L289">        return ResponseEntity.ok(productService.getProductCheckoutList(pageNo, pageSize, productIds));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

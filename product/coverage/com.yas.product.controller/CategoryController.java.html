@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CategoryController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product</a> &gt; <a href="index.source.html" class="el_package">com.yas.product.controller</a> &gt; <span class="el_source">CategoryController.java</span></div><h1>CategoryController.java</h1><pre class="source lang-java linenums">package com.yas.product.controller;
+
+import com.yas.commonlibrary.exception.BadRequestException;
+import com.yas.product.constants.PageableConstant;
+import com.yas.product.model.Category;
+import com.yas.product.repository.CategoryRepository;
+import com.yas.product.service.CategoryService;
+import com.yas.product.utils.Constants;
+import com.yas.product.viewmodel.category.CategoryGetDetailVm;
+import com.yas.product.viewmodel.category.CategoryGetVm;
+import com.yas.product.viewmodel.category.CategoryPostVm;
+import com.yas.product.viewmodel.error.ErrorVm;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
+import java.security.Principal;
+import java.util.List;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
+
+@RestController
+public class CategoryController {
+    private final CategoryRepository categoryRepository;
+    private final CategoryService categoryService;
+
+<span class="fc" id="L36">    public CategoryController(CategoryRepository categoryRepository, CategoryService categoryService) {</span>
+<span class="fc" id="L37">        this.categoryRepository = categoryRepository;</span>
+<span class="fc" id="L38">        this.categoryService = categoryService;</span>
+<span class="fc" id="L39">    }</span>
+
+    @GetMapping({&quot;/backoffice/categories&quot;, &quot;/storefront/categories&quot;})
+    public ResponseEntity&lt;List&lt;CategoryGetVm&gt;&gt; listCategories(
+        @RequestParam(required = false, defaultValue = &quot;&quot;) String categoryName) {
+<span class="fc" id="L44">        return ResponseEntity.ok(categoryService.getCategories(categoryName));</span>
+    }
+
+    @GetMapping(&quot;/storefront/categories/suggestions&quot;)
+    public ResponseEntity&lt;List&lt;String&gt;&gt; listTopNthCategories(
+        @RequestParam(value = &quot;limit&quot;, defaultValue = PageableConstant.DEFAULT_PAGE_SIZE, required = false)
+        final int limit) {
+<span class="nc" id="L51">        return ResponseEntity.ok(categoryService.getTopNthCategories(limit));</span>
+    }
+
+    @GetMapping(&quot;/backoffice/categories/{id}&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Ok&quot;,
+            content = @Content(schema = @Schema(implementation = CategoryGetDetailVm.class))),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Not found&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))
+    })
+    public ResponseEntity&lt;CategoryGetDetailVm&gt; getCategory(@PathVariable Long id) {
+<span class="fc" id="L62">        return ResponseEntity.ok(categoryService.getCategoryById(id));</span>
+    }
+
+    @PostMapping(&quot;/backoffice/categories&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;201&quot;, description = &quot;Created&quot;,
+            content = @Content(schema = @Schema(implementation = CategoryGetDetailVm.class))),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Bad request&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;CategoryGetDetailVm&gt; createCategory(
+            @Valid @RequestBody CategoryPostVm categoryPostVm,
+            UriComponentsBuilder uriComponentsBuilder,
+            Principal principal
+    ) {
+<span class="fc" id="L76">        Category savedCategory = categoryService.create(categoryPostVm);</span>
+
+<span class="fc" id="L78">        CategoryGetDetailVm categoryGetDetailVm = CategoryGetDetailVm.fromModel(savedCategory);</span>
+<span class="fc" id="L79">        return ResponseEntity.created(uriComponentsBuilder.replacePath(&quot;/categories/{id}&quot;)</span>
+<span class="fc" id="L80">            .buildAndExpand(savedCategory.getId()).toUri())</span>
+<span class="fc" id="L81">                .body(categoryGetDetailVm);</span>
+    }
+
+    @PutMapping(&quot;/backoffice/categories/{id}&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;204&quot;, description = &quot;No content&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Not found&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class))),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Bad request&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;Void&gt; updateCategory(
+            @PathVariable Long id,
+            @RequestBody @Valid final CategoryPostVm categoryPostVm,
+            Principal principal
+    ) {
+<span class="fc" id="L96">        categoryService.update(categoryPostVm, id);</span>
+<span class="fc" id="L97">        return ResponseEntity.noContent().build();</span>
+    }
+
+    @DeleteMapping(&quot;/backoffice/categories/{id}&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;204&quot;, description = &quot;No content&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Not found&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class))),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Bad request&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;Void&gt; deleteCategory(@PathVariable Long id) {
+<span class="fc" id="L108">        Category category = categoryRepository.findById(id)</span>
+<span class="fc" id="L109">                .orElseThrow(() -&gt; new BadRequestException(Constants.ErrorCode.CATEGORY_NOT_FOUND, id));</span>
+<span class="pc bpc" id="L110" title="1 of 2 branches missed.">        if (!category.getCategories().isEmpty()) {</span>
+<span class="nc" id="L111">            throw new BadRequestException(Constants.ErrorCode.MAKE_SURE_CATEGORY_DO_NOT_CONTAIN_CHILDREN);</span>
+        }
+<span class="pc bpc" id="L113" title="1 of 2 branches missed.">        if (!category.getProductCategories().isEmpty()) {</span>
+<span class="nc" id="L114">            throw new BadRequestException(Constants.ErrorCode.MAKE_SURE_CATEGORY_DO_NOT_CONTAIN_PRODUCT);</span>
+        }
+<span class="fc" id="L116">        categoryRepository.deleteById(id);</span>
+<span class="fc" id="L117">        return ResponseEntity.noContent().build();</span>
+    }
+
+    @GetMapping(&quot;/backoffice/categories/by-ids&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Ok&quot;,
+            content = @Content(schema = @Schema(implementation = CategoryGetDetailVm.class))),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Not found&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))
+    })
+    public ResponseEntity&lt;List&lt;CategoryGetVm&gt;&gt; getCategoriesByIds(@RequestParam List&lt;Long&gt; ids) {
+<span class="nc" id="L128">        return ResponseEntity.ok(categoryService.getCategoryByIds(ids));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

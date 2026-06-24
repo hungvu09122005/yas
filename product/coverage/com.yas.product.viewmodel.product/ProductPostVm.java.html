@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductPostVm.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product</a> &gt; <a href="index.source.html" class="el_package">com.yas.product.viewmodel.product</a> &gt; <span class="el_source">ProductPostVm.java</span></div><h1>ProductPostVm.java</h1><pre class="source lang-java linenums">package com.yas.product.viewmodel.product;
+
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.yas.product.model.enumeration.DimensionUnit;
+import com.yas.product.validation.ValidateProductPrice;
+import com.yas.product.viewmodel.productoption.ProductOptionValuePostVm;
+import jakarta.validation.constraints.NotBlank;
+import java.util.List;
+
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
+@JsonSerialize
+<span class="fc" id="L13">public record ProductPostVm(</span>
+        @NotBlank String name,
+        @NotBlank String slug,
+        Long brandId,
+        List&lt;Long&gt; categoryIds,
+        String shortDescription,
+        String description,
+        String specification,
+        String sku,
+        String gtin,
+        Double weight,
+        DimensionUnit dimensionUnit,
+        Double length,
+        Double width,
+        Double height,
+        @ValidateProductPrice Double price,
+        Boolean isAllowedToOrder,
+        Boolean isPublished,
+        Boolean isFeatured,
+        Boolean isVisibleIndividually,
+        Boolean stockTrackingEnabled,
+        String metaTitle,
+        String metaKeyword,
+        String metaDescription,
+        Long thumbnailMediaId,
+        List&lt;Long&gt; productImageIds,
+        List&lt;ProductVariationPostVm&gt; variations,
+        List&lt;ProductOptionValuePostVm&gt; productOptionValues,
+        List&lt;ProductOptionValueDisplay&gt; productOptionValueDisplays,
+        List&lt;Long&gt; relatedProductIds,
+        Long taxClassId) implements ProductSaveVm&lt;ProductVariationPostVm&gt; {
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

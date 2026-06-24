@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CategoryGetDetailVm.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product</a> &gt; <a href="index.source.html" class="el_package">com.yas.product.viewmodel.category</a> &gt; <span class="el_source">CategoryGetDetailVm.java</span></div><h1>CategoryGetDetailVm.java</h1><pre class="source lang-java linenums">package com.yas.product.viewmodel.category;
+
+import com.yas.product.model.Category;
+import com.yas.product.viewmodel.ImageVm;
+
+<span class="fc" id="L6">public record CategoryGetDetailVm(long id, String name, String slug, String description, long parentId,</span>
+                                  String metaKeywords, String metaDescription, short displayOrder, Boolean isPublish,
+                                  ImageVm categoryImage) {
+    public static CategoryGetDetailVm fromModel(Category category) {
+<span class="pc bpc" id="L10" title="1 of 2 branches missed.">        if (category.getParent() != null) {</span>
+<span class="nc" id="L11">            return new CategoryGetDetailVm(category.getId(), category.getName(), category.getSlug(),</span>
+<span class="nc" id="L12">                    category.getDescription(), category.getParent().getId(), category.getMetaKeyword(),</span>
+<span class="nc" id="L13">                    category.getMetaDescription(), category.getDisplayOrder(), category.getIsPublished(), null);</span>
+        } else {
+<span class="fc" id="L15">            return new CategoryGetDetailVm(category.getId(), category.getName(), category.getSlug(),</span>
+<span class="fc" id="L16">                    category.getDescription(), 0L, category.getMetaKeyword(), category.getMetaDescription(),</span>
+<span class="fc" id="L17">                    category.getDisplayOrder(), category.getIsPublished(), null);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

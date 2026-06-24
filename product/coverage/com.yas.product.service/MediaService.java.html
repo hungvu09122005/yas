@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MediaService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product</a> &gt; <a href="index.source.html" class="el_package">com.yas.product.service</a> &gt; <span class="el_source">MediaService.java</span></div><h1>MediaService.java</h1><pre class="source lang-java linenums">package com.yas.product.service;
+
+import com.yas.commonlibrary.config.ServiceUrlConfig;
+import com.yas.product.viewmodel.NoFileMediaVm;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import java.net.URI;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.MultipartBodyBuilder;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriComponentsBuilder;
+
+@Service
+@RequiredArgsConstructor
+public class MediaService extends AbstractCircuitBreakFallbackHandler {
+    private final RestClient restClient;
+    private final ServiceUrlConfig serviceUrlConfig;
+
+    @Retry(name = &quot;restApi&quot;)
+    @CircuitBreaker(name = &quot;restCircuitBreaker&quot;, fallbackMethod = &quot;handleMediaFallback&quot;)
+    public NoFileMediaVm saveFile(MultipartFile multipartFile, String caption, String fileNameOverride) {
+<span class="nc" id="L27">        final URI url = UriComponentsBuilder.fromUriString(serviceUrlConfig.media()).path(&quot;/medias&quot;).build().toUri();</span>
+<span class="nc" id="L28">        final String jwt = ((Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal())</span>
+<span class="nc" id="L29">            .getTokenValue();</span>
+
+<span class="nc" id="L31">        final MultipartBodyBuilder builder = new MultipartBodyBuilder();</span>
+<span class="nc" id="L32">        builder.part(&quot;multipartFile&quot;, multipartFile.getResource());</span>
+<span class="nc" id="L33">        builder.part(&quot;caption&quot;, caption);</span>
+<span class="nc" id="L34">        builder.part(&quot;fileNameOverride&quot;, fileNameOverride);</span>
+
+<span class="nc" id="L36">        return restClient.post()</span>
+<span class="nc" id="L37">                .uri(url)</span>
+<span class="nc" id="L38">                .contentType(MediaType.MULTIPART_FORM_DATA)</span>
+<span class="nc" id="L39">                .headers(h -&gt; h.setBearerAuth(jwt))</span>
+<span class="nc" id="L40">                .body(builder.build())</span>
+<span class="nc" id="L41">                .retrieve()</span>
+<span class="nc" id="L42">                .body(NoFileMediaVm.class);</span>
+    }
+
+    @Retry(name = &quot;restApi&quot;)
+    @CircuitBreaker(name = &quot;restCircuitBreaker&quot;, fallbackMethod = &quot;handleMediaFallback&quot;)
+    public NoFileMediaVm getMedia(Long id) {
+<span class="nc bnc" id="L48" title="All 2 branches missed.">        if (id == null) {</span>
+            //TODO return default no image url
+<span class="nc" id="L50">            return new NoFileMediaVm(null, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;);</span>
+        }
+<span class="nc" id="L52">        final URI url = UriComponentsBuilder.fromUriString(serviceUrlConfig.media())</span>
+<span class="nc" id="L53">            .path(&quot;/medias/{id}&quot;).buildAndExpand(id).toUri();</span>
+<span class="nc" id="L54">        return restClient.get()</span>
+<span class="nc" id="L55">                .uri(url)</span>
+<span class="nc" id="L56">                .retrieve()</span>
+<span class="nc" id="L57">                .body(NoFileMediaVm.class);</span>
+    }
+
+    @Retry(name = &quot;restApi&quot;)
+    @CircuitBreaker(name = &quot;restCircuitBreaker&quot;, fallbackMethod = &quot;handleBodilessFallback&quot;)
+    public void removeMedia(Long id) {
+<span class="nc" id="L63">        final URI url = UriComponentsBuilder.fromUriString(serviceUrlConfig.media()).path(&quot;/medias/{id}&quot;)</span>
+<span class="nc" id="L64">            .buildAndExpand(id).toUri();</span>
+<span class="nc" id="L65">        final String jwt = ((Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal())</span>
+<span class="nc" id="L66">            .getTokenValue();</span>
+<span class="nc" id="L67">        restClient.delete()</span>
+<span class="nc" id="L68">                .uri(url)</span>
+<span class="nc" id="L69">                .headers(h -&gt; h.setBearerAuth(jwt))</span>
+<span class="nc" id="L70">                .retrieve()</span>
+<span class="nc" id="L71">                .body(Void.class);</span>
+<span class="nc" id="L72">    }</span>
+
+    private NoFileMediaVm handleMediaFallback(Throwable throwable) throws Throwable {
+<span class="nc" id="L75">        return handleTypedFallback(throwable);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

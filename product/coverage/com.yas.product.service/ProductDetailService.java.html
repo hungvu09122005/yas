@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductDetailService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product</a> &gt; <a href="index.source.html" class="el_package">com.yas.product.service</a> &gt; <span class="el_source">ProductDetailService.java</span></div><h1>ProductDetailService.java</h1><pre class="source lang-java linenums">package com.yas.product.service;
+
+import com.yas.commonlibrary.exception.NotFoundException;
+import com.yas.product.model.Brand;
+import com.yas.product.model.Category;
+import com.yas.product.model.Product;
+import com.yas.product.model.ProductCategory;
+import com.yas.product.model.ProductOptionCombination;
+import com.yas.product.repository.ProductOptionCombinationRepository;
+import com.yas.product.repository.ProductRepository;
+import com.yas.product.utils.Constants;
+import com.yas.product.viewmodel.ImageVm;
+import com.yas.product.viewmodel.product.ProductDetailInfoVm;
+import com.yas.product.viewmodel.product.ProductVariationGetVm;
+import com.yas.product.viewmodel.productattribute.ProductAttributeValueGetVm;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * Service class responsible for managing product recommendations.
+ */
+<span class="fc" id="L29">@Slf4j</span>
+@Service
+@Transactional
+public class ProductDetailService {
+    private final ProductRepository productRepository;
+    private final MediaService mediaService;
+    private final ProductOptionCombinationRepository productOptionCombinationRepository;
+
+    /**
+     * Constructor for {@code ProductRecommendationService} that initializes the service with necessary dependencies.
+     *
+     * @param productRepository                  the repository responsible for handling product data
+     * @param mediaService                       the service responsible for managing media assets associated
+     *                                           with products
+     * @param productOptionCombinationRepository the repository for managing product option combinations
+     */
+    public ProductDetailService(ProductRepository productRepository, MediaService mediaService,
+<span class="fc" id="L46">                                ProductOptionCombinationRepository productOptionCombinationRepository) {</span>
+<span class="fc" id="L47">        this.productRepository = productRepository;</span>
+<span class="fc" id="L48">        this.mediaService = mediaService;</span>
+<span class="fc" id="L49">        this.productOptionCombinationRepository = productOptionCombinationRepository;</span>
+<span class="fc" id="L50">    }</span>
+
+    /**
+     * Retrieves detailed information about a product by its unique identifier.
+     *
+     * @param productId the unique identifier of the product to be retrieved
+     * @return a {@link ProductDetailInfoVm} containing detailed information about the product
+     * @throws NotFoundException if no product is found with the given {@code productId}
+     */
+    public ProductDetailInfoVm getProductDetailById(long productId) {
+<span class="fc" id="L60">        List&lt;ProductVariationGetVm&gt; variations = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L61">        Product product = productRepository</span>
+<span class="fc" id="L62">                .findById(productId)</span>
+<span class="fc" id="L63">                .filter(Product::isPublished)</span>
+<span class="fc" id="L64">                .orElseThrow(() -&gt;</span>
+<span class="fc" id="L65">                        new NotFoundException(Constants.ErrorCode.PRODUCT_NOT_FOUND, productId)</span>
+                );
+
+<span class="fc" id="L68">        List&lt;Category&gt; categories = Optional.ofNullable(product.getProductCategories())</span>
+<span class="fc" id="L69">                .orElse(Collections.emptyList())  // Handle null case</span>
+<span class="fc" id="L70">                .stream()</span>
+<span class="fc" id="L71">                .map(ProductCategory::getCategory)</span>
+<span class="fc" id="L72">                .toList();</span>
+
+<span class="fc" id="L74">        Long brandId = Optional.ofNullable(product.getBrand())</span>
+<span class="fc" id="L75">                .map(Brand::getId)</span>
+<span class="fc" id="L76">                .orElse(null);</span>
+<span class="fc" id="L77">        String brandName = Optional.ofNullable(product.getBrand())</span>
+<span class="fc" id="L78">                .map(Brand::getName)</span>
+<span class="fc" id="L79">                .orElse(null);</span>
+
+<span class="fc" id="L81">        List&lt;ProductAttributeValueGetVm&gt; productAttributes = product.getAttributeValues()</span>
+<span class="fc" id="L82">                .stream()</span>
+<span class="fc" id="L83">                .map(ProductAttributeValueGetVm::fromModel)</span>
+<span class="fc" id="L84">                .toList();</span>
+
+<span class="fc bfc" id="L86" title="All 2 branches covered.">        if (Boolean.TRUE.equals(product.isHasOptions())) {</span>
+<span class="fc" id="L87">            List&lt;Product&gt; productVariations = product.getProducts()</span>
+<span class="fc" id="L88">                    .stream()</span>
+<span class="fc" id="L89">                    .toList();</span>
+<span class="fc" id="L90">            variations = productVariations.stream()</span>
+<span class="fc" id="L91">                    .filter(Product::isPublished)</span>
+<span class="fc" id="L92">                    .map(pro -&gt; {</span>
+<span class="fc" id="L93">                        List&lt;ProductOptionCombination&gt; productOptionCombinations =</span>
+<span class="fc" id="L94">                                productOptionCombinationRepository.findAllByProduct(pro);</span>
+<span class="fc" id="L95">                        Map&lt;Long, String&gt; options = productOptionCombinations.stream().collect(Collectors.toMap(</span>
+<span class="fc" id="L96">                                productOptionCombination -&gt; productOptionCombination.getProductOption().getId(),</span>
+                                ProductOptionCombination::getValue
+                        ));
+
+<span class="fc" id="L100">                        return new ProductVariationGetVm(</span>
+<span class="fc" id="L101">                                pro.getId(),</span>
+<span class="fc" id="L102">                                pro.getName(),</span>
+<span class="fc" id="L103">                                pro.getSlug(),</span>
+<span class="fc" id="L104">                                pro.getSku(),</span>
+<span class="fc" id="L105">                                pro.getGtin(),</span>
+<span class="fc" id="L106">                                pro.getPrice(),</span>
+<span class="fc" id="L107">                                getThumbnailFromProduct(pro),</span>
+<span class="fc" id="L108">                                getImagesFromProduct(pro),</span>
+                                options
+                        );
+<span class="fc" id="L111">                    }).toList();</span>
+        }
+<span class="fc" id="L113">        return new ProductDetailInfoVm(product.getId(),</span>
+<span class="fc" id="L114">                product.getName(),</span>
+<span class="fc" id="L115">                product.getShortDescription(),</span>
+<span class="fc" id="L116">                product.getDescription(),</span>
+<span class="fc" id="L117">                product.getSpecification(),</span>
+<span class="fc" id="L118">                product.getSku(),</span>
+<span class="fc" id="L119">                product.getGtin(),</span>
+<span class="fc" id="L120">                product.getSlug(),</span>
+<span class="fc" id="L121">                product.isAllowedToOrder(),</span>
+<span class="fc" id="L122">                product.isPublished(),</span>
+<span class="fc" id="L123">                product.isFeatured(),</span>
+<span class="fc" id="L124">                product.isVisibleIndividually(),</span>
+<span class="fc" id="L125">                product.isStockTrackingEnabled(),</span>
+<span class="fc" id="L126">                product.getPrice(),</span>
+                brandId,
+                categories,
+<span class="fc" id="L129">                product.getMetaTitle(),</span>
+<span class="fc" id="L130">                product.getMetaKeyword(),</span>
+<span class="fc" id="L131">                product.getMetaDescription(),</span>
+<span class="fc" id="L132">                product.getTaxClassId(),</span>
+                brandName,
+                productAttributes,
+                variations,
+<span class="fc" id="L136">                getThumbnailFromProduct(product),</span>
+<span class="fc" id="L137">                getImagesFromProduct(product)</span>
+        );
+    }
+
+    private ImageVm getThumbnailFromProduct(Product product) {
+<span class="fc" id="L142">        return Optional.ofNullable(product.getThumbnailMediaId())</span>
+<span class="fc" id="L143">                .map(thumbnailId -&gt; new ImageVm(thumbnailId, mediaService.getMedia(thumbnailId).url()))</span>
+<span class="fc" id="L144">                .orElse(null);</span>
+
+    }
+
+    private List&lt;ImageVm&gt; getImagesFromProduct(Product product) {
+<span class="fc" id="L149">        return Optional.ofNullable(product.getProductImages())</span>
+<span class="fc" id="L150">                .orElse(Collections.emptyList())</span>
+<span class="fc" id="L151">                .stream()</span>
+<span class="fc" id="L152">                .map(image -&gt; new ImageVm(image.getImageId(), mediaService.getMedia(image.getImageId()).url()))</span>
+<span class="fc" id="L153">                .toList();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

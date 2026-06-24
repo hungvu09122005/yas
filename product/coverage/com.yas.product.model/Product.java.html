@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Product.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product</a> &gt; <a href="index.source.html" class="el_package">com.yas.product.model</a> &gt; <span class="el_source">Product.java</span></div><h1>Product.java</h1><pre class="source lang-java linenums">package com.yas.product.model;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.yas.commonlibrary.model.AbstractAuditEntity;
+import com.yas.product.model.attribute.ProductAttributeValue;
+import com.yas.product.model.enumeration.DimensionUnit;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity
+@Table(name = &quot;product&quot;)
+@lombok.Getter
+@lombok.Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@SuppressWarnings(&quot;javaarchitecture:S7027&quot;)
+public class Product extends AbstractAuditEntity {
+    @OneToMany(mappedBy = &quot;product&quot;)
+    @Builder.Default
+    List&lt;ProductRelated&gt; relatedProducts = new ArrayList&lt;&gt;();
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String name;
+    private String shortDescription;
+    private String description;
+    private String specification;
+    private String sku;
+    private String gtin;
+    private String slug;
+    private Double price;
+    private boolean hasOptions;
+    private boolean isAllowedToOrder;
+    private boolean isPublished;
+    private boolean isFeatured;
+    private boolean isVisibleIndividually;
+    private boolean stockTrackingEnabled;
+    private Long stockQuantity;
+    private Long taxClassId;
+    private String metaTitle;
+    private String metaKeyword;
+    private String metaDescription;
+    private Long thumbnailMediaId;
+    private Double weight;
+    @Enumerated(EnumType.STRING)
+    private DimensionUnit dimensionUnit;
+    private Double length;
+    private Double width;
+    private Double height;
+    @ManyToOne
+    @JoinColumn(name = &quot;brand_id&quot;)
+    private Brand brand;
+    @OneToMany(mappedBy = &quot;product&quot;, cascade = {CascadeType.PERSIST})
+    @Builder.Default
+    private List&lt;ProductCategory&gt; productCategories = new ArrayList&lt;&gt;();
+    @OneToMany(mappedBy = &quot;product&quot;)
+    @JsonIgnore
+    @Builder.Default
+    private List&lt;ProductAttributeValue&gt; attributeValues = new ArrayList&lt;&gt;();
+    @OneToMany(mappedBy = &quot;product&quot;, cascade = {CascadeType.PERSIST})
+    @Builder.Default
+    private List&lt;ProductImage&gt; productImages = new ArrayList&lt;&gt;();
+    @ManyToOne
+    @JoinColumn(name = &quot;parent_id&quot;)
+    private Product parent;
+    @OneToMany(mappedBy = &quot;parent&quot;, cascade = CascadeType.REMOVE)
+    @JsonIgnore
+    @Builder.Default
+    private List&lt;Product&gt; products = new ArrayList&lt;&gt;();
+    private boolean taxIncluded;
+
+    @Override
+    public boolean equals(Object o) {
+<span class="nc bnc" id="L91" title="All 2 branches missed.">        if (this == o) {</span>
+<span class="nc" id="L92">            return true;</span>
+        }
+<span class="nc bnc" id="L94" title="All 2 branches missed.">        if (!(o instanceof Product)) {</span>
+<span class="nc" id="L95">            return false;</span>
+        }
+<span class="nc bnc" id="L97" title="All 4 branches missed.">        return id != null &amp;&amp; id.equals(((Product) o).id);</span>
+    }
+
+    @Override
+    public int hashCode() {
+        // see https://vladmihalcea.com/how-to-implement-equals-and-hashcode-using-the-jpa-entity-identifier/
+<span class="nc" id="L103">        return getClass().hashCode();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

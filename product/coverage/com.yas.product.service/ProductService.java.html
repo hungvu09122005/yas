@@ -1,0 +1,1192 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product</a> &gt; <a href="index.source.html" class="el_package">com.yas.product.service</a> &gt; <span class="el_source">ProductService.java</span></div><h1>ProductService.java</h1><pre class="source lang-java linenums">package com.yas.product.service;
+
+import com.yas.commonlibrary.exception.BadRequestException;
+import com.yas.commonlibrary.exception.DuplicatedException;
+import com.yas.commonlibrary.exception.InternalServerErrorException;
+import com.yas.commonlibrary.exception.NotFoundException;
+import com.yas.product.model.Brand;
+import com.yas.product.model.Category;
+import com.yas.product.model.Product;
+import com.yas.product.model.ProductCategory;
+import com.yas.product.model.ProductImage;
+import com.yas.product.model.ProductOption;
+import com.yas.product.model.ProductOptionCombination;
+import com.yas.product.model.ProductOptionValue;
+import com.yas.product.model.ProductOptionValueSaveVm;
+import com.yas.product.model.ProductRelated;
+import com.yas.product.model.ProductVariationSaveVm;
+import com.yas.product.model.attribute.ProductAttributeGroup;
+import com.yas.product.model.attribute.ProductAttributeValue;
+import com.yas.product.model.enumeration.FilterExistInWhSelection;
+import com.yas.product.repository.BrandRepository;
+import com.yas.product.repository.CategoryRepository;
+import com.yas.product.repository.ProductCategoryRepository;
+import com.yas.product.repository.ProductImageRepository;
+import com.yas.product.repository.ProductOptionCombinationRepository;
+import com.yas.product.repository.ProductOptionRepository;
+import com.yas.product.repository.ProductOptionValueRepository;
+import com.yas.product.repository.ProductRelatedRepository;
+import com.yas.product.repository.ProductRepository;
+import com.yas.product.utils.Constants;
+import com.yas.product.viewmodel.ImageVm;
+import com.yas.product.viewmodel.product.ProductCheckoutListVm;
+import com.yas.product.viewmodel.product.ProductDetailGetVm;
+import com.yas.product.viewmodel.product.ProductDetailVm;
+import com.yas.product.viewmodel.product.ProductEsDetailVm;
+import com.yas.product.viewmodel.product.ProductExportingDetailVm;
+import com.yas.product.viewmodel.product.ProductFeatureGetVm;
+import com.yas.product.viewmodel.product.ProductGetCheckoutListVm;
+import com.yas.product.viewmodel.product.ProductGetDetailVm;
+import com.yas.product.viewmodel.product.ProductInfoVm;
+import com.yas.product.viewmodel.product.ProductListGetFromCategoryVm;
+import com.yas.product.viewmodel.product.ProductListGetVm;
+import com.yas.product.viewmodel.product.ProductListVm;
+import com.yas.product.viewmodel.product.ProductPostVm;
+import com.yas.product.viewmodel.product.ProductProperties;
+import com.yas.product.viewmodel.product.ProductPutVm;
+import com.yas.product.viewmodel.product.ProductQuantityPostVm;
+import com.yas.product.viewmodel.product.ProductQuantityPutVm;
+import com.yas.product.viewmodel.product.ProductSaveVm;
+import com.yas.product.viewmodel.product.ProductSlugGetVm;
+import com.yas.product.viewmodel.product.ProductThumbnailGetVm;
+import com.yas.product.viewmodel.product.ProductThumbnailVm;
+import com.yas.product.viewmodel.product.ProductVariationGetVm;
+import com.yas.product.viewmodel.product.ProductVariationPostVm;
+import com.yas.product.viewmodel.product.ProductVariationPutVm;
+import com.yas.product.viewmodel.product.ProductsGetVm;
+import com.yas.product.viewmodel.productattribute.ProductAttributeGroupGetVm;
+import com.yas.product.viewmodel.productattribute.ProductAttributeValueVm;
+import io.micrometer.common.util.StringUtils;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.ListUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@Transactional
+<span class="fc" id="L82">@Slf4j</span>
+public class ProductService {
+    private static final String NONE_GROUP = &quot;None group&quot;;
+    private final ProductRepository productRepository;
+    private final MediaService mediaService;
+    private final BrandRepository brandRepository;
+    private final CategoryRepository categoryRepository;
+    private final ProductCategoryRepository productCategoryRepository;
+    private final ProductImageRepository productImageRepository;
+    private final ProductOptionRepository productOptionRepository;
+    private final ProductOptionValueRepository productOptionValueRepository;
+    private final ProductOptionCombinationRepository productOptionCombinationRepository;
+    private final ProductRelatedRepository productRelatedRepository;
+
+    public ProductService(ProductRepository productRepository,
+                          MediaService mediaService,
+                          BrandRepository brandRepository,
+                          ProductCategoryRepository productCategoryRepository,
+                          CategoryRepository categoryRepository,
+                          ProductImageRepository productImageRepository,
+                          ProductOptionRepository productOptionRepository,
+                          ProductOptionValueRepository productOptionValueRepository,
+                          ProductOptionCombinationRepository productOptionCombinationRepository,
+<span class="fc" id="L105">                          ProductRelatedRepository productRelatedRepository) {</span>
+<span class="fc" id="L106">        this.productRepository = productRepository;</span>
+<span class="fc" id="L107">        this.mediaService = mediaService;</span>
+<span class="fc" id="L108">        this.brandRepository = brandRepository;</span>
+<span class="fc" id="L109">        this.categoryRepository = categoryRepository;</span>
+<span class="fc" id="L110">        this.productCategoryRepository = productCategoryRepository;</span>
+<span class="fc" id="L111">        this.productImageRepository = productImageRepository;</span>
+<span class="fc" id="L112">        this.productOptionRepository = productOptionRepository;</span>
+<span class="fc" id="L113">        this.productOptionValueRepository = productOptionValueRepository;</span>
+<span class="fc" id="L114">        this.productOptionCombinationRepository = productOptionCombinationRepository;</span>
+<span class="fc" id="L115">        this.productRelatedRepository = productRelatedRepository;</span>
+<span class="fc" id="L116">    }</span>
+
+    public ProductGetDetailVm createProduct(ProductPostVm productPostVm) {
+<span class="fc" id="L119">        validateProductVm(productPostVm);</span>
+
+<span class="fc" id="L121">        Product mainProduct = buildMainProductFromVm(productPostVm);</span>
+
+<span class="fc" id="L123">        setProductBrand(productPostVm.brandId(), mainProduct);</span>
+
+<span class="fc" id="L125">        Product savedMainProduct = productRepository.save(mainProduct);</span>
+
+<span class="fc" id="L127">        List&lt;ProductCategory&gt; productCategories = setProductCategories(productPostVm.categoryIds(), savedMainProduct);</span>
+<span class="fc" id="L128">        List&lt;ProductImage&gt; productImages = setProductImages(productPostVm.productImageIds(), savedMainProduct);</span>
+<span class="fc" id="L129">        productImageRepository.saveAll(productImages);</span>
+<span class="fc" id="L130">        productCategoryRepository.saveAll(productCategories);</span>
+
+<span class="fc" id="L132">        createProductRelations(productPostVm, savedMainProduct);</span>
+
+<span class="pc bpc" id="L134" title="1 of 2 branches missed.">        if (CollectionUtils.isEmpty(productPostVm.variations())</span>
+<span class="nc bnc" id="L135" title="All 2 branches missed.">            || CollectionUtils.isEmpty(productPostVm.productOptionValues())) {</span>
+<span class="fc" id="L136">            return ProductGetDetailVm.fromModel(savedMainProduct);</span>
+        }
+
+<span class="nc" id="L139">        List&lt;Product&gt; savedVariations = createProductVariationsFromPostVm(productPostVm.variations(), savedMainProduct);</span>
+
+<span class="nc" id="L141">        Map&lt;Long, ProductOption&gt; optionsById = getProductOptionByIdMap(productPostVm.productOptionValues());</span>
+<span class="nc" id="L142">        List&lt;ProductOptionValue&gt; savedOptionValues =</span>
+<span class="nc" id="L143">            createProductOptionValues(productPostVm, savedMainProduct, optionsById);</span>
+
+<span class="nc bnc" id="L145" title="All 2 branches missed.">        savedMainProduct.setHasOptions((CollectionUtils.isNotEmpty(savedVariations))</span>
+<span class="nc bnc" id="L146" title="All 2 branches missed.">            &amp;&amp; CollectionUtils.isNotEmpty(savedOptionValues));</span>
+<span class="nc" id="L147">        savedMainProduct = productRepository.save(savedMainProduct);</span>
+
+<span class="nc" id="L149">        createOptionCombinations(productPostVm.variations(), savedVariations, optionsById, savedOptionValues);</span>
+
+<span class="nc" id="L151">        return ProductGetDetailVm.fromModel(savedMainProduct);</span>
+    }
+
+    private &lt;T extends ProductVariationSaveVm&gt; void validateProductVm(ProductSaveVm&lt;T&gt; productSaveVm) {
+<span class="fc" id="L155">        validateProductVm(productSaveVm, null);</span>
+<span class="fc" id="L156">    }</span>
+
+    private &lt;T extends ProductVariationSaveVm&gt; void validateProductVm(ProductSaveVm&lt;T&gt; productSaveVm,
+                                                                      Product existingProduct) {
+<span class="fc" id="L160">        validateLengthMustGreaterThanWidth(productSaveVm);</span>
+
+<span class="fc" id="L162">        validateExistingProductProperties(productSaveVm, existingProduct);</span>
+
+<span class="fc" id="L164">        validateProductVariationDuplicates(productSaveVm);</span>
+
+        // validate whether the variations contain properties that already exist
+<span class="fc" id="L167">        List&lt;Long&gt; variationIds = productSaveVm.variations().stream()</span>
+<span class="fc" id="L168">            .map(ProductProperties::id)</span>
+<span class="fc" id="L169">            .filter(Objects::nonNull).toList();</span>
+
+<span class="fc" id="L171">        Map&lt;Long, Product&gt; existingVariationsById = productRepository.findAllById(variationIds).stream()</span>
+<span class="fc" id="L172">            .collect(Collectors.toMap(Product::getId, Function.identity()));</span>
+
+<span class="pc bpc" id="L174" title="1 of 2 branches missed.">        for (ProductProperties variation : productSaveVm.variations()) {</span>
+<span class="nc" id="L175">            Product existingVariation = existingVariationsById.get(variation.id());</span>
+<span class="nc" id="L176">            validateExistingProductProperties(variation, existingVariation);</span>
+<span class="nc" id="L177">        }</span>
+<span class="fc" id="L178">    }</span>
+
+    private &lt;T extends ProductVariationSaveVm&gt; void validateLengthMustGreaterThanWidth(ProductSaveVm&lt;T&gt; productPostVm) {
+<span class="fc bfc" id="L181" title="All 2 branches covered.">        if (productPostVm.length() &lt; productPostVm.width()) {</span>
+<span class="fc" id="L182">            throw new BadRequestException(Constants.ErrorCode.MAKE_SURE_LENGTH_GREATER_THAN_WIDTH);</span>
+        }
+<span class="fc" id="L184">    }</span>
+
+    private void validateExistingProductProperties(ProductProperties productProperties, Product existingProduct) {
+<span class="fc" id="L187">        checkPropertyExists(productProperties.slug().toLowerCase(), existingProduct,</span>
+<span class="fc" id="L188">            productRepository::findBySlugAndIsPublishedTrue, Constants.ErrorCode.SLUG_ALREADY_EXISTED_OR_DUPLICATED);</span>
+        // only check gtin when it's not empty
+<span class="fc bfc" id="L190" title="All 2 branches covered.">        if (StringUtils.isNotEmpty(productProperties.gtin())) {</span>
+<span class="fc" id="L191">            checkPropertyExists(productProperties.gtin(), existingProduct,</span>
+<span class="fc" id="L192">                productRepository::findByGtinAndIsPublishedTrue,</span>
+                Constants.ErrorCode.GTIN_ALREADY_EXISTED_OR_DUPLICATED);
+        }
+<span class="fc" id="L195">        checkPropertyExists(productProperties.sku(), existingProduct,</span>
+<span class="fc" id="L196">            productRepository::findBySkuAndIsPublishedTrue, Constants.ErrorCode.SKU_ALREADY_EXISTED_OR_DUPLICATED);</span>
+<span class="fc" id="L197">    }</span>
+
+    private void checkPropertyExists(String propertyValue, Product existingProduct, Function&lt;String,
+        Optional&lt;Product&gt;&gt; finder, String errorCode) {
+<span class="fc" id="L201">        finder.apply(propertyValue).ifPresent(foundProduct -&gt; {</span>
+<span class="pc bpc" id="L202" title="3 of 4 branches missed.">            if (existingProduct == null || !foundProduct.getId().equals(existingProduct.getId())) {</span>
+<span class="fc" id="L203">                throw new DuplicatedException(errorCode, propertyValue);</span>
+            }
+<span class="nc" id="L205">        });</span>
+<span class="fc" id="L206">    }</span>
+
+    private &lt;T extends ProductVariationSaveVm&gt; void validateProductVariationDuplicates(ProductSaveVm&lt;T&gt; productSaveVm) {
+<span class="fc" id="L209">        Set&lt;String&gt; seenSlugs = new HashSet&lt;&gt;(Collections.singletonList(productSaveVm.slug().toLowerCase()));</span>
+<span class="fc" id="L210">        Set&lt;String&gt; seenSkus = new HashSet&lt;&gt;(Collections.singletonList(productSaveVm.sku()));</span>
+<span class="fc" id="L211">        Set&lt;String&gt; seenGtins = new HashSet&lt;&gt;(Collections.singletonList(productSaveVm.gtin()));</span>
+<span class="pc bpc" id="L212" title="1 of 2 branches missed.">        for (ProductProperties variation : productSaveVm.variations()) {</span>
+<span class="nc bnc" id="L213" title="All 2 branches missed.">            if (!seenSlugs.add(variation.slug().toLowerCase())) {</span>
+<span class="nc" id="L214">                throw new DuplicatedException(Constants.ErrorCode.SLUG_ALREADY_EXISTED_OR_DUPLICATED, variation.slug());</span>
+            }
+            // only check gtin when it's not empty
+<span class="nc bnc" id="L217" title="All 4 branches missed.">            if (StringUtils.isNotEmpty(variation.gtin()) &amp;&amp; !seenGtins.add(variation.gtin())) {</span>
+<span class="nc" id="L218">                throw new DuplicatedException(Constants.ErrorCode.GTIN_ALREADY_EXISTED_OR_DUPLICATED, variation.gtin());</span>
+            }
+<span class="nc bnc" id="L220" title="All 2 branches missed.">            if (!seenSkus.add(variation.sku())) {</span>
+<span class="nc" id="L221">                throw new DuplicatedException(Constants.ErrorCode.SKU_ALREADY_EXISTED_OR_DUPLICATED, variation.sku());</span>
+            }
+<span class="nc" id="L223">        }</span>
+<span class="fc" id="L224">    }</span>
+
+    private Product buildMainProductFromVm(ProductPostVm productPostVm) {
+<span class="fc" id="L227">        return Product.builder()</span>
+<span class="fc" id="L228">            .name(productPostVm.name())</span>
+<span class="fc" id="L229">            .thumbnailMediaId(productPostVm.thumbnailMediaId())</span>
+<span class="fc" id="L230">            .slug(productPostVm.slug().toLowerCase())</span>
+<span class="fc" id="L231">            .description(productPostVm.shortDescription())</span>
+<span class="fc" id="L232">            .shortDescription(productPostVm.description())</span>
+<span class="fc" id="L233">            .specification(productPostVm.specification())</span>
+<span class="fc" id="L234">            .sku(productPostVm.sku())</span>
+<span class="fc" id="L235">            .gtin(productPostVm.gtin())</span>
+<span class="fc" id="L236">            .weight(productPostVm.weight())</span>
+<span class="fc" id="L237">            .dimensionUnit(productPostVm.dimensionUnit())</span>
+<span class="fc" id="L238">            .length(productPostVm.length())</span>
+<span class="fc" id="L239">            .width(productPostVm.width())</span>
+<span class="fc" id="L240">            .height(productPostVm.height())</span>
+<span class="fc" id="L241">            .price(productPostVm.price())</span>
+<span class="fc" id="L242">            .hasOptions(false)</span>
+<span class="fc" id="L243">            .isAllowedToOrder(productPostVm.isAllowedToOrder())</span>
+<span class="fc" id="L244">            .isPublished(productPostVm.isPublished())</span>
+<span class="fc" id="L245">            .isFeatured(productPostVm.isFeatured())</span>
+<span class="fc" id="L246">            .isVisibleIndividually(productPostVm.isVisibleIndividually())</span>
+<span class="fc" id="L247">            .stockTrackingEnabled(productPostVm.stockTrackingEnabled())</span>
+<span class="fc" id="L248">            .metaTitle(productPostVm.metaTitle())</span>
+<span class="fc" id="L249">            .metaKeyword(productPostVm.metaKeyword())</span>
+<span class="fc" id="L250">            .metaDescription(productPostVm.description())</span>
+<span class="pc bpc" id="L251" title="1 of 2 branches missed.">            .hasOptions(CollectionUtils.isNotEmpty(productPostVm.variations())</span>
+<span class="pc bnc" id="L252" title="All 2 branches missed.">                &amp;&amp; CollectionUtils.isNotEmpty(productPostVm.productOptionValues()))</span>
+<span class="fc" id="L253">            .productCategories(List.of())</span>
+<span class="fc" id="L254">            .taxClassId(productPostVm.taxClassId())</span>
+<span class="fc" id="L255">            .build();</span>
+    }
+
+    private List&lt;Product&gt; createProductVariationsFromPostVm(List&lt;ProductVariationPostVm&gt; newVariationVms,
+                                                            Product mainProduct) {
+<span class="nc" id="L260">        List&lt;ProductImage&gt; allVariationImages = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L261">        return performCreateVariations(newVariationVms, mainProduct, allVariationImages);</span>
+    }
+
+    private List&lt;Product&gt; createProductVariationsFromPutVm(List&lt;ProductVariationPutVm&gt; newVariationVms,
+                                                           Product mainProduct,
+                                                           List&lt;ProductImage&gt; existingVariationImages) {
+<span class="nc" id="L267">        List&lt;ProductImage&gt; allVariationImages = new ArrayList&lt;&gt;(existingVariationImages);</span>
+<span class="nc" id="L268">        return performCreateVariations(newVariationVms, mainProduct, allVariationImages);</span>
+    }
+
+    private List&lt;Product&gt; performCreateVariations(List&lt;? extends ProductVariationSaveVm&gt; newVariationVms,
+                                                  Product mainProduct,
+                                                  List&lt;ProductImage&gt; allVariationImages) {
+<span class="nc" id="L274">        List&lt;Product&gt; productVariations = newVariationVms.stream()</span>
+<span class="nc" id="L275">            .map(variation -&gt; {</span>
+<span class="nc" id="L276">                Product productVariation = buildProductVariationFromVm(variation, mainProduct);</span>
+<span class="nc" id="L277">                List&lt;ProductImage&gt; variationImages</span>
+<span class="nc" id="L278">                    = setProductImages(variation.productImageIds(), productVariation);</span>
+<span class="nc" id="L279">                allVariationImages.addAll(variationImages);</span>
+<span class="nc" id="L280">                return productVariation;</span>
+            })
+<span class="nc" id="L282">            .toList();</span>
+
+<span class="nc" id="L284">        List&lt;Product&gt; savedVariations = productRepository.saveAll(productVariations);</span>
+<span class="nc" id="L285">        productImageRepository.saveAll(allVariationImages);</span>
+<span class="nc" id="L286">        return savedVariations;</span>
+    }
+
+    private Product buildProductVariationFromVm(ProductVariationSaveVm variationVm, Product mainProduct) {
+<span class="nc" id="L290">        return Product.builder()</span>
+<span class="nc" id="L291">            .name(variationVm.name())</span>
+<span class="nc" id="L292">            .thumbnailMediaId(variationVm.thumbnailMediaId())</span>
+<span class="nc" id="L293">            .slug(variationVm.slug().toLowerCase())</span>
+<span class="nc" id="L294">            .sku(variationVm.sku())</span>
+<span class="nc" id="L295">            .gtin(variationVm.gtin())</span>
+<span class="nc" id="L296">            .price(variationVm.price())</span>
+<span class="nc" id="L297">            .isPublished(mainProduct.isPublished())</span>
+<span class="nc" id="L298">            .parent(mainProduct)</span>
+<span class="nc" id="L299">            .build();</span>
+    }
+
+    private List&lt;ProductOptionValue&gt; createProductOptionValues(ProductPostVm productPostVm, Product savedMainProduct,
+                                                               Map&lt;Long, ProductOption&gt; optionsById) {
+<span class="nc" id="L304">        List&lt;ProductOptionValue&gt; optionValues = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L305">        productPostVm.productOptionValueDisplays().forEach(optionValueVm -&gt; {</span>
+<span class="nc" id="L306">            ProductOptionValue optionValue = ProductOptionValue.builder()</span>
+<span class="nc" id="L307">                .product(savedMainProduct)</span>
+<span class="nc" id="L308">                .displayOrder(optionValueVm.displayOrder())</span>
+<span class="nc" id="L309">                .displayType(optionValueVm.displayType())</span>
+<span class="nc" id="L310">                .productOption(optionsById.get(optionValueVm.productOptionId()))</span>
+<span class="nc" id="L311">                .value(optionValueVm.value())</span>
+<span class="nc" id="L312">                .build();</span>
+<span class="nc" id="L313">            optionValues.add(optionValue);</span>
+<span class="nc" id="L314">        });</span>
+<span class="nc" id="L315">        return productOptionValueRepository.saveAll(optionValues);</span>
+    }
+
+    private void createOptionCombinations(
+        List&lt;? extends ProductVariationSaveVm&gt; variationVms,
+        List&lt;Product&gt; savedVariations,
+        Map&lt;Long, ProductOption&gt; optionsById,
+        List&lt;ProductOptionValue&gt; optionValues) {
+<span class="nc" id="L323">        List&lt;ProductOptionCombination&gt; optionCombinations = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L324">        Map&lt;String, Product&gt; variationsBySlug = savedVariations.stream()</span>
+<span class="nc" id="L325">            .collect(Collectors.toMap(Product::getSlug, Function.identity()));</span>
+
+<span class="nc bnc" id="L327" title="All 2 branches missed.">        for (ProductVariationSaveVm variationVm : variationVms) {</span>
+<span class="nc" id="L328">            String variationSlug = variationVm.slug().toLowerCase();</span>
+<span class="nc" id="L329">            Product savedVariation = variationsBySlug.get(variationSlug);</span>
+<span class="nc bnc" id="L330" title="All 2 branches missed.">            if (savedVariation == null) {</span>
+<span class="nc" id="L331">                log.error(</span>
+                    &quot;Failed to create combinations: variation with slug '{}' not found in the saved variations map&quot;,
+                    variationSlug);
+<span class="nc" id="L334">                throw new InternalServerErrorException(Constants.ErrorCode.PRODUCT_COMBINATION_PROCESSING_FAILED);</span>
+            }
+
+<span class="nc" id="L337">            variationVm.optionValuesByOptionId().forEach((optionId, optionValue) -&gt; {</span>
+<span class="nc" id="L338">                ProductOption productOption = optionsById.get(optionId);</span>
+<span class="nc" id="L339">                List&lt;ProductOptionValue&gt; foundOptionValues = optionValues.stream()</span>
+<span class="nc" id="L340">                    .filter(</span>
+<span class="nc" id="L341">                        pov -&gt; pov.getProductOption().getId().equals(optionId))</span>
+<span class="nc" id="L342">                    .toList();</span>
+
+<span class="nc bnc" id="L344" title="All 2 branches missed.">                if (CollectionUtils.isEmpty(foundOptionValues)) {</span>
+<span class="nc" id="L345">                    throw new BadRequestException(Constants.ErrorCode.PRODUCT_OPTION_VALUE_IS_NOT_FOUND, optionValue);</span>
+                }
+
+<span class="nc" id="L348">                List&lt;ProductOptionCombination&gt; optionCombinationEntities = foundOptionValues.stream()</span>
+<span class="nc" id="L349">                    .map(foundOptionValue -&gt;</span>
+<span class="nc" id="L350">                        ProductOptionCombination.builder()</span>
+<span class="nc" id="L351">                        .product(savedVariation)</span>
+<span class="nc" id="L352">                        .productOption(productOption)</span>
+<span class="nc" id="L353">                        .value(optionValue)</span>
+<span class="nc" id="L354">                        .displayOrder(foundOptionValue.getDisplayOrder())</span>
+<span class="nc" id="L355">                        .build()</span>
+<span class="nc" id="L356">                    ).toList();</span>
+<span class="nc" id="L357">                optionCombinations.addAll(optionCombinationEntities);</span>
+<span class="nc" id="L358">            });</span>
+<span class="nc" id="L359">        }</span>
+<span class="nc" id="L360">        productOptionCombinationRepository.saveAll(optionCombinations);</span>
+<span class="nc" id="L361">    }</span>
+
+    private void createProductRelations(ProductPostVm productPostVm, Product savedMainProduct) {
+<span class="fc bfc" id="L364" title="All 2 branches covered.">        if (CollectionUtils.isEmpty(productPostVm.relatedProductIds())) {</span>
+<span class="fc" id="L365">            return;</span>
+        }
+<span class="fc" id="L367">        List&lt;Product&gt; relatedProducts = productRepository.findAllById(productPostVm.relatedProductIds());</span>
+<span class="fc" id="L368">        List&lt;ProductRelated&gt; productRelations = relatedProducts.stream()</span>
+<span class="fc" id="L369">            .map(relatedProduct -&gt; ProductRelated.builder()</span>
+<span class="fc" id="L370">                .product(savedMainProduct)</span>
+<span class="fc" id="L371">                .relatedProduct(relatedProduct)</span>
+<span class="fc" id="L372">                .build())</span>
+<span class="fc" id="L373">            .toList();</span>
+<span class="fc" id="L374">        productRelatedRepository.saveAll(productRelations);</span>
+<span class="fc" id="L375">    }</span>
+
+    public void updateProduct(long productId, ProductPutVm productPutVm) {
+<span class="nc" id="L378">        Product product = productRepository.findById(productId).orElseThrow(()</span>
+<span class="nc" id="L379">            -&gt; new NotFoundException(Constants.ErrorCode.PRODUCT_NOT_FOUND, productId));</span>
+
+<span class="nc" id="L381">        validateProductVm(productPutVm, product);</span>
+
+<span class="nc" id="L383">        setProductBrand(productPutVm.brandId(), product);</span>
+
+<span class="nc" id="L385">        updateMainProductFromVm(productPutVm, product);</span>
+
+<span class="nc" id="L387">        updateProductCategories(productPutVm, product);</span>
+
+<span class="nc" id="L389">        List&lt;ProductImage&gt; productImages = setProductImages(productPutVm.productImageIds(), product);</span>
+<span class="nc" id="L390">        productImageRepository.saveAll(productImages);</span>
+
+<span class="nc" id="L392">        updateProductRelations(productPutVm, product);</span>
+
+<span class="nc" id="L394">        List&lt;ProductImage&gt; allVariationImages = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L395">        List&lt;Product&gt; existingVariations = product.getProducts();</span>
+<span class="nc" id="L396">        updateExistingVariants(productPutVm, allVariationImages, existingVariations);</span>
+<span class="nc" id="L397">        productRepository.saveAll(existingVariations);</span>
+
+<span class="nc" id="L399">        Map&lt;Long, ProductOption&gt; optionsById = getProductOptionByIdMap(productPutVm.productOptionValues());</span>
+<span class="nc" id="L400">        List&lt;ProductOptionValue&gt; productOptionValues = updateProductOptionValues(productPutVm, product, optionsById);</span>
+
+<span class="nc" id="L402">        List&lt;ProductVariationPutVm&gt; newVariationVms = productPutVm.variations().stream()</span>
+<span class="nc bnc" id="L403" title="All 2 branches missed.">            .filter(variant -&gt; variant.id() == null).toList();</span>
+<span class="nc bnc" id="L404" title="All 2 branches missed.">        if (CollectionUtils.isEmpty(newVariationVms)) {</span>
+<span class="nc" id="L405">            return;</span>
+        }
+
+<span class="nc" id="L408">        List&lt;Product&gt; newSavedVariations =</span>
+<span class="nc" id="L409">            createProductVariationsFromPutVm(newVariationVms, product, allVariationImages);</span>
+
+<span class="nc bnc" id="L411" title="All 2 branches missed.">        product.setHasOptions((CollectionUtils.isNotEmpty(newSavedVariations)</span>
+<span class="nc bnc" id="L412" title="All 2 branches missed.">            || CollectionUtils.isNotEmpty(existingVariations))</span>
+<span class="nc bnc" id="L413" title="All 2 branches missed.">            &amp;&amp; CollectionUtils.isNotEmpty(productOptionValues));</span>
+<span class="nc" id="L414">        productRepository.save(product);</span>
+
+<span class="nc" id="L416">        createOptionCombinations(newVariationVms, newSavedVariations, optionsById, productOptionValues);</span>
+
+<span class="nc" id="L418">    }</span>
+
+    private Map&lt;Long, ProductOption&gt; getProductOptionByIdMap(List&lt;? extends ProductOptionValueSaveVm&gt; optionValueVms) {
+<span class="nc" id="L421">        List&lt;Long&gt; productOptionIds = optionValueVms.stream()</span>
+<span class="nc" id="L422">            .map(ProductOptionValueSaveVm::productOptionId).toList();</span>
+<span class="nc" id="L423">        List&lt;ProductOption&gt; productOptions = productOptionRepository.findAllByIdIn(productOptionIds);</span>
+<span class="nc bnc" id="L424" title="All 2 branches missed.">        if (CollectionUtils.isEmpty(productOptions)) {</span>
+<span class="nc" id="L425">            throw new BadRequestException(Constants.ErrorCode.NO_MATCHING_PRODUCT_OPTIONS);</span>
+        }
+<span class="nc" id="L427">        return productOptions.stream()</span>
+<span class="nc" id="L428">            .collect(Collectors.toMap(ProductOption::getId, Function.identity()));</span>
+    }
+
+    public void updateMainProductFromVm(ProductPutVm productPutVm, Product product) {
+<span class="nc" id="L432">        product.setName(productPutVm.name());</span>
+<span class="nc" id="L433">        product.setSlug(productPutVm.slug().toLowerCase());</span>
+<span class="nc" id="L434">        product.setThumbnailMediaId(productPutVm.thumbnailMediaId());</span>
+<span class="nc" id="L435">        product.setDescription(productPutVm.description());</span>
+<span class="nc" id="L436">        product.setShortDescription(productPutVm.shortDescription());</span>
+<span class="nc" id="L437">        product.setSpecification(productPutVm.specification());</span>
+<span class="nc" id="L438">        product.setSku(productPutVm.sku());</span>
+<span class="nc" id="L439">        product.setGtin(productPutVm.gtin());</span>
+<span class="nc" id="L440">        product.setPrice(productPutVm.price());</span>
+<span class="nc" id="L441">        product.setAllowedToOrder(productPutVm.isAllowedToOrder());</span>
+<span class="nc" id="L442">        product.setFeatured(productPutVm.isFeatured());</span>
+<span class="nc" id="L443">        product.setPublished(productPutVm.isPublished());</span>
+<span class="nc" id="L444">        product.setVisibleIndividually(productPutVm.isVisibleIndividually());</span>
+<span class="nc" id="L445">        product.setStockTrackingEnabled(productPutVm.stockTrackingEnabled());</span>
+<span class="nc" id="L446">        product.setMetaTitle(productPutVm.metaTitle());</span>
+<span class="nc" id="L447">        product.setMetaKeyword(productPutVm.metaKeyword());</span>
+<span class="nc" id="L448">        product.setMetaDescription(productPutVm.metaDescription());</span>
+<span class="nc" id="L449">        product.setTaxClassId(productPutVm.taxClassId());</span>
+<span class="nc" id="L450">        product.setWeight(productPutVm.weight());</span>
+<span class="nc" id="L451">        product.setDimensionUnit(productPutVm.dimensionUnit());</span>
+<span class="nc" id="L452">        product.setLength(productPutVm.length());</span>
+<span class="nc" id="L453">        product.setWidth(productPutVm.width());</span>
+<span class="nc" id="L454">        product.setHeight(productPutVm.height());</span>
+<span class="nc" id="L455">    }</span>
+
+    private void updateProductCategories(ProductPutVm productPutVm, Product product) {
+<span class="nc" id="L458">        List&lt;ProductCategory&gt; newProductCategories = setProductCategories(productPutVm.categoryIds(), product);</span>
+<span class="nc" id="L459">        List&lt;ProductCategory&gt; oldProductCategories = productCategoryRepository.findAllByProductId(product.getId());</span>
+<span class="nc" id="L460">        productCategoryRepository.deleteAllInBatch(oldProductCategories);</span>
+<span class="nc" id="L461">        productCategoryRepository.saveAll(newProductCategories);</span>
+<span class="nc" id="L462">    }</span>
+
+    private void updateProductRelations(ProductPutVm productPutVm, Product product) {
+        List&lt;ProductRelated&gt; newProductRelations;
+        List&lt;ProductRelated&gt; oldProductRelations;
+<span class="nc" id="L467">        List&lt;Long&gt; requestedProductIds = productPutVm.relatedProductIds();</span>
+<span class="nc" id="L468">        List&lt;ProductRelated&gt; currentProductRelations = product.getRelatedProducts();</span>
+
+<span class="nc" id="L470">        Set&lt;Long&gt; currentRelatedProductIds = currentProductRelations.stream()</span>
+<span class="nc" id="L471">            .map(currentRelation -&gt; currentRelation.getRelatedProduct().getId())</span>
+<span class="nc" id="L472">            .collect(Collectors.toSet());</span>
+
+<span class="nc" id="L474">        Set&lt;Long&gt; oldRelatedProductIds = currentRelatedProductIds.stream()</span>
+<span class="nc bnc" id="L475" title="All 2 branches missed.">            .filter(id -&gt; !requestedProductIds.contains(id))</span>
+<span class="nc" id="L476">            .collect(Collectors.toSet());</span>
+<span class="nc" id="L477">        oldProductRelations = currentProductRelations.stream()</span>
+<span class="nc" id="L478">            .filter(currentRelation</span>
+<span class="nc" id="L479">                -&gt; oldRelatedProductIds.contains(currentRelation.getRelatedProduct().getId()))</span>
+<span class="nc" id="L480">            .toList();</span>
+
+<span class="nc" id="L482">        Set&lt;Long&gt; newRelatedProductIds = requestedProductIds.stream()</span>
+<span class="nc bnc" id="L483" title="All 2 branches missed.">            .filter(id -&gt; !currentRelatedProductIds.contains(id))</span>
+<span class="nc" id="L484">            .collect(Collectors.toSet());</span>
+<span class="nc" id="L485">        List&lt;Product&gt; newRelatedProducts = productRepository.findAllById(newRelatedProductIds);</span>
+<span class="nc" id="L486">        newProductRelations = newRelatedProducts.stream()</span>
+<span class="nc" id="L487">            .map(newRelatedProduct -&gt; ProductRelated.builder()</span>
+<span class="nc" id="L488">                .product(product)</span>
+<span class="nc" id="L489">                .relatedProduct(newRelatedProduct)</span>
+<span class="nc" id="L490">                .build())</span>
+<span class="nc" id="L491">            .toList();</span>
+
+<span class="nc" id="L493">        productRelatedRepository.deleteAll(oldProductRelations);</span>
+<span class="nc" id="L494">        productRelatedRepository.saveAll(newProductRelations);</span>
+<span class="nc" id="L495">    }</span>
+
+    private List&lt;ProductOptionValue&gt; updateProductOptionValues(ProductPutVm productPutVm, Product product,
+                                                            Map&lt;Long, ProductOption&gt; optionsById) {
+<span class="nc" id="L499">        productOptionValueRepository.deleteAllByProductId(product.getId());</span>
+
+<span class="nc" id="L501">        List&lt;ProductOptionValue&gt; productOptionValues = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L502">        productPutVm.productOptionValueDisplays().forEach(optionValueVm -&gt; {</span>
+<span class="nc" id="L503">            ProductOptionValue optionValue = ProductOptionValue.builder()</span>
+<span class="nc" id="L504">                .product(product)</span>
+<span class="nc" id="L505">                .displayOrder(optionValueVm.displayOrder())</span>
+<span class="nc" id="L506">                .displayType(optionValueVm.displayType())</span>
+<span class="nc" id="L507">                .productOption(optionsById.get(optionValueVm.productOptionId()))</span>
+<span class="nc" id="L508">                .value(optionValueVm.value())</span>
+<span class="nc" id="L509">                .build();</span>
+<span class="nc" id="L510">            productOptionValues.add(optionValue);</span>
+<span class="nc" id="L511">        });</span>
+<span class="nc" id="L512">        return productOptionValueRepository.saveAll(productOptionValues);</span>
+    }
+
+    private void updateExistingVariants(
+        ProductPutVm productPutVm,
+        List&lt;ProductImage&gt; newProductImages,
+        List&lt;Product&gt; existingVariants
+    ) {
+<span class="nc bnc" id="L520" title="All 2 branches missed.">        if (CollectionUtils.isNotEmpty(productPutVm.variations())) {</span>
+<span class="nc" id="L521">            productPutVm.variations().forEach(variant -&gt; {</span>
+<span class="nc bnc" id="L522" title="All 2 branches missed.">                if (variant.id() != null) {</span>
+<span class="nc" id="L523">                    Product variantInDb = existingVariants.stream().filter(productVariant</span>
+<span class="nc" id="L524">                            -&gt; variant.id().equals(productVariant.getId()))</span>
+<span class="nc" id="L525">                        .findFirst().orElse(null);</span>
+<span class="nc" id="L526">                    setValuesForVariantExisting(newProductImages, variant, variantInDb);</span>
+                }
+<span class="nc" id="L528">            });</span>
+
+        }
+<span class="nc" id="L531">    }</span>
+
+    private void setValuesForVariantExisting(
+        List&lt;ProductImage&gt; newProductImages,
+        ProductVariationPutVm variant,
+        Product variantInDb
+    ) {
+<span class="nc bnc" id="L538" title="All 2 branches missed.">        if (variantInDb != null) {</span>
+<span class="nc" id="L539">            variantInDb.setName(variant.name());</span>
+<span class="nc" id="L540">            variantInDb.setThumbnailMediaId(variant.thumbnailMediaId());</span>
+<span class="nc" id="L541">            variantInDb.setSlug(variant.slug().toLowerCase());</span>
+<span class="nc" id="L542">            variantInDb.setSku(variant.sku());</span>
+<span class="nc" id="L543">            variantInDb.setGtin(variant.gtin());</span>
+<span class="nc" id="L544">            variantInDb.setPrice(variant.price());</span>
+<span class="nc" id="L545">            productImageRepository.deleteByProductId(variant.id());</span>
+<span class="nc bnc" id="L546" title="All 2 branches missed.">            if (CollectionUtils.isNotEmpty(variant.productImageIds())) {</span>
+<span class="nc" id="L547">                variant.productImageIds().forEach(imageId -&gt; {</span>
+<span class="nc" id="L548">                    newProductImages.add(ProductImage.builder()</span>
+<span class="nc" id="L549">                        .imageId(imageId).product(variantInDb).build());</span>
+<span class="nc" id="L550">                });</span>
+            }
+<span class="nc" id="L552">            productImageRepository.saveAll(newProductImages);</span>
+        }
+<span class="nc" id="L554">    }</span>
+
+    public List&lt;ProductImage&gt; setProductImages(List&lt;Long&gt; imageMediaIds, Product product) {
+<span class="fc" id="L557">        List&lt;ProductImage&gt; productImages = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L558" title="All 2 branches covered.">        if (CollectionUtils.isEmpty(imageMediaIds)) {</span>
+<span class="fc" id="L559">            productImageRepository.deleteByProductId(product.getId());</span>
+<span class="fc" id="L560">            return productImages;</span>
+        }
+<span class="fc bfc" id="L562" title="All 2 branches covered.">        if (product.getProductImages() == null) {</span>
+<span class="fc" id="L563">            productImages = imageMediaIds.stream()</span>
+<span class="fc" id="L564">                .map(id -&gt; ProductImage.builder().imageId(id).product(product).build()).toList();</span>
+        } else {
+<span class="fc" id="L566">            List&lt;Long&gt; productImageIds = product.getProductImages().stream().map(ProductImage::getImageId).toList();</span>
+<span class="fc bfc" id="L567" title="All 2 branches covered.">            List&lt;Long&gt; newImageIds = imageMediaIds.stream().filter(id -&gt; !productImageIds.contains(id)).toList();</span>
+<span class="pc bpc" id="L568" title="1 of 2 branches missed.">            List&lt;Long&gt; deletedImageIds = productImageIds.stream().filter(id -&gt; !imageMediaIds.contains(id)).toList();</span>
+<span class="pc bpc" id="L569" title="1 of 2 branches missed.">            if (CollectionUtils.isNotEmpty(newImageIds)) {</span>
+<span class="fc" id="L570">                productImages = newImageIds.stream()</span>
+<span class="fc" id="L571">                    .map(id -&gt; ProductImage.builder().imageId(id).product(product).build()).toList();</span>
+            }
+<span class="pc bpc" id="L573" title="1 of 2 branches missed.">            if (CollectionUtils.isNotEmpty(deletedImageIds)) {</span>
+<span class="nc" id="L574">                productImageRepository.deleteByImageIdInAndProductId(deletedImageIds, product.getId());</span>
+            }
+        }
+<span class="fc" id="L577">        return productImages;</span>
+    }
+
+    private void setProductBrand(Long brandId, Product product) {
+<span class="pc bpc" id="L581" title="4 of 6 branches missed.">        if (brandId != null &amp;&amp; (product.getBrand() == null || !(brandId.equals(product.getBrand().getId())))) {</span>
+<span class="fc" id="L582">            Brand brand = brandRepository.findById(brandId).orElseThrow(()</span>
+<span class="fc" id="L583">                -&gt; new NotFoundException(Constants.ErrorCode.BRAND_NOT_FOUND, brandId));</span>
+<span class="fc" id="L584">            product.setBrand(brand);</span>
+        }
+<span class="fc" id="L586">    }</span>
+
+    private List&lt;ProductCategory&gt; setProductCategories(List&lt;Long&gt; vmCategoryIds, Product product) {
+<span class="fc" id="L589">        List&lt;ProductCategory&gt; productCategoryList = new ArrayList&lt;&gt;();</span>
+<span class="pc bpc" id="L590" title="1 of 2 branches missed.">        if (CollectionUtils.isNotEmpty(vmCategoryIds)) {</span>
+<span class="fc" id="L591">            List&lt;Long&gt; categoryIds</span>
+<span class="fc" id="L592">                = product.getProductCategories().stream().map(productCategory</span>
+<span class="fc" id="L593">                    -&gt; productCategory.getCategory().getId()).sorted().toList();</span>
+<span class="pc bpc" id="L594" title="1 of 2 branches missed.">            if (!CollectionUtils.isEqualCollection(categoryIds, vmCategoryIds.stream().sorted().toList())) {</span>
+<span class="nc" id="L595">                List&lt;Category&gt; categoryList = categoryRepository.findAllById(vmCategoryIds);</span>
+<span class="nc bnc" id="L596" title="All 2 branches missed.">                if (categoryList.isEmpty()) {</span>
+<span class="nc" id="L597">                    throw new BadRequestException(Constants.ErrorCode.CATEGORY_NOT_FOUND, vmCategoryIds);</span>
+<span class="nc bnc" id="L598" title="All 2 branches missed.">                } else if (categoryList.size() &lt; vmCategoryIds.size()) {</span>
+<span class="nc" id="L599">                    vmCategoryIds.removeAll(categoryList.stream().map(Category::getId).toList());</span>
+<span class="nc" id="L600">                    throw new BadRequestException(Constants.ErrorCode.CATEGORY_NOT_FOUND, vmCategoryIds);</span>
+                } else {
+<span class="nc bnc" id="L602" title="All 2 branches missed.">                    for (Category category : categoryList) {</span>
+<span class="nc" id="L603">                        productCategoryList.add(ProductCategory.builder()</span>
+<span class="nc" id="L604">                            .product(product)</span>
+<span class="nc" id="L605">                            .category(category).build());</span>
+<span class="nc" id="L606">                    }</span>
+                }
+            }
+        }
+<span class="fc" id="L610">        return productCategoryList;</span>
+    }
+
+    public ProductListGetVm getProductsWithFilter(int pageNo, int pageSize, String productName, String brandName) {
+<span class="fc" id="L614">        Pageable pageable = PageRequest.of(pageNo, pageSize);</span>
+        Page&lt;Product&gt; productPage;
+
+<span class="fc" id="L617">        productPage = productRepository.getProductsWithFilter(productName.trim().toLowerCase(),</span>
+<span class="fc" id="L618">            brandName.trim(), pageable);</span>
+
+<span class="fc" id="L620">        List&lt;Product&gt; productList = productPage.getContent();</span>
+<span class="fc" id="L621">        List&lt;ProductListVm&gt; productListVmList = productList.stream()</span>
+<span class="fc" id="L622">            .map(ProductListVm::fromModel)</span>
+<span class="fc" id="L623">            .toList();</span>
+
+<span class="fc" id="L625">        return new ProductListGetVm(</span>
+            productListVmList,
+<span class="fc" id="L627">            productPage.getNumber(),</span>
+<span class="fc" id="L628">            productPage.getSize(),</span>
+<span class="fc" id="L629">            (int) productPage.getTotalElements(),</span>
+<span class="fc" id="L630">            productPage.getTotalPages(),</span>
+<span class="fc" id="L631">            productPage.isLast()</span>
+        );
+    }
+
+    public ProductDetailVm getProductById(long productId) {
+<span class="fc" id="L636">        Product product = productRepository</span>
+<span class="fc" id="L637">            .findById(productId)</span>
+<span class="fc" id="L638">            .orElseThrow(() -&gt;</span>
+<span class="fc" id="L639">                new NotFoundException(Constants.ErrorCode.PRODUCT_NOT_FOUND, productId)</span>
+            );
+<span class="fc" id="L641">        List&lt;ImageVm&gt; productImageMedias = new ArrayList&lt;&gt;();</span>
+<span class="pc bpc" id="L642" title="1 of 2 branches missed.">        if (null != product.getProductImages()) {</span>
+<span class="fc bfc" id="L643" title="All 2 branches covered.">            for (ProductImage image : product.getProductImages()) {</span>
+<span class="fc" id="L644">                productImageMedias.add(new ImageVm(image.getImageId(),</span>
+<span class="fc" id="L645">                    mediaService.getMedia(image.getImageId()).url()));</span>
+<span class="fc" id="L646">            }</span>
+        }
+<span class="fc" id="L648">        ImageVm thumbnailMedia = null;</span>
+<span class="pc bpc" id="L649" title="1 of 2 branches missed.">        if (null != product.getThumbnailMediaId()) {</span>
+<span class="fc" id="L650">            thumbnailMedia = new ImageVm(product.getThumbnailMediaId(),</span>
+<span class="fc" id="L651">                mediaService.getMedia(product.getThumbnailMediaId()).url());</span>
+        }
+<span class="fc" id="L653">        List&lt;Category&gt; categories = new ArrayList&lt;&gt;();</span>
+<span class="pc bpc" id="L654" title="1 of 2 branches missed.">        if (null != product.getProductCategories()) {</span>
+<span class="fc bfc" id="L655" title="All 2 branches covered.">            for (ProductCategory category : product.getProductCategories()) {</span>
+<span class="fc" id="L656">                categories.add(category.getCategory());</span>
+<span class="fc" id="L657">            }</span>
+        }
+<span class="fc" id="L659">        Long brandId = null;</span>
+<span class="fc bfc" id="L660" title="All 2 branches covered.">        if (null != product.getBrand()) {</span>
+<span class="fc" id="L661">            brandId = product.getBrand().getId();</span>
+        }
+<span class="fc" id="L663">        return ProductDetailVm.builder()</span>
+<span class="fc" id="L664">            .id(product.getId())</span>
+<span class="fc" id="L665">            .name(product.getName())</span>
+<span class="fc" id="L666">            .shortDescription(product.getShortDescription())</span>
+<span class="fc" id="L667">            .description(product.getDescription())</span>
+<span class="fc" id="L668">            .specification(product.getSpecification())</span>
+<span class="fc" id="L669">            .sku(product.getSku())</span>
+<span class="fc" id="L670">            .gtin(product.getGtin())</span>
+<span class="fc" id="L671">            .slug(product.getSlug())</span>
+<span class="fc" id="L672">            .isAllowedToOrder(product.isAllowedToOrder())</span>
+<span class="fc" id="L673">            .isPublished(product.isPublished())</span>
+<span class="fc" id="L674">            .isFeatured(product.isFeatured())</span>
+<span class="fc" id="L675">            .isVisible(product.isVisibleIndividually())</span>
+<span class="fc" id="L676">            .stockTrackingEnabled(product.isStockTrackingEnabled())</span>
+<span class="fc" id="L677">            .weight(product.getWeight())</span>
+<span class="fc" id="L678">            .dimensionUnit(product.getDimensionUnit())</span>
+<span class="fc" id="L679">            .length(product.getLength())</span>
+<span class="fc" id="L680">            .width(product.getWidth())</span>
+<span class="fc" id="L681">            .height(product.getHeight())</span>
+<span class="fc" id="L682">            .price(product.getPrice())</span>
+<span class="fc" id="L683">            .brandId(brandId)</span>
+<span class="fc" id="L684">            .categories(categories)</span>
+<span class="fc" id="L685">            .metaTitle(product.getMetaTitle())</span>
+<span class="fc" id="L686">            .metaKeyword(product.getMetaKeyword())</span>
+<span class="fc" id="L687">            .metaDescription(product.getMetaDescription())</span>
+<span class="fc" id="L688">            .thumbnailMedia(thumbnailMedia)</span>
+<span class="fc" id="L689">            .productImageMedias(productImageMedias)</span>
+<span class="fc" id="L690">            .taxClassId(product.getTaxClassId())</span>
+<span class="pc bpc" id="L691" title="1 of 2 branches missed.">            .parentId(Objects.isNull(product.getParent()) ? null : product.getParent().getId())</span>
+<span class="fc" id="L692">            .build();</span>
+    }
+
+    public List&lt;ProductListVm&gt; getLatestProducts(int count) {
+
+<span class="fc bfc" id="L697" title="All 2 branches covered.">        if (count &lt;= 0) {</span>
+<span class="fc" id="L698">            return List.of();</span>
+        }
+
+<span class="fc" id="L701">        Pageable pageable = PageRequest.of(0, count);</span>
+<span class="fc" id="L702">        List&lt;Product&gt; products =  productRepository.getLatestProducts(pageable);</span>
+
+<span class="fc bfc" id="L704" title="All 2 branches covered.">        if (CollectionUtils.isEmpty(products)) {</span>
+<span class="fc" id="L705">            return List.of();</span>
+        }
+
+<span class="fc" id="L708">        return products.stream()</span>
+<span class="fc" id="L709">                .map(ProductListVm::fromModel)</span>
+<span class="fc" id="L710">                .toList();</span>
+    }
+
+    public List&lt;ProductThumbnailVm&gt; getProductsByBrand(String brandSlug) {
+<span class="fc" id="L714">        List&lt;ProductThumbnailVm&gt; productThumbnailVms = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L715">        Brand brand = brandRepository</span>
+<span class="fc" id="L716">            .findBySlug(brandSlug)</span>
+<span class="fc" id="L717">            .orElseThrow(() -&gt; new NotFoundException(Constants.ErrorCode.BRAND_NOT_FOUND, brandSlug));</span>
+<span class="fc" id="L718">        List&lt;Product&gt; products = productRepository.findAllByBrandAndIsPublishedTrueOrderByIdAsc(brand);</span>
+<span class="fc bfc" id="L719" title="All 2 branches covered.">        for (Product product : products) {</span>
+<span class="fc" id="L720">            productThumbnailVms.add(new ProductThumbnailVm(</span>
+<span class="fc" id="L721">                product.getId(),</span>
+<span class="fc" id="L722">                product.getName(),</span>
+<span class="fc" id="L723">                product.getSlug(),</span>
+<span class="fc" id="L724">                mediaService.getMedia(product.getThumbnailMediaId()).url()));</span>
+<span class="fc" id="L725">        }</span>
+<span class="fc" id="L726">        return productThumbnailVms;</span>
+    }
+
+    public ProductListGetFromCategoryVm getProductsFromCategory(int pageNo, int pageSize, String categorySlug) {
+<span class="fc" id="L730">        List&lt;ProductThumbnailVm&gt; productThumbnailVms = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L731">        Pageable pageable = PageRequest.of(pageNo, pageSize);</span>
+        Page&lt;ProductCategory&gt; productCategoryPage;
+<span class="fc" id="L733">        Category category = categoryRepository</span>
+<span class="fc" id="L734">            .findBySlug(categorySlug)</span>
+<span class="fc" id="L735">            .orElseThrow(() -&gt; new NotFoundException(Constants.ErrorCode.CATEGORY_NOT_FOUND, categorySlug));</span>
+<span class="fc" id="L736">        productCategoryPage = productCategoryRepository.findAllByCategory(pageable, category);</span>
+<span class="fc" id="L737">        List&lt;ProductCategory&gt; productList = productCategoryPage.getContent();</span>
+<span class="fc" id="L738">        List&lt;Product&gt; products = productList.stream()</span>
+<span class="fc" id="L739">            .map(ProductCategory::getProduct).toList();</span>
+<span class="fc bfc" id="L740" title="All 2 branches covered.">        for (Product product : products) {</span>
+<span class="fc" id="L741">            productThumbnailVms.add(new ProductThumbnailVm(</span>
+<span class="fc" id="L742">                product.getId(),</span>
+<span class="fc" id="L743">                product.getName(),</span>
+<span class="fc" id="L744">                product.getSlug(),</span>
+<span class="fc" id="L745">                mediaService.getMedia(product.getThumbnailMediaId()).url()));</span>
+<span class="fc" id="L746">        }</span>
+<span class="fc" id="L747">        return new ProductListGetFromCategoryVm(</span>
+            productThumbnailVms,
+<span class="fc" id="L749">            productCategoryPage.getNumber(),</span>
+<span class="fc" id="L750">            productCategoryPage.getSize(),</span>
+<span class="fc" id="L751">            (int) productCategoryPage.getTotalElements(),</span>
+<span class="fc" id="L752">            productCategoryPage.getTotalPages(),</span>
+<span class="fc" id="L753">            productCategoryPage.isLast()</span>
+        );
+    }
+
+    public List&lt;ProductThumbnailGetVm&gt; getFeaturedProductsById(List&lt;Long&gt; productIds) {
+<span class="fc" id="L758">        List&lt;Product&gt; products = productRepository.findAllByIdIn(productIds);</span>
+<span class="fc" id="L759">        return products.stream().map(product -&gt; {</span>
+
+<span class="fc" id="L761">            String thumbnailUrl = mediaService.getMedia(product.getThumbnailMediaId()).url();</span>
+<span class="pc bpc" id="L762" title="3 of 4 branches missed.">            if (StringUtils.isNotEmpty(thumbnailUrl) || Objects.isNull(product.getParent())) {</span>
+<span class="fc" id="L763">                return new ProductThumbnailGetVm(</span>
+<span class="fc" id="L764">                    product.getId(),</span>
+<span class="fc" id="L765">                    product.getName(),</span>
+<span class="fc" id="L766">                    product.getSlug(),</span>
+                    thumbnailUrl,
+<span class="fc" id="L768">                    product.getPrice());</span>
+            }
+
+<span class="nc" id="L771">            Optional&lt;Product&gt; parentProduct = productRepository.findById(product.getParent().getId());</span>
+
+<span class="nc" id="L773">            return new ProductThumbnailGetVm(</span>
+<span class="nc" id="L774">                product.getId(),</span>
+<span class="nc" id="L775">                product.getName(),</span>
+<span class="nc" id="L776">                product.getSlug(),</span>
+<span class="nc" id="L777">                parentProduct.map(pr -&gt; mediaService.getMedia(pr.getThumbnailMediaId()).url())</span>
+<span class="nc" id="L778">                    .orElse(&quot;&quot;),</span>
+<span class="nc" id="L779">                product.getPrice());</span>
+<span class="fc" id="L780">        }).toList();</span>
+    }
+
+    public ProductFeatureGetVm getListFeaturedProducts(int pageNo, int pageSize) {
+<span class="fc" id="L784">        Pageable pageable = PageRequest.of(pageNo, pageSize);</span>
+<span class="fc" id="L785">        List&lt;ProductThumbnailGetVm&gt; productThumbnailVms = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L786">        Page&lt;Product&gt; productPage = productRepository.getFeaturedProduct(pageable);</span>
+<span class="fc" id="L787">        List&lt;Product&gt; products = productPage.getContent();</span>
+<span class="fc bfc" id="L788" title="All 2 branches covered.">        for (Product product : products) {</span>
+<span class="fc" id="L789">            productThumbnailVms.add(new ProductThumbnailGetVm(</span>
+<span class="fc" id="L790">                product.getId(),</span>
+<span class="fc" id="L791">                product.getName(),</span>
+<span class="fc" id="L792">                product.getSlug(),</span>
+<span class="fc" id="L793">                mediaService.getMedia(product.getThumbnailMediaId()).url(),</span>
+<span class="fc" id="L794">                product.getPrice()));</span>
+<span class="fc" id="L795">        }</span>
+<span class="fc" id="L796">        return new ProductFeatureGetVm(productThumbnailVms, productPage.getTotalPages());</span>
+    }
+
+    public ProductDetailGetVm getProductDetail(String slug) {
+<span class="fc" id="L800">        Product product = productRepository.findBySlugAndIsPublishedTrue(slug)</span>
+<span class="fc" id="L801">            .orElseThrow(() -&gt; new NotFoundException(Constants.ErrorCode.PRODUCT_NOT_FOUND, slug));</span>
+
+<span class="fc" id="L803">        Long productThumbnailMediaId = product.getThumbnailMediaId();</span>
+<span class="fc" id="L804">        String productThumbnailUrl = mediaService.getMedia(productThumbnailMediaId).url();</span>
+
+<span class="fc" id="L806">        List&lt;String&gt; productImageMediaUrls = new ArrayList&lt;&gt;();</span>
+<span class="pc bpc" id="L807" title="1 of 2 branches missed.">        if (CollectionUtils.isNotEmpty(product.getProductImages())) {</span>
+<span class="nc bnc" id="L808" title="All 2 branches missed.">            for (ProductImage image : product.getProductImages()) {</span>
+<span class="nc" id="L809">                productImageMediaUrls.add(mediaService.getMedia(image.getImageId()).url());</span>
+<span class="nc" id="L810">            }</span>
+        }
+
+<span class="fc" id="L813">        List&lt;ProductAttributeGroupGetVm&gt; productAttributeGroupsVm = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L814">        List&lt;ProductAttributeValue&gt; productAttributeValues = product.getAttributeValues();</span>
+<span class="pc bpc" id="L815" title="1 of 2 branches missed.">        if (CollectionUtils.isNotEmpty(productAttributeValues)) {</span>
+<span class="nc" id="L816">            List&lt;ProductAttributeGroup&gt; productAttributeGroups = productAttributeValues.stream()</span>
+<span class="nc" id="L817">                .map(productAttributeValue</span>
+<span class="nc" id="L818">                    -&gt; productAttributeValue.getProductAttribute().getProductAttributeGroup())</span>
+<span class="nc" id="L819">                .distinct()</span>
+<span class="nc" id="L820">                .toList();</span>
+
+<span class="nc" id="L822">            productAttributeGroups.forEach(productAttributeGroup -&gt; {</span>
+<span class="nc" id="L823">                List&lt;ProductAttributeValueVm&gt; productAttributeValueVms = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L824">                productAttributeValues.forEach(productAttributeValue -&gt; {</span>
+<span class="nc" id="L825">                    ProductAttributeGroup group</span>
+<span class="nc" id="L826">                        = productAttributeValue.getProductAttribute().getProductAttributeGroup();</span>
+<span class="nc bnc" id="L827" title="All 8 branches missed.">                    if ((group != null &amp;&amp; group.equals(productAttributeGroup))</span>
+                        || (group == null &amp;&amp; productAttributeGroup == null)) {
+<span class="nc" id="L829">                        ProductAttributeValueVm productAttributeValueVm = new ProductAttributeValueVm(</span>
+<span class="nc" id="L830">                            productAttributeValue.getProductAttribute().getName(),</span>
+<span class="nc" id="L831">                            productAttributeValue.getValue());</span>
+<span class="nc" id="L832">                        productAttributeValueVms.add(productAttributeValueVm);</span>
+                    }
+<span class="nc" id="L834">                });</span>
+                String productAttributeGroupName
+<span class="nc bnc" id="L836" title="All 2 branches missed.">                    = productAttributeGroup == null ? NONE_GROUP : productAttributeGroup.getName();</span>
+<span class="nc" id="L837">                ProductAttributeGroupGetVm productAttributeGroupVm = new ProductAttributeGroupGetVm(</span>
+                    productAttributeGroupName,
+                    productAttributeValueVms);
+<span class="nc" id="L840">                productAttributeGroupsVm.add(productAttributeGroupVm);</span>
+<span class="nc" id="L841">            });</span>
+        }
+
+
+<span class="fc" id="L845">        return new ProductDetailGetVm(</span>
+<span class="fc" id="L846">            product.getId(),</span>
+<span class="fc" id="L847">            product.getName(),</span>
+<span class="pc bpc" id="L848" title="1 of 2 branches missed.">            product.getBrand() == null ? null : product.getBrand().getName(),</span>
+<span class="fc" id="L849">            product.getProductCategories().stream().map(category -&gt; category.getCategory().getName()).toList(),</span>
+            productAttributeGroupsVm,
+<span class="fc" id="L851">            product.getShortDescription(),</span>
+<span class="fc" id="L852">            product.getDescription(),</span>
+<span class="fc" id="L853">            product.getSpecification(),</span>
+<span class="fc" id="L854">            product.isAllowedToOrder(),</span>
+<span class="fc" id="L855">            product.isPublished(),</span>
+<span class="fc" id="L856">            product.isFeatured(),</span>
+<span class="fc" id="L857">            product.isHasOptions(),</span>
+<span class="fc" id="L858">            product.getPrice(),</span>
+            productThumbnailUrl,
+            productImageMediaUrls
+        );
+    }
+
+    public void deleteProduct(Long id) {
+<span class="fc" id="L865">        Product product = productRepository</span>
+<span class="fc" id="L866">            .findById(id)</span>
+<span class="fc" id="L867">            .orElseThrow(() -&gt; new NotFoundException(Constants.ErrorCode.PRODUCT_NOT_FOUND, id));</span>
+<span class="fc" id="L868">        product.setPublished(false);</span>
+
+<span class="fc bfc" id="L870" title="All 2 branches covered.">        if (!Objects.isNull(product.getParent())) {</span>
+<span class="fc" id="L871">            List&lt;ProductOptionCombination&gt; productOptionCombinationList = productOptionCombinationRepository</span>
+<span class="fc" id="L872">                .findAllByProduct(product);</span>
+<span class="pc bpc" id="L873" title="1 of 2 branches missed.">            if (CollectionUtils.isNotEmpty(productOptionCombinationList)) {</span>
+<span class="fc" id="L874">                productOptionCombinationRepository.deleteAll(productOptionCombinationList);</span>
+            }
+        }
+<span class="fc" id="L877">        productRepository.save(product);</span>
+
+<span class="fc" id="L879">    }</span>
+
+    public ProductsGetVm getProductsByMultiQuery(
+        int pageNo,
+        int pageSize,
+        String productName,
+        String categorySlug,
+        Double startPrice,
+        Double endPrice
+    ) {
+<span class="fc" id="L889">        Pageable pageable = PageRequest.of(pageNo, pageSize);</span>
+
+        Page&lt;Product&gt; productPage;
+<span class="fc" id="L892">        productPage = productRepository.findByProductNameAndCategorySlugAndPriceBetween(</span>
+<span class="fc" id="L893">            productName.trim().toLowerCase(),</span>
+<span class="fc" id="L894">            categorySlug.trim(), startPrice, endPrice, pageable);</span>
+
+<span class="fc" id="L896">        List&lt;ProductThumbnailGetVm&gt; productThumbnailVms = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L897">        List&lt;Product&gt; products = productPage.getContent();</span>
+<span class="fc bfc" id="L898" title="All 2 branches covered.">        for (Product product : products) {</span>
+<span class="fc" id="L899">            productThumbnailVms.add(new ProductThumbnailGetVm(</span>
+<span class="fc" id="L900">                product.getId(),</span>
+<span class="fc" id="L901">                product.getName(),</span>
+<span class="fc" id="L902">                product.getSlug(),</span>
+<span class="fc" id="L903">                mediaService.getMedia(product.getThumbnailMediaId()).url(),</span>
+<span class="fc" id="L904">                product.getPrice()));</span>
+<span class="fc" id="L905">        }</span>
+
+<span class="fc" id="L907">        return new ProductsGetVm(</span>
+            productThumbnailVms,
+<span class="fc" id="L909">            productPage.getNumber(),</span>
+<span class="fc" id="L910">            productPage.getSize(),</span>
+<span class="fc" id="L911">            (int) productPage.getTotalElements(),</span>
+<span class="fc" id="L912">            productPage.getTotalPages(),</span>
+<span class="fc" id="L913">            productPage.isLast()</span>
+        );
+    }
+
+    public List&lt;ProductVariationGetVm&gt; getProductVariationsByParentId(Long id) {
+<span class="fc" id="L918">        Product parentProduct = productRepository.findById(id)</span>
+<span class="fc" id="L919">            .orElseThrow(() -&gt; new NotFoundException(Constants.ErrorCode.PRODUCT_NOT_FOUND, id));</span>
+<span class="fc bfc" id="L920" title="All 2 branches covered.">        if (Boolean.TRUE.equals(parentProduct.isHasOptions())) {</span>
+<span class="fc" id="L921">            List&lt;Product&gt; productVariations</span>
+<span class="fc" id="L922">                = parentProduct.getProducts().stream().filter(Product::isPublished).toList();</span>
+
+<span class="fc" id="L924">            return productVariations.stream().map(product -&gt; {</span>
+<span class="fc" id="L925">                List&lt;ProductOptionCombination&gt; productOptionCombinations =</span>
+<span class="fc" id="L926">                    productOptionCombinationRepository.findAllByProduct(product);</span>
+<span class="fc" id="L927">                Map&lt;Long, String&gt; options = productOptionCombinations.stream().collect(Collectors.toMap(</span>
+<span class="nc" id="L928">                    productOptionCombination -&gt; productOptionCombination.getProductOption().getId(),</span>
+                    ProductOptionCombination::getValue
+                ));
+<span class="fc" id="L931">                ImageVm image = null;</span>
+<span class="pc bpc" id="L932" title="1 of 2 branches missed.">                if (product.getThumbnailMediaId() != null) {</span>
+<span class="fc" id="L933">                    image = new ImageVm(product.getThumbnailMediaId(),</span>
+<span class="fc" id="L934">                        mediaService.getMedia(product.getThumbnailMediaId()).url());</span>
+                }
+<span class="fc" id="L936">                return new ProductVariationGetVm(</span>
+<span class="fc" id="L937">                    product.getId(),</span>
+<span class="fc" id="L938">                    product.getName(),</span>
+<span class="fc" id="L939">                    product.getSlug(),</span>
+<span class="fc" id="L940">                    product.getSku(),</span>
+<span class="fc" id="L941">                    product.getGtin(),</span>
+<span class="fc" id="L942">                    product.getPrice(),</span>
+                    image,
+<span class="fc" id="L944">                    product.getProductImages().stream()</span>
+<span class="pc" id="L945">                        .map(productImage -&gt; new ImageVm(productImage.getImageId(),</span>
+<span class="pc" id="L946">                            mediaService.getMedia(productImage.getImageId()).url())).toList(),</span>
+                    options
+                );
+<span class="fc" id="L949">            }).toList();</span>
+        }
+<span class="fc" id="L951">        return Collections.emptyList();</span>
+    }
+
+    public List&lt;ProductExportingDetailVm&gt; exportProducts(String productName, String brandName) {
+<span class="fc" id="L955">        List&lt;Product&gt; productList = productRepository.getExportingProducts(productName.trim().toLowerCase(),</span>
+<span class="fc" id="L956">            brandName.trim());</span>
+
+<span class="fc" id="L958">        return productList.stream()</span>
+<span class="fc" id="L959">            .map(product -&gt; new ProductExportingDetailVm(product.getId(),</span>
+<span class="fc" id="L960">                product.getName(),</span>
+<span class="fc" id="L961">                product.getShortDescription(),</span>
+<span class="fc" id="L962">                product.getDescription(),</span>
+<span class="fc" id="L963">                product.getSpecification(),</span>
+<span class="fc" id="L964">                product.getSku(),</span>
+<span class="fc" id="L965">                product.getGtin(),</span>
+<span class="fc" id="L966">                product.getSlug(),</span>
+<span class="fc" id="L967">                product.isAllowedToOrder(),</span>
+<span class="fc" id="L968">                product.isPublished(),</span>
+<span class="fc" id="L969">                product.isFeatured(),</span>
+<span class="fc" id="L970">                product.isVisibleIndividually(),</span>
+<span class="fc" id="L971">                product.isStockTrackingEnabled(),</span>
+<span class="fc" id="L972">                product.getPrice(),</span>
+<span class="fc" id="L973">                product.getBrand().getId(),</span>
+<span class="fc" id="L974">                product.getBrand().getName(),</span>
+<span class="fc" id="L975">                product.getMetaTitle(),</span>
+<span class="fc" id="L976">                product.getMetaKeyword(),</span>
+<span class="fc" id="L977">                product.getMetaDescription()</span>
+            ))
+<span class="fc" id="L979">            .toList();</span>
+    }
+
+    public ProductSlugGetVm getProductSlug(Long id) {
+<span class="fc" id="L983">        Product product = productRepository.findById(id)</span>
+<span class="fc" id="L984">            .orElseThrow(() -&gt; new NotFoundException(Constants.ErrorCode.PRODUCT_NOT_FOUND, id));</span>
+<span class="fc" id="L985">        Product parent = product.getParent();</span>
+<span class="fc bfc" id="L986" title="All 2 branches covered.">        if (parent != null) {</span>
+<span class="fc" id="L987">            return new ProductSlugGetVm(parent.getSlug(), id);</span>
+        }
+<span class="fc" id="L989">        return new ProductSlugGetVm(product.getSlug(), null);</span>
+    }
+
+    public ProductEsDetailVm getProductEsDetailById(long productId) {
+<span class="fc" id="L993">        Product product = productRepository</span>
+<span class="fc" id="L994">            .findById(productId)</span>
+<span class="fc" id="L995">            .orElseThrow(() -&gt;</span>
+<span class="fc" id="L996">                new NotFoundException(Constants.ErrorCode.PRODUCT_NOT_FOUND, productId)</span>
+            );
+
+<span class="fc" id="L999">        Long thumbnailMediaId = null;</span>
+<span class="pc bpc" id="L1000" title="1 of 2 branches missed.">        if (null != product.getThumbnailMediaId()) {</span>
+<span class="fc" id="L1001">            thumbnailMediaId = product.getThumbnailMediaId();</span>
+        }
+<span class="fc" id="L1003">        List&lt;String&gt; categoryNames = product.getProductCategories().stream().map(productCategory</span>
+<span class="fc" id="L1004">            -&gt; productCategory.getCategory().getName()).toList();</span>
+<span class="fc" id="L1005">        List&lt;String&gt; attributeNames = product.getAttributeValues().stream().map(attributeValue</span>
+<span class="pc" id="L1006">            -&gt; attributeValue.getProductAttribute().getName()).toList();</span>
+
+<span class="fc" id="L1008">        String brandName = null;</span>
+<span class="fc bfc" id="L1009" title="All 2 branches covered.">        if (null != product.getBrand()) {</span>
+<span class="fc" id="L1010">            brandName = product.getBrand().getName();</span>
+        }
+
+<span class="fc" id="L1013">        return new ProductEsDetailVm(product.getId(),</span>
+<span class="fc" id="L1014">            product.getName(),</span>
+<span class="fc" id="L1015">            product.getSlug(),</span>
+<span class="fc" id="L1016">            product.getPrice(),</span>
+<span class="fc" id="L1017">            product.isPublished(),</span>
+<span class="fc" id="L1018">            product.isVisibleIndividually(),</span>
+<span class="fc" id="L1019">            product.isAllowedToOrder(),</span>
+<span class="fc" id="L1020">            product.isFeatured(),</span>
+            thumbnailMediaId,
+            brandName,
+            categoryNames,
+            attributeNames
+        );
+    }
+
+    public List&lt;ProductListVm&gt; getRelatedProductsBackoffice(Long id) {
+<span class="fc" id="L1029">        Product product = productRepository.findById(id)</span>
+<span class="fc" id="L1030">            .orElseThrow(() -&gt; new NotFoundException(Constants.ErrorCode.PRODUCT_NOT_FOUND, id));</span>
+<span class="fc" id="L1031">        List&lt;ProductRelated&gt; relatedProducts = product.getRelatedProducts();</span>
+<span class="fc" id="L1032">        return relatedProducts.stream()</span>
+<span class="fc" id="L1033">            .map(productRelated -&gt;</span>
+<span class="fc" id="L1034">                new ProductListVm(</span>
+<span class="fc" id="L1035">                    productRelated.getRelatedProduct().getId(),</span>
+<span class="fc" id="L1036">                    productRelated.getRelatedProduct().getName(),</span>
+<span class="fc" id="L1037">                    productRelated.getRelatedProduct().getSlug(),</span>
+<span class="fc" id="L1038">                    productRelated.getRelatedProduct().isAllowedToOrder(),</span>
+<span class="fc" id="L1039">                    productRelated.getRelatedProduct().isPublished(),</span>
+<span class="fc" id="L1040">                    productRelated.getRelatedProduct().isFeatured(),</span>
+<span class="fc" id="L1041">                    productRelated.getRelatedProduct().isVisibleIndividually(),</span>
+<span class="fc" id="L1042">                    productRelated.getRelatedProduct().getPrice(),</span>
+<span class="fc" id="L1043">                    productRelated.getRelatedProduct().getCreatedOn(),</span>
+<span class="fc" id="L1044">                    productRelated.getRelatedProduct().getTaxClassId(),</span>
+<span class="pc bpc" id="L1045" title="1 of 2 branches missed.">                    Objects.isNull(productRelated.getRelatedProduct().getParent())</span>
+<span class="pc" id="L1046">                        ? null : productRelated.getRelatedProduct().getParent().getId()</span>
+                )
+<span class="fc" id="L1048">            ).toList();</span>
+    }
+
+    public ProductsGetVm getRelatedProductsStorefront(Long id, int pageNo, int pageSize) {
+<span class="fc" id="L1052">        Product product = productRepository.findById(id)</span>
+<span class="fc" id="L1053">            .orElseThrow(() -&gt; new NotFoundException(Constants.ErrorCode.PRODUCT_NOT_FOUND, id));</span>
+<span class="fc" id="L1054">        Page&lt;ProductRelated&gt; relatedProductsPage</span>
+<span class="fc" id="L1055">            = productRelatedRepository.findAllByProduct(product, PageRequest.of(pageNo, pageSize));</span>
+<span class="fc" id="L1056">        List&lt;ProductThumbnailGetVm&gt; productThumbnailVms = relatedProductsPage.stream()</span>
+<span class="fc" id="L1057">            .filter(productRelated -&gt; productRelated.getRelatedProduct().isPublished())</span>
+<span class="fc" id="L1058">            .map(productRelated -&gt; {</span>
+<span class="fc" id="L1059">                Product relatedProduct = productRelated.getRelatedProduct();</span>
+<span class="fc" id="L1060">                return new ProductThumbnailGetVm(</span>
+<span class="fc" id="L1061">                    relatedProduct.getId(),</span>
+<span class="fc" id="L1062">                    relatedProduct.getName(),</span>
+<span class="fc" id="L1063">                    relatedProduct.getSlug(),</span>
+<span class="fc" id="L1064">                    mediaService.getMedia(relatedProduct.getThumbnailMediaId()).url(),</span>
+<span class="fc" id="L1065">                    relatedProduct.getPrice());</span>
+            })
+<span class="fc" id="L1067">            .toList();</span>
+<span class="fc" id="L1068">        return new ProductsGetVm(</span>
+            productThumbnailVms,
+<span class="fc" id="L1070">            relatedProductsPage.getNumber(),</span>
+<span class="fc" id="L1071">            relatedProductsPage.getSize(),</span>
+<span class="fc" id="L1072">            (int) relatedProductsPage.getTotalElements(),</span>
+<span class="fc" id="L1073">            relatedProductsPage.getTotalPages(),</span>
+<span class="fc" id="L1074">            relatedProductsPage.isLast()</span>
+        );
+    }
+
+    public List&lt;ProductInfoVm&gt; getProductsForWarehouse(
+        String name, String sku, List&lt;Long&gt; productIds, FilterExistInWhSelection selection) {
+<span class="fc" id="L1080">        return productRepository.findProductForWarehouse(name, sku, productIds, selection.name())</span>
+<span class="fc" id="L1081">            .stream().map(ProductInfoVm::fromProduct).toList();</span>
+    }
+
+    public void updateProductQuantity(List&lt;ProductQuantityPostVm&gt; productQuantityPostVms) {
+
+<span class="fc" id="L1086">        List&lt;Long&gt; productIds = productQuantityPostVms.stream().map(ProductQuantityPostVm::productId).toList();</span>
+<span class="fc" id="L1087">        List&lt;Product&gt; products = productRepository.findAllByIdIn(productIds);</span>
+<span class="fc" id="L1088">        products.parallelStream().forEach(product -&gt; {</span>
+<span class="fc" id="L1089">            Optional&lt;ProductQuantityPostVm&gt; productQuantityPostVmOptional = productQuantityPostVms.parallelStream()</span>
+<span class="fc" id="L1090">                .filter(productPostVm -&gt; product.getId().equals(productPostVm.productId())).findFirst();</span>
+<span class="fc" id="L1091">            productQuantityPostVmOptional.ifPresent(productQuantityPostVm</span>
+<span class="fc" id="L1092">                -&gt; product.setStockQuantity(productQuantityPostVm.stockQuantity()));</span>
+<span class="fc" id="L1093">        });</span>
+
+<span class="fc" id="L1095">        productRepository.saveAll(products);</span>
+<span class="fc" id="L1096">    }</span>
+
+    private void partitionUpdateStockQuantityByCalculation(List&lt;ProductQuantityPutVm&gt; productQuantityItems,
+                                                           BiFunction&lt;Long, Long, Long&gt; calculation) {
+<span class="fc" id="L1100">        var productIds = productQuantityItems.stream()</span>
+<span class="fc" id="L1101">            .map(ProductQuantityPutVm::productId)</span>
+<span class="fc" id="L1102">            .toList();</span>
+
+<span class="fc" id="L1104">        var productQuantityItemMap = productQuantityItems.stream()</span>
+<span class="fc" id="L1105">            .collect(Collectors.toMap(</span>
+                ProductQuantityPutVm::productId,
+<span class="fc" id="L1107">                Function.identity(),</span>
+                this::mergeProductQuantityItem
+            ));
+
+
+<span class="fc" id="L1112">        List&lt;Product&gt; products = this.productRepository.findAllByIdIn(productIds);</span>
+<span class="fc" id="L1113">        products.forEach(product -&gt; {</span>
+<span class="pc bpc" id="L1114" title="1 of 2 branches missed.">            if (product.isStockTrackingEnabled()) {</span>
+<span class="fc" id="L1115">                long amount = getRemainAmountOfStockQuantity(productQuantityItemMap, product, calculation);</span>
+<span class="fc" id="L1116">                product.setStockQuantity(amount);</span>
+            }
+<span class="fc" id="L1118">        });</span>
+<span class="fc" id="L1119">        this.productRepository.saveAll(products);</span>
+<span class="fc" id="L1120">    }</span>
+
+    public void subtractStockQuantity(List&lt;ProductQuantityPutVm&gt; productQuantityItems) {
+<span class="fc" id="L1123">        ListUtils.partition(productQuantityItems, 5)</span>
+<span class="fc" id="L1124">            .forEach(it -&gt; partitionUpdateStockQuantityByCalculation(it, this.subtractStockQuantity()));</span>
+<span class="fc" id="L1125">    }</span>
+
+    private BiFunction&lt;Long, Long, Long&gt; subtractStockQuantity() {
+<span class="fc" id="L1128">        return (totalQuantity, amount) -&gt; {</span>
+<span class="fc" id="L1129">            long result = totalQuantity - amount;</span>
+<span class="pc bpc" id="L1130" title="1 of 2 branches missed.">            return result &lt; 0 ? 0 : result;</span>
+        };
+    }
+
+    public List&lt;ProductListVm&gt; getProductByIds(List&lt;Long&gt; productIds) {
+<span class="fc" id="L1135">        return this.productRepository.findAllByIdIn(productIds).stream().map(ProductListVm::fromModel).toList();</span>
+    }
+
+    public void restoreStockQuantity(List&lt;ProductQuantityPutVm&gt; productQuantityItems) {
+<span class="fc" id="L1139">        ListUtils.partition(productQuantityItems, 5)</span>
+<span class="fc" id="L1140">            .forEach(it -&gt; partitionUpdateStockQuantityByCalculation(it, this.restoreStockQuantity()));</span>
+<span class="fc" id="L1141">    }</span>
+
+    private BiFunction&lt;Long, Long, Long&gt; restoreStockQuantity() {
+<span class="fc" id="L1144">        return Long::sum;</span>
+    }
+
+    private Long getRemainAmountOfStockQuantity(Map&lt;Long, ProductQuantityPutVm&gt; productQuantityItemMap,
+                                                Product product, BiFunction&lt;Long, Long, Long&gt; calculation) {
+<span class="fc" id="L1149">        Long stockQuantity = product.getStockQuantity();</span>
+<span class="fc" id="L1150">        var productItem = productQuantityItemMap.get(product.getId());</span>
+<span class="fc" id="L1151">        Long quantity = productItem.quantity();</span>
+<span class="fc" id="L1152">        return calculation.apply(stockQuantity, quantity);</span>
+    }
+
+    private ProductQuantityPutVm mergeProductQuantityItem(ProductQuantityPutVm p1, ProductQuantityPutVm p2) {
+<span class="nc" id="L1156">        var q1 = p1.quantity();</span>
+<span class="nc" id="L1157">        var q2 = p2.quantity();</span>
+<span class="nc" id="L1158">        return new ProductQuantityPutVm(p1.productId(), q1 + q2);</span>
+    }
+
+    public List&lt;ProductListVm&gt; getProductByCategoryIds(List&lt;Long&gt; categoryIds) {
+<span class="fc" id="L1162">        return this.productRepository.findByCategoryIdsIn(categoryIds).stream().map(ProductListVm::fromModel).toList();</span>
+    }
+
+    public List&lt;ProductListVm&gt; getProductByBrandIds(List&lt;Long&gt; brandIds) {
+<span class="fc" id="L1166">        return this.productRepository.findByBrandIdsIn(brandIds).stream().map(ProductListVm::fromModel).toList();</span>
+    }
+
+    public ProductGetCheckoutListVm getProductCheckoutList(int pageNo, int pageSize, List&lt;Long&gt; productIds) {
+<span class="fc" id="L1170">        Pageable pageable = PageRequest.of(pageNo, pageSize);</span>
+<span class="fc" id="L1171">        Page&lt;Product&gt; productPage = productRepository.findAllPublishedProductsByIds(productIds, pageable);</span>
+
+<span class="fc" id="L1173">        List&lt;ProductCheckoutListVm&gt; productCheckoutListVms = productPage.getContent()</span>
+<span class="fc" id="L1174">            .stream().map(product -&gt; {</span>
+<span class="fc" id="L1175">                String thumbnailUrl = mediaService.getMedia(product.getThumbnailMediaId()).url();</span>
+<span class="fc" id="L1176">                ProductCheckoutListVm productCheckoutListVm = ProductCheckoutListVm.fromModel(product);</span>
+<span class="pc bpc" id="L1177" title="1 of 2 branches missed.">                if (StringUtils.isNotEmpty(thumbnailUrl)) {</span>
+<span class="fc" id="L1178">                    return productCheckoutListVm.toBuilder().thumbnailUrl(thumbnailUrl).build();</span>
+                }
+<span class="nc" id="L1180">                return productCheckoutListVm;</span>
+<span class="fc" id="L1181">            }).toList();</span>
+<span class="fc" id="L1182">        return new ProductGetCheckoutListVm(</span>
+            productCheckoutListVms,
+<span class="fc" id="L1184">            productPage.getNumber(),</span>
+<span class="fc" id="L1185">            productPage.getSize(),</span>
+<span class="fc" id="L1186">            (int) productPage.getTotalElements(),</span>
+<span class="fc" id="L1187">            productPage.getTotalPages(),</span>
+<span class="fc" id="L1188">            productPage.isLast()</span>
+        );
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

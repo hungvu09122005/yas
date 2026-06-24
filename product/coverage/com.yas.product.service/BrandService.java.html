@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BrandService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product</a> &gt; <a href="index.source.html" class="el_package">com.yas.product.service</a> &gt; <span class="el_source">BrandService.java</span></div><h1>BrandService.java</h1><pre class="source lang-java linenums">package com.yas.product.service;
+
+import com.yas.commonlibrary.exception.BadRequestException;
+import com.yas.commonlibrary.exception.DuplicatedException;
+import com.yas.commonlibrary.exception.NotFoundException;
+import com.yas.product.model.Brand;
+import com.yas.product.repository.BrandRepository;
+import com.yas.product.utils.Constants;
+import com.yas.product.viewmodel.brand.BrandListGetVm;
+import com.yas.product.viewmodel.brand.BrandPostVm;
+import com.yas.product.viewmodel.brand.BrandVm;
+import java.util.ArrayList;
+import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@Transactional
+public class BrandService {
+    private final BrandRepository brandRepository;
+
+<span class="fc" id="L25">    public BrandService(BrandRepository brandRepository) {</span>
+<span class="fc" id="L26">        this.brandRepository = brandRepository;</span>
+<span class="fc" id="L27">    }</span>
+
+    public BrandListGetVm getBrands(int pageNo, int pageSize) {
+<span class="fc" id="L30">        List&lt;BrandVm&gt; brandVms = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L31">        Pageable pageable = PageRequest.of(pageNo, pageSize);</span>
+<span class="fc" id="L32">        Page&lt;Brand&gt; brandPage = brandRepository.findAll(pageable);</span>
+<span class="fc" id="L33">        List&lt;Brand&gt; brandList = brandPage.getContent();</span>
+<span class="fc bfc" id="L34" title="All 2 branches covered.">        for (Brand brand : brandList) {</span>
+<span class="fc" id="L35">            brandVms.add(BrandVm.fromModel(brand));</span>
+<span class="fc" id="L36">        }</span>
+
+<span class="fc" id="L38">        return new BrandListGetVm(</span>
+                brandVms,
+<span class="fc" id="L40">                brandPage.getNumber(),</span>
+<span class="fc" id="L41">                brandPage.getSize(),</span>
+<span class="fc" id="L42">                (int) brandPage.getTotalElements(),</span>
+<span class="fc" id="L43">                brandPage.getTotalPages(),</span>
+<span class="fc" id="L44">                brandPage.isLast()</span>
+        );
+    }
+
+    public Brand create(BrandPostVm brandPostVm) {
+<span class="fc" id="L49">        validateExistedName(brandPostVm.name(), null);</span>
+
+<span class="fc" id="L51">        return brandRepository.save(brandPostVm.toModel());</span>
+    }
+
+    public Brand update(BrandPostVm brandPostVm, Long id) {
+<span class="fc" id="L55">        validateExistedName(brandPostVm.name(), id);</span>
+
+<span class="fc" id="L57">        Brand brand = brandRepository</span>
+<span class="fc" id="L58">                .findById(id)</span>
+<span class="fc" id="L59">                .orElseThrow(() -&gt; new NotFoundException(Constants.ErrorCode.BRAND_NOT_FOUND, id));</span>
+<span class="fc" id="L60">        brand.setSlug(brandPostVm.slug());</span>
+<span class="fc" id="L61">        brand.setName(brandPostVm.name());</span>
+<span class="fc" id="L62">        brand.setPublished(brandPostVm.isPublish());</span>
+
+<span class="fc" id="L64">        return brandRepository.save(brand);</span>
+    }
+
+    private void validateExistedName(String name, Long id) {
+<span class="fc bfc" id="L68" title="All 2 branches covered.">        if (checkExistedName(name, id)) {</span>
+<span class="fc" id="L69">            throw new DuplicatedException(Constants.ErrorCode.NAME_ALREADY_EXITED, name);</span>
+        }
+<span class="fc" id="L71">    }</span>
+
+    private boolean checkExistedName(String name, Long id) {
+<span class="fc bfc" id="L74" title="All 2 branches covered.">        return brandRepository.findExistedName(name, id) != null;</span>
+    }
+
+    public List&lt;BrandVm&gt; getBrandsByIds(List&lt;Long&gt; ids) {
+<span class="nc" id="L78">        return brandRepository.findAllById(ids).stream().map(BrandVm::fromModel).toList();</span>
+    }
+
+    public void delete(long id) {
+<span class="nc" id="L82">        Brand brand = brandRepository.findById(id).orElseThrow(</span>
+<span class="nc" id="L83">            () -&gt; new NotFoundException(Constants.ErrorCode.BRAND_NOT_FOUND, id));</span>
+<span class="nc bnc" id="L84" title="All 2 branches missed.">        if (!brand.getProducts().isEmpty()) {</span>
+<span class="nc" id="L85">            throw new BadRequestException(Constants.ErrorCode.MAKE_SURE_BRAND_DONT_CONTAINS_ANY_PRODUCT);</span>
+        }
+<span class="nc" id="L87">        brandRepository.deleteById(id);</span>
+<span class="nc" id="L88">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

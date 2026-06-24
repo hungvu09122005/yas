@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductAttributeGroupController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product</a> &gt; <a href="index.source.html" class="el_package">com.yas.product.controller</a> &gt; <span class="el_source">ProductAttributeGroupController.java</span></div><h1>ProductAttributeGroupController.java</h1><pre class="source lang-java linenums">package com.yas.product.controller;
+
+import com.yas.commonlibrary.exception.NotFoundException;
+import com.yas.product.constants.PageableConstant;
+import com.yas.product.model.attribute.ProductAttributeGroup;
+import com.yas.product.repository.ProductAttributeGroupRepository;
+import com.yas.product.service.ProductAttributeGroupService;
+import com.yas.product.utils.Constants;
+import com.yas.product.viewmodel.error.ErrorVm;
+import com.yas.product.viewmodel.productattribute.ProductAttributeGroupListGetVm;
+import com.yas.product.viewmodel.productattribute.ProductAttributeGroupPostVm;
+import com.yas.product.viewmodel.productattribute.ProductAttributeGroupVm;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
+import java.util.List;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
+
+@RestController
+public class ProductAttributeGroupController {
+
+    private final ProductAttributeGroupService productAttributeGroupService;
+    private final ProductAttributeGroupRepository productAttributeGroupRepository;
+
+    public ProductAttributeGroupController(ProductAttributeGroupRepository productAttributeGroupRepository,
+<span class="fc" id="L38">                                           ProductAttributeGroupService productAttributeGroupService) {</span>
+<span class="fc" id="L39">        this.productAttributeGroupRepository = productAttributeGroupRepository;</span>
+<span class="fc" id="L40">        this.productAttributeGroupService = productAttributeGroupService;</span>
+<span class="fc" id="L41">    }</span>
+
+    @GetMapping(&quot;/backoffice/product-attribute-groups&quot;)
+    public ResponseEntity&lt;List&lt;ProductAttributeGroupVm&gt;&gt; listProductAttributeGroups() {
+<span class="fc" id="L45">        List&lt;ProductAttributeGroupVm&gt; productAttributeGroupVms = productAttributeGroupRepository.findAll().stream()</span>
+<span class="fc" id="L46">            .map(ProductAttributeGroupVm::fromModel)</span>
+<span class="fc" id="L47">            .toList();</span>
+<span class="fc" id="L48">        return ResponseEntity.ok(productAttributeGroupVms);</span>
+    }
+
+    @GetMapping({&quot;/backoffice/product-attribute-groups/paging&quot;, &quot;/storefront/product-attribute-groups/paging&quot;})
+    public ResponseEntity&lt;ProductAttributeGroupListGetVm&gt; getPageableProductAttributeGroups(
+        @RequestParam(value = &quot;pageNo&quot;, defaultValue = PageableConstant.DEFAULT_PAGE_NUMBER, required = false)
+        int pageNo,
+        @RequestParam(value = &quot;pageSize&quot;, defaultValue = PageableConstant.DEFAULT_PAGE_SIZE, required = false)
+        int pageSize) {
+
+<span class="fc" id="L58">        return ResponseEntity.ok(productAttributeGroupService.getPageableProductAttributeGroups(pageNo, pageSize));</span>
+    }
+
+    @GetMapping(&quot;/backoffice/product-attribute-groups/{id}&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Ok&quot;,
+            content = @Content(schema = @Schema(implementation = ProductAttributeGroupVm.class))),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Not found&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class))),
+    })
+    public ResponseEntity&lt;ProductAttributeGroupVm&gt; getProductAttributeGroup(@PathVariable(&quot;id&quot;) Long id) {
+<span class="fc" id="L69">        ProductAttributeGroup productAttributeGroup = productAttributeGroupRepository</span>
+<span class="fc" id="L70">            .findById(id)</span>
+<span class="fc" id="L71">            .orElseThrow(</span>
+<span class="nc" id="L72">                () -&gt; new NotFoundException(String.format(Constants.ErrorCode.PRODUCT_ATTRIBUTE_GROUP_NOT_FOUND, id)));</span>
+<span class="fc" id="L73">        return ResponseEntity.ok(ProductAttributeGroupVm.fromModel(productAttributeGroup));</span>
+    }
+
+    @PostMapping(&quot;/backoffice/product-attribute-groups&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;201&quot;, description = &quot;Created&quot;,
+            content = @Content(schema = @Schema(implementation = ProductAttributeGroupVm.class))),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Bad request&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;ProductAttributeGroupVm&gt; createProductAttributeGroup(
+        @Valid @RequestBody ProductAttributeGroupPostVm productAttributeGroupPostVm,
+        UriComponentsBuilder uriComponentsBuilder
+    ) {
+<span class="fc" id="L86">        ProductAttributeGroup productAttributeGroup = productAttributeGroupPostVm.toModel();</span>
+<span class="fc" id="L87">        productAttributeGroupService.save(productAttributeGroup);</span>
+<span class="fc" id="L88">        return ResponseEntity.created(uriComponentsBuilder.replacePath(&quot;/product-attribute-groups/{id}&quot;)</span>
+<span class="fc" id="L89">            .buildAndExpand(productAttributeGroup.getId()).toUri())</span>
+<span class="fc" id="L90">                .body(ProductAttributeGroupVm.fromModel(productAttributeGroup));</span>
+    }
+
+    @PutMapping(&quot;/backoffice/product-attribute-groups/{id}&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;204&quot;, description = &quot;No content&quot;, content = @Content()),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Not found&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class))),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Bad request&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;Void&gt; updateProductAttributeGroup(
+        @PathVariable Long id,
+        @Valid @RequestBody final ProductAttributeGroupPostVm productAttributeGroupPostVm
+    ) {
+<span class="fc" id="L104">        ProductAttributeGroup productAttributeGroup = productAttributeGroupRepository</span>
+<span class="fc" id="L105">                .findById(id)</span>
+<span class="fc" id="L106">                .orElseThrow(</span>
+<span class="nc" id="L107">                    () -&gt; new NotFoundException(</span>
+<span class="nc" id="L108">                        String.format(Constants.ErrorCode.PRODUCT_ATTRIBUTE_GROUP_NOT_FOUND, id)));</span>
+<span class="fc" id="L109">        productAttributeGroup.setName(productAttributeGroupPostVm.name());</span>
+<span class="fc" id="L110">        productAttributeGroupService.save(productAttributeGroup);</span>
+<span class="fc" id="L111">        return ResponseEntity.noContent().build();</span>
+    }
+
+    @DeleteMapping(&quot;/backoffice/product-attribute-groups/{id}&quot;)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = &quot;204&quot;, description = &quot;No content&quot;, content = @Content()),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Not found&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class))),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Bad request&quot;,
+            content = @Content(schema = @Schema(implementation = ErrorVm.class)))})
+    public ResponseEntity&lt;Void&gt; deleteProductAttributeGroup(@PathVariable Long id) {
+<span class="fc" id="L122">        productAttributeGroupRepository.findById(id);</span>
+        try {
+<span class="fc" id="L124">            productAttributeGroupRepository.deleteById(id);</span>
+<span class="nc" id="L125">        } catch (DataIntegrityViolationException e) {</span>
+<span class="nc" id="L126">            throw new DataIntegrityViolationException(</span>
+                    Constants.ErrorCode.MAKE_SURE_PRODUCT_ATTRIBUTE_GROUP_DO_NOT_CONTAINS_ANY_PRODUCT_ATTRIBUTE);
+<span class="fc" id="L128">        }</span>
+<span class="fc" id="L129">        return ResponseEntity.noContent().build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

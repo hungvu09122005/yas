@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductDetailInfoVm.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product</a> &gt; <a href="index.source.html" class="el_package">com.yas.product.viewmodel.product</a> &gt; <span class="el_source">ProductDetailInfoVm.java</span></div><h1>ProductDetailInfoVm.java</h1><pre class="source lang-java linenums">package com.yas.product.viewmodel.product;
+
+import com.yas.product.model.Category;
+import com.yas.product.viewmodel.ImageVm;
+import com.yas.product.viewmodel.productattribute.ProductAttributeValueGetVm;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * ViewModel class that represents detailed information about a product.
+ */
+@lombok.Getter
+@lombok.Setter
+public class ProductDetailInfoVm {
+    private long id;
+    private String name;
+    private String shortDescription;
+    private String description;
+    private String specification;
+    private String sku;
+    private String gtin;
+    private String slug;
+    private Boolean isAllowedToOrder;
+    private Boolean isPublished;
+    private Boolean isFeatured;
+    private Boolean isVisible;
+    private Boolean stockTrackingEnabled;
+    private Double price;
+    private Long brandId;
+    private List&lt;Category&gt; categories;
+    private String metaTitle;
+    private String metaKeyword;
+    private String metaDescription;
+    private Long taxClassId;
+    private String brandName;
+    private List&lt;ProductAttributeValueGetVm&gt; attributeValues;
+    private List&lt;ProductVariationGetVm&gt; variations;
+    private ImageVm thumbnail;
+    private List&lt;ImageVm&gt; productImages;
+
+    /**
+     * Constructs a new {@code ProductDetailInfoVm} instance with detailed product information.
+     **/
+    public ProductDetailInfoVm(long id, String name, String shortDescription, String description,
+                               String specification, String sku, String gtin, String slug,
+                               Boolean isAllowedToOrder, Boolean isPublished, Boolean isFeatured,
+                               Boolean isVisible, Boolean stockTrackingEnabled, Double price,
+                               Long brandId, List&lt;Category&gt; categories, String metaTitle,
+                               String metaKeyword, String metaDescription, Long taxClassId,
+                               String brandName, List&lt;ProductAttributeValueGetVm&gt; attributeValues,
+<span class="fc" id="L51">                               List&lt;ProductVariationGetVm&gt; variations, ImageVm thumbnail, List&lt;ImageVm&gt; productImages) {</span>
+<span class="fc" id="L52">        this.id = id;</span>
+<span class="fc" id="L53">        this.name = name;</span>
+<span class="fc" id="L54">        this.shortDescription = shortDescription;</span>
+<span class="fc" id="L55">        this.description = description;</span>
+<span class="fc" id="L56">        this.specification = specification;</span>
+<span class="fc" id="L57">        this.sku = sku;</span>
+<span class="fc" id="L58">        this.gtin = gtin;</span>
+<span class="fc" id="L59">        this.slug = slug;</span>
+<span class="fc" id="L60">        this.isAllowedToOrder = isAllowedToOrder;</span>
+<span class="fc" id="L61">        this.isPublished = isPublished;</span>
+<span class="fc" id="L62">        this.isFeatured = isFeatured;</span>
+<span class="fc" id="L63">        this.isVisible = isVisible;</span>
+<span class="fc" id="L64">        this.stockTrackingEnabled = stockTrackingEnabled;</span>
+<span class="fc" id="L65">        this.price = price;</span>
+<span class="fc" id="L66">        this.brandId = brandId;</span>
+<span class="pc bpc" id="L67" title="1 of 2 branches missed.">        this.categories = (categories != null) ? categories : new ArrayList&lt;&gt;();  // Handle null</span>
+<span class="fc" id="L68">        this.metaTitle = metaTitle;</span>
+<span class="fc" id="L69">        this.metaKeyword = metaKeyword;</span>
+<span class="fc" id="L70">        this.metaDescription = metaDescription;</span>
+<span class="fc" id="L71">        this.taxClassId = taxClassId;</span>
+<span class="fc" id="L72">        this.brandName = brandName;</span>
+<span class="pc bpc" id="L73" title="1 of 2 branches missed.">        this.attributeValues = (attributeValues != null) ? attributeValues : new ArrayList&lt;&gt;();  // Handle null</span>
+<span class="pc bpc" id="L74" title="1 of 2 branches missed.">        this.variations = (variations != null) ? variations : new ArrayList&lt;&gt;();  // Handle null</span>
+<span class="fc" id="L75">        this.thumbnail = thumbnail;</span>
+<span class="fc" id="L76">        this.productImages = productImages;</span>
+<span class="fc" id="L77">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>
