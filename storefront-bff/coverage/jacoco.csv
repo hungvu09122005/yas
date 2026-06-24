@@ -1,0 +1,9 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+storefront-bff,com.yas.storefrontbff.controller,AuthenticationController,0,27,0,2,0,5,0,3,0,2
+storefront-bff,com.yas.storefrontbff.viewmodel,TokenResponseVm,0,9,0,0,0,1,0,1,0,1
+storefront-bff,com.yas.storefrontbff.viewmodel,CartDetailVm,0,12,0,0,0,1,0,1,0,1
+storefront-bff,com.yas.storefrontbff.viewmodel,GuestUserVm,0,12,0,0,0,1,0,1,0,1
+storefront-bff,com.yas.storefrontbff.viewmodel,CartItemVm,8,9,0,0,1,1,1,1,1,1
+storefront-bff,com.yas.storefrontbff.viewmodel,CartGetDetailVm,0,12,0,0,0,1,0,1,0,1
+storefront-bff,com.yas.storefrontbff.viewmodel,AuthenticationInfoVm,0,9,0,0,0,1,0,1,0,1
+storefront-bff,com.yas.storefrontbff.viewmodel,AuthenticatedUserVm,0,6,0,0,0,1,0,1,0,1
