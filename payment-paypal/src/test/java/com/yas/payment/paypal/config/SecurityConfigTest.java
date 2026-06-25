@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.GrantedAuthority;
@@ -100,10 +101,18 @@ class SecurityConfigTest {
      * Calls the real production jwtAuthenticationConverterForKeycloak() and invokes
      * convert(Jwt) on it so that every line inside the production lambda is executed.
      */
+    /**
+     * Returns only ROLE_* authorities from the converted token.
+     * Spring Security 6.x automatically adds FactorGrantedAuthority[FACTOR_BEARER]
+     * to every JwtAuthenticationToken — we exclude it to assert only the custom
+     * role-mapping logic defined in the production SecurityConfig lambda.
+     */
     private Collection<GrantedAuthority> convertAuthorities(Jwt jwt) {
         JwtAuthenticationConverter converter = securityConfig.jwtAuthenticationConverterForKeycloak();
         JwtAuthenticationToken token = (JwtAuthenticationToken) converter.convert(jwt);
-        return token.getAuthorities();
+        return token.getAuthorities().stream()
+            .filter(a -> a.getAuthority().startsWith("ROLE_"))
+            .collect(Collectors.toList());
     }
 
     /**
