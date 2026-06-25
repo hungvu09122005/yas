@@ -33,81 +33,81 @@ public class ProductService extends AbstractCircuitBreakFallbackHandler {
     @Retry(name = &quot;restApi&quot;)
     @CircuitBreaker(name = &quot;restCircuitBreaker&quot;, fallbackMethod = &quot;handleProductVariationListFallback&quot;)
     public List&lt;ProductVariationVm&gt; getProductVariations(Long productId) {
-<span class="nc" id="L36">        final String jwt = AuthenticationUtils.extractJwt();</span>
+<span class="fc" id="L36">        final String jwt = AuthenticationUtils.extractJwt();</span>
 
-<span class="nc" id="L38">        final URI url = UriComponentsBuilder</span>
-<span class="nc" id="L39">                .fromUriString(serviceUrlConfig.product())</span>
-<span class="nc" id="L40">                .path(&quot;/backoffice/product-variations/{productId}&quot;)</span>
-<span class="nc" id="L41">                .buildAndExpand(productId)</span>
-<span class="nc" id="L42">                .toUri();</span>
+<span class="fc" id="L38">        final URI url = UriComponentsBuilder</span>
+<span class="fc" id="L39">                .fromUriString(serviceUrlConfig.product())</span>
+<span class="fc" id="L40">                .path(&quot;/backoffice/product-variations/{productId}&quot;)</span>
+<span class="fc" id="L41">                .buildAndExpand(productId)</span>
+<span class="fc" id="L42">                .toUri();</span>
 
-<span class="nc" id="L44">        return restClient.get()</span>
-<span class="nc" id="L45">                .uri(url)</span>
-<span class="nc" id="L46">                .headers(h -&gt; h.setBearerAuth(jwt))</span>
-<span class="nc" id="L47">                .retrieve()</span>
-<span class="nc" id="L48">                .toEntity(new ParameterizedTypeReference&lt;List&lt;ProductVariationVm&gt;&gt;() {</span>
+<span class="fc" id="L44">        return restClient.get()</span>
+<span class="fc" id="L45">                .uri(url)</span>
+<span class="pc" id="L46">                .headers(h -&gt; h.setBearerAuth(jwt))</span>
+<span class="fc" id="L47">                .retrieve()</span>
+<span class="fc" id="L48">                .toEntity(new ParameterizedTypeReference&lt;List&lt;ProductVariationVm&gt;&gt;() {</span>
                 })
-<span class="nc" id="L50">                .getBody();</span>
+<span class="fc" id="L50">                .getBody();</span>
     }
 
     @Retry(name = &quot;restApi&quot;)
     @CircuitBreaker(name = &quot;restCircuitBreaker&quot;, fallbackMethod = &quot;handleBodilessFallback&quot;)
     public void subtractProductStockQuantity(OrderVm orderVm) {
-<span class="nc" id="L56">        final String jwt = AuthenticationUtils.extractJwt();</span>
+<span class="fc" id="L56">        final String jwt = AuthenticationUtils.extractJwt();</span>
 
-<span class="nc" id="L58">        final URI url = UriComponentsBuilder</span>
-<span class="nc" id="L59">                .fromUriString(serviceUrlConfig.product())</span>
-<span class="nc" id="L60">                .path(&quot;/backoffice/products/subtract-quantity&quot;)</span>
-<span class="nc" id="L61">                .buildAndExpand()</span>
-<span class="nc" id="L62">                .toUri();</span>
+<span class="fc" id="L58">        final URI url = UriComponentsBuilder</span>
+<span class="fc" id="L59">                .fromUriString(serviceUrlConfig.product())</span>
+<span class="fc" id="L60">                .path(&quot;/backoffice/products/subtract-quantity&quot;)</span>
+<span class="fc" id="L61">                .buildAndExpand()</span>
+<span class="fc" id="L62">                .toUri();</span>
 
-<span class="nc" id="L64">        restClient.put()</span>
-<span class="nc" id="L65">                .uri(url)</span>
-<span class="nc" id="L66">                .headers(h -&gt; h.setBearerAuth(jwt))</span>
-<span class="nc" id="L67">                .body(buildProductQuantityItems(orderVm.orderItemVms()))</span>
-<span class="nc" id="L68">                .retrieve();</span>
-<span class="nc" id="L69">    }</span>
+<span class="fc" id="L64">        restClient.put()</span>
+<span class="fc" id="L65">                .uri(url)</span>
+<span class="pc" id="L66">                .headers(h -&gt; h.setBearerAuth(jwt))</span>
+<span class="fc" id="L67">                .body(buildProductQuantityItems(orderVm.orderItemVms()))</span>
+<span class="fc" id="L68">                .retrieve();</span>
+<span class="fc" id="L69">    }</span>
 
     @Retry(name = &quot;restApi&quot;)
     @CircuitBreaker(name = &quot;restCircuitBreaker&quot;, fallbackMethod = &quot;handleProductInfomationFallback&quot;)
     public Map&lt;Long, ProductCheckoutListVm&gt; getProductInfomation(Set&lt;Long&gt; ids, int pageNo, int pageSize) {
-<span class="nc" id="L74">        final String jwt = AuthenticationUtils.extractJwt();</span>
+<span class="fc" id="L74">        final String jwt = AuthenticationUtils.extractJwt();</span>
 
-<span class="nc" id="L76">        final URI url = UriComponentsBuilder</span>
-<span class="nc" id="L77">                .fromUriString(serviceUrlConfig.product())</span>
-<span class="nc" id="L78">                .path(&quot;/products&quot;)</span>
-<span class="nc" id="L79">                .queryParam(&quot;ids&quot;, ids)</span>
-<span class="nc" id="L80">                .queryParam(&quot;pageNo&quot;, pageNo)</span>
-<span class="nc" id="L81">                .queryParam(&quot;pageSize&quot;, pageSize)</span>
-<span class="nc" id="L82">                .buildAndExpand()</span>
-<span class="nc" id="L83">                .toUri();</span>
+<span class="fc" id="L76">        final URI url = UriComponentsBuilder</span>
+<span class="fc" id="L77">                .fromUriString(serviceUrlConfig.product())</span>
+<span class="fc" id="L78">                .path(&quot;/products&quot;)</span>
+<span class="fc" id="L79">                .queryParam(&quot;ids&quot;, ids)</span>
+<span class="fc" id="L80">                .queryParam(&quot;pageNo&quot;, pageNo)</span>
+<span class="fc" id="L81">                .queryParam(&quot;pageSize&quot;, pageSize)</span>
+<span class="fc" id="L82">                .buildAndExpand()</span>
+<span class="fc" id="L83">                .toUri();</span>
 
-<span class="nc" id="L85">        ProductGetCheckoutListVm response = restClient.get()</span>
-<span class="nc" id="L86">                .uri(url)</span>
-<span class="nc" id="L87">                .headers(h -&gt; h.setBearerAuth(jwt))</span>
-<span class="nc" id="L88">                .retrieve()</span>
-<span class="nc" id="L89">                .toEntity(new ParameterizedTypeReference&lt;ProductGetCheckoutListVm&gt;() {</span>
+<span class="fc" id="L85">        ProductGetCheckoutListVm response = restClient.get()</span>
+<span class="fc" id="L86">                .uri(url)</span>
+<span class="pc" id="L87">                .headers(h -&gt; h.setBearerAuth(jwt))</span>
+<span class="fc" id="L88">                .retrieve()</span>
+<span class="fc" id="L89">                .toEntity(new ParameterizedTypeReference&lt;ProductGetCheckoutListVm&gt;() {</span>
                 })
-<span class="nc" id="L91">                .getBody();</span>
+<span class="fc" id="L91">                .getBody();</span>
 
-<span class="nc bnc" id="L93" title="All 4 branches missed.">        if (response == null || response.productCheckoutListVms() == null) {</span>
-<span class="nc" id="L94">            throw new NotFoundException(&quot;PRODUCT_NOT_FOUND&quot;);</span>
+<span class="fc bfc" id="L93" title="All 4 branches covered.">        if (response == null || response.productCheckoutListVms() == null) {</span>
+<span class="fc" id="L94">            throw new NotFoundException(&quot;PRODUCT_NOT_FOUND&quot;);</span>
         } else {
-<span class="nc" id="L96">            return response.productCheckoutListVms()</span>
-<span class="nc" id="L97">                    .stream()</span>
-<span class="nc" id="L98">                    .collect(Collectors.toMap(ProductCheckoutListVm::getId, Function.identity()));</span>
+<span class="fc" id="L96">            return response.productCheckoutListVms()</span>
+<span class="fc" id="L97">                    .stream()</span>
+<span class="fc" id="L98">                    .collect(Collectors.toMap(ProductCheckoutListVm::getId, Function.identity()));</span>
         }
     }
 
     private List&lt;ProductQuantityItem&gt; buildProductQuantityItems(Set&lt;OrderItemVm&gt; orderItems) {
-<span class="nc" id="L103">        return orderItems.stream()</span>
-<span class="nc" id="L104">                .map(orderItem</span>
-<span class="nc" id="L105">                        -&gt; ProductQuantityItem</span>
-<span class="nc" id="L106">                        .builder()</span>
-<span class="nc" id="L107">                        .productId(orderItem.productId())</span>
-<span class="nc" id="L108">                        .quantity(Long.valueOf(orderItem.quantity()))</span>
-<span class="nc" id="L109">                        .build()</span>
-<span class="nc" id="L110">                ).toList();</span>
+<span class="fc" id="L103">        return orderItems.stream()</span>
+<span class="fc" id="L104">                .map(orderItem</span>
+<span class="fc" id="L105">                        -&gt; ProductQuantityItem</span>
+<span class="fc" id="L106">                        .builder()</span>
+<span class="fc" id="L107">                        .productId(orderItem.productId())</span>
+<span class="fc" id="L108">                        .quantity(Long.valueOf(orderItem.quantity()))</span>
+<span class="fc" id="L109">                        .build()</span>
+<span class="fc" id="L110">                ).toList();</span>
     }
 
     protected List&lt;ProductVariationVm&gt; handleProductVariationListFallback(Throwable throwable) throws Throwable {

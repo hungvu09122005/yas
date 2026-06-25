@@ -22,13 +22,13 @@ order,com.yas.order.model.enumeration,DeliveryStatus,0,27,0,0,0,5,0,1,0,1
 order,com.yas.order.model.enumeration,DeliveryMethod,0,27,0,0,0,2,0,1,0,1
 order,com.yas.order.service,OrderService,24,640,2,12,4,163,2,26,0,21
 order,com.yas.order.service,CustomerService,9,30,0,0,1,12,2,1,2,1
-order,com.yas.order.service,ProductService.new ParameterizedTypeReference() {...},8,0,0,0,1,0,1,0,1,0
-order,com.yas.order.service,ProductService.new ParameterizedTypeReference() {...},8,0,0,0,1,0,1,0,1,0
+order,com.yas.order.service,ProductService.new ParameterizedTypeReference() {...},0,8,0,0,0,1,0,1,0,1
+order,com.yas.order.service,ProductService.new ParameterizedTypeReference() {...},0,8,0,0,0,1,0,1,0,1
 order,com.yas.order.service,CheckoutService,87,278,2,8,13,66,4,15,3,11
 order,com.yas.order.service,PromotionService,4,32,0,0,0,13,1,1,1,1
 order,com.yas.order.service,CartService,4,48,0,0,0,17,1,2,1,2
-order,com.yas.order.service,AbstractCircuitBreakFallbackHandler,16,7,0,0,6,2,3,2,3,2
-order,com.yas.order.service,ProductService,176,0,4,0,54,0,12,0,10,0
+order,com.yas.order.service,AbstractCircuitBreakFallbackHandler,9,14,0,0,4,4,2,3,2,3
+order,com.yas.order.service,ProductService,22,154,0,4,2,52,5,7,5,5
 order,com.yas.order.service,TaxService,9,60,0,0,1,14,2,1,2,1
 order,com.yas.order.viewmodel.checkout,CheckoutPostVm,0,24,0,0,0,1,0,1,0,1
 order,com.yas.order.viewmodel.checkout,CheckoutVm,0,48,0,0,0,1,0,1,0,1
@@ -48,7 +48,7 @@ order,com.yas.order.viewmodel.cart,CartItemDeleteVm,0,9,0,0,0,1,0,1,0,1
 order,com.yas.order.mapper,OrderMapperImpl,63,0,4,0,17,0,5,0,3,0
 order,com.yas.order.mapper,CheckoutMapper,0,6,0,2,0,1,0,2,0,1
 order,com.yas.order.mapper,CheckoutMapperImpl,10,235,6,6,5,51,6,6,0,6
-order,com.yas.order.viewmodel.product,ProductVariationVm,12,0,0,0,1,0,1,0,1,0
-order,com.yas.order.viewmodel.product,ProductQuantityItem,9,0,0,0,1,0,1,0,1,0
+order,com.yas.order.viewmodel.product,ProductVariationVm,0,12,0,0,0,1,0,1,0,1
+order,com.yas.order.viewmodel.product,ProductQuantityItem,0,9,0,0,0,1,0,1,0,1
 order,com.yas.order.viewmodel.product,ProductGetCheckoutListVm,0,21,0,0,0,1,0,1,0,1
 order,com.yas.order.specification,OrderSpecification,240,182,21,11,58,50,21,20,5,20

@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrderVm.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">order</a> &gt; <a href="index.source.html" class="el_package">com.yas.order.viewmodel.order</a> &gt; <span class="el_source">OrderVm.java</span></div><h1>OrderVm.java</h1><pre class="source lang-java linenums">package com.yas.order.viewmodel.order;
 
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import com.yas.order.model.Order;
 import com.yas.order.model.OrderItem;
 import com.yas.order.model.enumeration.DeliveryMethod;
@@ -14,7 +16,7 @@ import java.util.stream.Collectors;
 import lombok.Builder;
 
 @Builder
-<span class="fc" id="L17">public record OrderVm(</span>
+<span class="fc" id="L19">public record OrderVm(</span>
         Long id,
         String email,
         OrderAddressVm shippingAddressVm,
@@ -36,31 +38,31 @@ import lombok.Builder;
 ) {
     public static OrderVm fromModel(Order order, Set&lt;OrderItem&gt; orderItems) {
 
-<span class="fc" id="L39">        Set&lt;OrderItemVm&gt; orderItemVms = Optional.ofNullable(orderItems)</span>
-<span class="fc" id="L40">            .map(items -&gt; items.stream()</span>
-<span class="fc" id="L41">                .map(OrderItemVm::fromModel)</span>
-<span class="fc" id="L42">                .collect(Collectors.toSet()))</span>
-<span class="fc" id="L43">            .orElse(null);</span>
+<span class="fc" id="L41">        Set&lt;OrderItemVm&gt; orderItemVms = Optional.ofNullable(orderItems)</span>
+<span class="fc" id="L42">            .map(items -&gt; items.stream()</span>
+<span class="fc" id="L43">                .map(OrderItemVm::fromModel)</span>
+<span class="fc" id="L44">                .collect(Collectors.toSet()))</span>
+<span class="fc" id="L45">            .orElse(null);</span>
 
-<span class="fc" id="L45">        return OrderVm.builder()</span>
-<span class="fc" id="L46">                .id(order.getId())</span>
-<span class="fc" id="L47">                .email(order.getEmail())</span>
-<span class="fc" id="L48">                .shippingAddressVm(OrderAddressVm.fromModel(order.getShippingAddressId()))</span>
-<span class="fc" id="L49">                .billingAddressVm(OrderAddressVm.fromModel(order.getBillingAddressId()))</span>
-<span class="fc" id="L50">                .note(order.getNote())</span>
-<span class="fc" id="L51">                .tax(order.getTax())</span>
-<span class="fc" id="L52">                .discount(order.getDiscount())</span>
-<span class="fc" id="L53">                .numberItem(order.getNumberItem())</span>
-<span class="fc" id="L54">                .totalPrice(order.getTotalPrice())</span>
-<span class="fc" id="L55">                .couponCode(order.getCouponCode())</span>
-<span class="fc" id="L56">                .orderStatus(order.getOrderStatus())</span>
-<span class="fc" id="L57">                .deliveryFee(order.getDeliveryFee())</span>
-<span class="fc" id="L58">                .deliveryMethod(order.getDeliveryMethod())</span>
-<span class="fc" id="L59">                .deliveryStatus(order.getDeliveryStatus())</span>
-<span class="fc" id="L60">                .paymentStatus(order.getPaymentStatus())</span>
-<span class="fc" id="L61">                .orderItemVms(orderItemVms)</span>
-<span class="fc" id="L62">                .checkoutId(order.getCheckoutId())</span>
-<span class="fc" id="L63">                .build();</span>
+<span class="fc" id="L47">        return OrderVm.builder()</span>
+<span class="fc" id="L48">                .id(order.getId())</span>
+<span class="fc" id="L49">                .email(order.getEmail())</span>
+<span class="fc" id="L50">                .shippingAddressVm(OrderAddressVm.fromModel(order.getShippingAddressId()))</span>
+<span class="fc" id="L51">                .billingAddressVm(OrderAddressVm.fromModel(order.getBillingAddressId()))</span>
+<span class="fc" id="L52">                .note(order.getNote())</span>
+<span class="fc" id="L53">                .tax(order.getTax())</span>
+<span class="fc" id="L54">                .discount(order.getDiscount())</span>
+<span class="fc" id="L55">                .numberItem(order.getNumberItem())</span>
+<span class="fc" id="L56">                .totalPrice(order.getTotalPrice())</span>
+<span class="fc" id="L57">                .couponCode(order.getCouponCode())</span>
+<span class="fc" id="L58">                .orderStatus(order.getOrderStatus())</span>
+<span class="fc" id="L59">                .deliveryFee(order.getDeliveryFee())</span>
+<span class="fc" id="L60">                .deliveryMethod(order.getDeliveryMethod())</span>
+<span class="fc" id="L61">                .deliveryStatus(order.getDeliveryStatus())</span>
+<span class="fc" id="L62">                .paymentStatus(order.getPaymentStatus())</span>
+<span class="fc" id="L63">                .orderItemVms(orderItemVms)</span>
+<span class="fc" id="L64">                .checkoutId(order.getCheckoutId())</span>
+<span class="fc" id="L65">                .build();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>
