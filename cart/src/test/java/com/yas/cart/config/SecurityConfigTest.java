@@ -1,30 +1,26 @@
 package com.yas.cart.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
 /**
  * Unit tests for cart SecurityConfig.
  *
  * filterChain() is a @Bean that wires HttpSecurity rules — no branching logic,
- * cannot be unit-tested without servlet container. Covered by integration tests.
+ * cannot be unit-tested without a servlet container. Covered by integration tests.
  *
  * jwtAuthenticationConverterForKeycloak() contains real role-mapping logic and is
- * the primary target here.
+ * the primary target here. Tests invoke the real production method to ensure
+ * SonarCloud line coverage on the actual source file.
  */
 class SecurityConfigTest {
 
@@ -47,18 +43,17 @@ class SecurityConfigTest {
     }
 
     // ──────────────────────────────────────────────────────────────────
-    // jwtGrantedAuthoritiesConverter lambda — role mapping logic
+    // Internal lambda — role mapping (invoked via converter.convert())
+    // These tests execute the real production lines inside SecurityConfig.
     // ──────────────────────────────────────────────────────────────────
 
     @Test
     void testJwtGrantedAuthoritiesConverter_whenJwtHasTwoRoles_shouldReturnTwoGrantedAuthorities() {
-        Jwt jwt = mock(Jwt.class);
-        when(jwt.getClaim("realm_access"))
-            .thenReturn(Map.of("roles", List.of("ADMIN", "CUSTOMER")));
+        Jwt jwt = buildJwt(List.of("ADMIN", "CUSTOMER"));
 
-        Collection<GrantedAuthority> authorities = buildInternalConverter().convert(jwt);
+        Collection<GrantedAuthority> authorities = convertAuthorities(jwt);
 
-        assertThat(authorities).isNotNull().hasSize(2);
+        assertThat(authorities).hasSize(2);
         assertThat(authorities)
             .extracting(GrantedAuthority::getAuthority)
             .containsExactlyInAnyOrder("ROLE_ADMIN", "ROLE_CUSTOMER");
@@ -66,13 +61,11 @@ class SecurityConfigTest {
 
     @Test
     void testJwtGrantedAuthoritiesConverter_whenJwtHasSingleRole_shouldReturnOneGrantedAuthority() {
-        Jwt jwt = mock(Jwt.class);
-        when(jwt.getClaim("realm_access"))
-            .thenReturn(Map.of("roles", List.of("USER")));
+        Jwt jwt = buildJwt(List.of("USER"));
 
-        Collection<GrantedAuthority> authorities = buildInternalConverter().convert(jwt);
+        Collection<GrantedAuthority> authorities = convertAuthorities(jwt);
 
-        assertThat(authorities).isNotNull().hasSize(1);
+        assertThat(authorities).hasSize(1);
         assertThat(authorities)
             .extracting(GrantedAuthority::getAuthority)
             .containsExactly("ROLE_USER");
@@ -80,22 +73,18 @@ class SecurityConfigTest {
 
     @Test
     void testJwtGrantedAuthoritiesConverter_whenRolesIsEmpty_shouldReturnEmptyCollection() {
-        Jwt jwt = mock(Jwt.class);
-        when(jwt.getClaim("realm_access"))
-            .thenReturn(Map.of("roles", List.of()));
+        Jwt jwt = buildJwt(List.of());
 
-        Collection<GrantedAuthority> authorities = buildInternalConverter().convert(jwt);
+        Collection<GrantedAuthority> authorities = convertAuthorities(jwt);
 
-        assertThat(authorities).isNotNull().isEmpty();
+        assertThat(authorities).isEmpty();
     }
 
     @Test
     void testJwtGrantedAuthoritiesConverter_whenRoleHasSpecialChars_shouldPrefixCorrectly() {
-        Jwt jwt = mock(Jwt.class);
-        when(jwt.getClaim("realm_access"))
-            .thenReturn(Map.of("roles", List.of("offline_access")));
+        Jwt jwt = buildJwt(List.of("offline_access"));
 
-        Collection<GrantedAuthority> authorities = buildInternalConverter().convert(jwt);
+        Collection<GrantedAuthority> authorities = convertAuthorities(jwt);
 
         assertThat(authorities)
             .extracting(GrantedAuthority::getAuthority)
@@ -103,20 +92,28 @@ class SecurityConfigTest {
     }
 
     // ──────────────────────────────────────────────────────────────────
-    // Helper — mirrors the lambda in SecurityConfig.jwtAuthenticationConverterForKeycloak()
+    // Helpers
     // ──────────────────────────────────────────────────────────────────
 
     /**
-     * Directly replicates the converter lambda from cart SecurityConfig (uses toList(), not
-     * toCollection(ArrayList::new) — matching production code exactly).
+     * Calls the real production jwtAuthenticationConverterForKeycloak() and invokes
+     * convert(Jwt) on it so that every line inside the production lambda is executed.
      */
-    private Converter<Jwt, Collection<GrantedAuthority>> buildInternalConverter() {
-        return jwt -> {
-            Map<String, Collection<String>> realmAccess = jwt.getClaim("realm_access");
-            Collection<String> roles = realmAccess.get("roles");
-            return roles.stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-                .collect(Collectors.toList());
-        };
+    private Collection<GrantedAuthority> convertAuthorities(Jwt jwt) {
+        JwtAuthenticationConverter converter = securityConfig.jwtAuthenticationConverterForKeycloak();
+        JwtAuthenticationToken token = (JwtAuthenticationToken) converter.convert(jwt);
+        return token.getAuthorities();
+    }
+
+    /**
+     * Builds a real {@link Jwt} using the standard Spring Security builder.
+     * Includes the "sub" claim required by JwtAuthenticationConverter's principal extraction.
+     */
+    private static Jwt buildJwt(List<String> roles) {
+        return Jwt.withTokenValue("test-token")
+            .header("alg", "RS256")
+            .subject("test-user")
+            .claim("realm_access", Map.of("roles", roles))
+            .build();
     }
 }

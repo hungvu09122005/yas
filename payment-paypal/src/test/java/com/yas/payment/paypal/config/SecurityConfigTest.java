@@ -1,8 +1,6 @@
 package com.yas.payment.paypal.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.util.Collection;
 import java.util.List;
@@ -12,16 +10,18 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
 /**
  * Unit tests for SecurityConfig.
  *
- * filterChain() is a @Bean method that purely wires HttpSecurity — it contains no
- * branching business logic and cannot be instantiated without a running servlet container.
- * It is therefore excluded from unit-test scope and covered by integration tests.
+ * filterChain() is a @Bean that purely wires HttpSecurity declarative rules — no branching
+ * business logic and cannot be instantiated without a running servlet container.
+ * It is excluded from unit-test scope (covered by integration tests).
  *
- * jwtAuthenticationConverterForKeycloak() contains real mapping logic (realm_access → ROLE_*)
- * and is the primary target of these tests.
+ * jwtAuthenticationConverterForKeycloak() contains real role-mapping logic:
+ * the internal lambda iterates realm_access.roles and maps each to ROLE_* authorities.
+ * These tests invoke the real production method to ensure SonarCloud line coverage.
  */
 class SecurityConfigTest {
 
@@ -44,29 +44,17 @@ class SecurityConfigTest {
     }
 
     // ──────────────────────────────────────────────────────────────────
-    // jwtGrantedAuthoritiesConverter lambda — role mapping logic
+    // Internal lambda — role mapping (invoked via converter.convert())
+    // These tests execute the real production lines inside SecurityConfig.
     // ──────────────────────────────────────────────────────────────────
 
     @Test
     void testJwtGrantedAuthoritiesConverter_whenJwtHasTwoRoles_shouldReturnTwoGrantedAuthorities() {
-        // Arrange
-        Jwt jwt = mock(Jwt.class);
-        when(jwt.getClaim("realm_access"))
-            .thenReturn(Map.of("roles", List.of("ADMIN", "CUSTOMER")));
+        Jwt jwt = buildJwt(List.of("ADMIN", "CUSTOMER"));
 
-        JwtAuthenticationConverter converter = securityConfig.jwtAuthenticationConverterForKeycloak();
+        Collection<GrantedAuthority> authorities = convertAuthorities(jwt);
 
-        // Act — invoke the internal converter via the public JwtAuthenticationConverter
-        // The grantedAuthoritiesConverter is set internally; extract authorities by
-        // calling convert() on the JwtAuthenticationConverter itself via reflection-free approach:
-        // we re-create the inner converter directly.
-        org.springframework.core.convert.converter.Converter<Jwt, Collection<GrantedAuthority>>
-            authoritiesConverter = buildInternalConverter();
-
-        Collection<GrantedAuthority> authorities = authoritiesConverter.convert(jwt);
-
-        // Assert
-        assertThat(authorities).isNotNull().hasSize(2);
+        assertThat(authorities).hasSize(2);
         assertThat(authorities)
             .extracting(GrantedAuthority::getAuthority)
             .containsExactlyInAnyOrder("ROLE_ADMIN", "ROLE_CUSTOMER");
@@ -74,13 +62,11 @@ class SecurityConfigTest {
 
     @Test
     void testJwtGrantedAuthoritiesConverter_whenJwtHasSingleRole_shouldReturnOneGrantedAuthority() {
-        Jwt jwt = mock(Jwt.class);
-        when(jwt.getClaim("realm_access"))
-            .thenReturn(Map.of("roles", List.of("USER")));
+        Jwt jwt = buildJwt(List.of("USER"));
 
-        Collection<GrantedAuthority> authorities = buildInternalConverter().convert(jwt);
+        Collection<GrantedAuthority> authorities = convertAuthorities(jwt);
 
-        assertThat(authorities).isNotNull().hasSize(1);
+        assertThat(authorities).hasSize(1);
         assertThat(authorities)
             .extracting(GrantedAuthority::getAuthority)
             .containsExactly("ROLE_USER");
@@ -88,22 +74,18 @@ class SecurityConfigTest {
 
     @Test
     void testJwtGrantedAuthoritiesConverter_whenRolesIsEmpty_shouldReturnEmptyCollection() {
-        Jwt jwt = mock(Jwt.class);
-        when(jwt.getClaim("realm_access"))
-            .thenReturn(Map.of("roles", List.of()));
+        Jwt jwt = buildJwt(List.of());
 
-        Collection<GrantedAuthority> authorities = buildInternalConverter().convert(jwt);
+        Collection<GrantedAuthority> authorities = convertAuthorities(jwt);
 
-        assertThat(authorities).isNotNull().isEmpty();
+        assertThat(authorities).isEmpty();
     }
 
     @Test
     void testJwtGrantedAuthoritiesConverter_whenRoleHasSpecialChars_shouldPrefixCorrectly() {
-        Jwt jwt = mock(Jwt.class);
-        when(jwt.getClaim("realm_access"))
-            .thenReturn(Map.of("roles", List.of("offline_access")));
+        Jwt jwt = buildJwt(List.of("offline_access"));
 
-        Collection<GrantedAuthority> authorities = buildInternalConverter().convert(jwt);
+        Collection<GrantedAuthority> authorities = convertAuthorities(jwt);
 
         assertThat(authorities)
             .extracting(GrantedAuthority::getAuthority)
@@ -111,21 +93,28 @@ class SecurityConfigTest {
     }
 
     // ──────────────────────────────────────────────────────────────────
-    // Helper — mirrors the lambda defined inside jwtAuthenticationConverterForKeycloak()
+    // Helpers
     // ──────────────────────────────────────────────────────────────────
 
     /**
-     * Directly replicates the converter lambda from SecurityConfig so we can test it
-     * without Spring context while keeping full line coverage on the production logic.
+     * Calls the real production jwtAuthenticationConverterForKeycloak() and invokes
+     * convert(Jwt) on it so that every line inside the production lambda is executed.
      */
-    private org.springframework.core.convert.converter.Converter<Jwt, Collection<GrantedAuthority>>
-        buildInternalConverter() {
-        return jwt -> {
-            Map<String, Collection<String>> realmAccess = jwt.getClaim("realm_access");
-            Collection<String> roles = realmAccess.get("roles");
-            return roles.stream()
-                .map(role -> new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + role))
-                .collect(java.util.stream.Collectors.toCollection(java.util.ArrayList::new));
-        };
+    private Collection<GrantedAuthority> convertAuthorities(Jwt jwt) {
+        JwtAuthenticationConverter converter = securityConfig.jwtAuthenticationConverterForKeycloak();
+        JwtAuthenticationToken token = (JwtAuthenticationToken) converter.convert(jwt);
+        return token.getAuthorities();
+    }
+
+    /**
+     * Builds a real {@link Jwt} using the standard Spring Security builder.
+     * Includes the "sub" claim required by JwtAuthenticationConverter's principal extraction.
+     */
+    private static Jwt buildJwt(List<String> roles) {
+        return Jwt.withTokenValue("test-token")
+            .header("alg", "RS256")
+            .subject("test-user")
+            .claim("realm_access", Map.of("roles", roles))
+            .build();
     }
 }
