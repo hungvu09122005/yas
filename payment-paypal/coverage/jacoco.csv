@@ -1,11 +1,12 @@
 GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
 payment-paypal,com.yas.payment.paypal.model,CheckoutIdHelper,0,5,0,0,0,3,0,2,0,2
+payment-paypal,com.yas.payment.paypal,PaymentPaypalApplication,0,8,0,0,0,3,0,2,0,2
 payment-paypal,com.yas.payment.paypal.viewmodel,PaypalCreatePaymentResponse,0,12,0,0,0,1,0,1,0,1
 payment-paypal,com.yas.payment.paypal.viewmodel,PaypalCapturePaymentRequest,0,9,0,0,0,1,0,1,0,1
 payment-paypal,com.yas.payment.paypal.viewmodel,PaypalCapturePaymentResponse,0,24,0,0,0,1,0,1,0,1
 payment-paypal,com.yas.payment.paypal.viewmodel,PaypalCreatePaymentRequest,0,15,0,0,0,1,0,1,0,1
 payment-paypal,com.yas.payment.paypal.service,PaypalService,0,225,0,4,0,57,0,6,0,4
-payment-paypal,com.yas.payment.paypal.service,PayPalHttpClientInitializer,47,0,2,0,9,0,3,0,2,0
+payment-paypal,com.yas.payment.paypal.service,PayPalHttpClientInitializer,44,3,2,0,8,1,2,1,1,1
 payment-paypal,com.yas.payment.paypal.service,AbstractCircuitBreakFallbackHandler,23,0,0,0,8,0,5,0,5,0
 payment-paypal,com.yas.payment.paypal.utils,Constants.Message,8,0,0,0,2,0,1,0,1,0
 payment-paypal,com.yas.payment.paypal.utils,Constants.Yas,8,0,0,0,2,0,1,0,1,0
