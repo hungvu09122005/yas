@@ -29,18 +29,21 @@ import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 class ProductServiceTest {
 
     private RestClient restClient;
     private ServiceUrlConfig serviceUrlConfig;
     private ProductService productService;
     private RestClient.ResponseSpec responseSpec;
+
+    // Raw type to avoid wildcard capture mismatch with Mockito's thenReturn
+    private RestClient.RequestHeadersUriSpec requestHeadersUriSpec;
 
     private static final String PRODUCT_URL = "http://api.yas.local/product";
     private static final Long PRODUCT_ID = 1L;
@@ -51,6 +54,7 @@ class ProductServiceTest {
         serviceUrlConfig = mock(ServiceUrlConfig.class);
         productService = new ProductService(restClient, serviceUrlConfig);
         responseSpec = mock(RestClient.ResponseSpec.class);
+        requestHeadersUriSpec = mock(RestClient.RequestHeadersUriSpec.class);
         setUpSecurityContext("test");
         when(serviceUrlConfig.product()).thenReturn(PRODUCT_URL);
     }
@@ -73,13 +77,11 @@ class ProductServiceTest {
             .buildAndExpand(PRODUCT_ID)
             .toUri();
 
-        RestClient.RequestHeadersUriSpec<?> requestHeadersUriSpec = mock(RestClient.RequestHeadersUriSpec.class);
         when(restClient.get()).thenReturn(requestHeadersUriSpec);
         when(requestHeadersUriSpec.uri(url)).thenReturn(requestHeadersUriSpec);
         when(requestHeadersUriSpec.headers(any())).thenReturn(requestHeadersUriSpec);
         when(requestHeadersUriSpec.retrieve()).thenReturn(responseSpec);
 
-        @SuppressWarnings("unchecked")
         ResponseEntity<List<ProductVariationVm>> responseEntity = mock(ResponseEntity.class);
         when(responseSpec.toEntity(any(ParameterizedTypeReference.class))).thenReturn(responseEntity);
         when(responseEntity.getBody()).thenReturn(expected);
@@ -102,13 +104,11 @@ class ProductServiceTest {
             .buildAndExpand(PRODUCT_ID)
             .toUri();
 
-        RestClient.RequestHeadersUriSpec<?> requestHeadersUriSpec = mock(RestClient.RequestHeadersUriSpec.class);
         when(restClient.get()).thenReturn(requestHeadersUriSpec);
         when(requestHeadersUriSpec.uri(url)).thenReturn(requestHeadersUriSpec);
         when(requestHeadersUriSpec.headers(any())).thenReturn(requestHeadersUriSpec);
         when(requestHeadersUriSpec.retrieve()).thenReturn(responseSpec);
 
-        @SuppressWarnings("unchecked")
         ResponseEntity<List<ProductVariationVm>> responseEntity = mock(ResponseEntity.class);
         when(responseSpec.toEntity(any(ParameterizedTypeReference.class))).thenReturn(responseEntity);
         when(responseEntity.getBody()).thenReturn(null);
@@ -122,10 +122,8 @@ class ProductServiceTest {
 
     @Test
     void testHandleProductVariationListFallback_whenThrowable_shouldRethrow() {
-        // Arrange
         RuntimeException cause = new RuntimeException("circuit open");
 
-        // Act & Assert
         assertThatThrownBy(() -> productService.handleProductVariationListFallback(cause))
             .isInstanceOf(RuntimeException.class)
             .hasMessage("circuit open");
@@ -137,7 +135,6 @@ class ProductServiceTest {
 
     @Test
     void testSubtractProductStockQuantity_whenValidOrderVm_shouldNotThrow() {
-        // Arrange
         OrderVm orderVm = buildOrderVm();
 
         URI url = UriComponentsBuilder
@@ -153,13 +150,11 @@ class ProductServiceTest {
         when(requestBodyUriSpec.body(any())).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.retrieve()).thenReturn(responseSpec);
 
-        // Act & Assert
         assertDoesNotThrow(() -> productService.subtractProductStockQuantity(orderVm));
     }
 
     @Test
     void testSubtractProductStockQuantity_whenOrderItemsEmpty_shouldNotThrow() {
-        // Arrange – order with empty item set
         OrderVm orderVm = new OrderVm(
             1L, "test@example.com", null, null, null,
             0f, 0f, 0, BigDecimal.ZERO, BigDecimal.ZERO, null,
@@ -181,16 +176,13 @@ class ProductServiceTest {
         when(requestBodyUriSpec.body(any())).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.retrieve()).thenReturn(responseSpec);
 
-        // Act & Assert
         assertDoesNotThrow(() -> productService.subtractProductStockQuantity(orderVm));
     }
 
     @Test
     void testHandleBodilessFallback_whenThrowable_shouldRethrow() {
-        // Arrange
         RuntimeException cause = new RuntimeException("service unavailable");
 
-        // Act & Assert – inherited handleBodilessFallback
         assertThatThrownBy(() -> productService.handleBodilessFallback(cause))
             .isInstanceOf(RuntimeException.class)
             .hasMessage("service unavailable");
@@ -202,7 +194,6 @@ class ProductServiceTest {
 
     @Test
     void testGetProductInfomation_whenValidResponse_shouldReturnMappedResult() {
-        // Arrange
         Set<Long> ids = Set.of(1L, 2L);
         ProductCheckoutListVm vm1 = new ProductCheckoutListVm(1L, "Product A", 10.0, 100L);
         ProductCheckoutListVm vm2 = new ProductCheckoutListVm(2L, "Product B", 20.0, 200L);
@@ -210,10 +201,8 @@ class ProductServiceTest {
 
         mockGetProductInfomationRestClient(ids, 0, 10, response);
 
-        // Act
         Map<Long, ProductCheckoutListVm> result = productService.getProductInfomation(ids, 0, 10);
 
-        // Assert
         assertThat(result).isNotNull().hasSize(2);
         assertThat(result.get(1L).getName()).isEqualTo("Product A");
         assertThat(result.get(2L).getName()).isEqualTo("Product B");
@@ -221,11 +210,9 @@ class ProductServiceTest {
 
     @Test
     void testGetProductInfomation_whenResponseIsNull_shouldThrowNotFoundException() {
-        // Arrange
         Set<Long> ids = Set.of(1L);
         mockGetProductInfomationRestClient(ids, 0, 10, null);
 
-        // Act & Assert
         assertThatThrownBy(() -> productService.getProductInfomation(ids, 0, 10))
             .isInstanceOf(NotFoundException.class)
             .hasMessageContaining("PRODUCT_NOT_FOUND");
@@ -233,13 +220,10 @@ class ProductServiceTest {
 
     @Test
     void testGetProductInfomation_whenProductListIsNull_shouldThrowNotFoundException() {
-        // Arrange
         Set<Long> ids = Set.of(1L);
-        // productCheckoutListVms() is null
         ProductGetCheckoutListVm response = new ProductGetCheckoutListVm(null, 0, 10, 0, 0, true);
         mockGetProductInfomationRestClient(ids, 0, 10, response);
 
-        // Act & Assert
         assertThatThrownBy(() -> productService.getProductInfomation(ids, 0, 10))
             .isInstanceOf(NotFoundException.class)
             .hasMessageContaining("PRODUCT_NOT_FOUND");
@@ -247,24 +231,19 @@ class ProductServiceTest {
 
     @Test
     void testGetProductInfomation_whenProductListEmpty_shouldReturnEmptyMap() {
-        // Arrange
         Set<Long> ids = Set.of();
         ProductGetCheckoutListVm response = new ProductGetCheckoutListVm(List.of(), 0, 10, 0, 0, true);
         mockGetProductInfomationRestClient(ids, 0, 10, response);
 
-        // Act
         Map<Long, ProductCheckoutListVm> result = productService.getProductInfomation(ids, 0, 10);
 
-        // Assert
         assertThat(result).isNotNull().isEmpty();
     }
 
     @Test
     void testHandleProductInfomationFallback_whenThrowable_shouldRethrow() {
-        // Arrange
         RuntimeException cause = new RuntimeException("timeout");
 
-        // Act & Assert
         assertThatThrownBy(() -> productService.handleProductInfomationFallback(cause))
             .isInstanceOf(RuntimeException.class)
             .hasMessage("timeout");
@@ -275,7 +254,8 @@ class ProductServiceTest {
     // ──────────────────────────────────────────────────────────────────
 
     /**
-     * Configures the RestClient mock chain for getProductInfomation calls.
+     * Builds the RestClient mock chain for getProductInfomation.
+     * Uses a single shared requestHeadersUriSpec (raw type) to avoid wildcard capture errors.
      */
     private void mockGetProductInfomationRestClient(
         Set<Long> ids, int pageNo, int pageSize, ProductGetCheckoutListVm responseBody
@@ -289,13 +269,11 @@ class ProductServiceTest {
             .buildAndExpand()
             .toUri();
 
-        RestClient.RequestHeadersUriSpec<?> requestHeadersUriSpec = mock(RestClient.RequestHeadersUriSpec.class);
         when(restClient.get()).thenReturn(requestHeadersUriSpec);
         when(requestHeadersUriSpec.uri(url)).thenReturn(requestHeadersUriSpec);
         when(requestHeadersUriSpec.headers(any())).thenReturn(requestHeadersUriSpec);
         when(requestHeadersUriSpec.retrieve()).thenReturn(responseSpec);
 
-        @SuppressWarnings("unchecked")
         ResponseEntity<ProductGetCheckoutListVm> responseEntity = mock(ResponseEntity.class);
         when(responseSpec.toEntity(any(ParameterizedTypeReference.class))).thenReturn(responseEntity);
         when(responseEntity.getBody()).thenReturn(responseBody);
