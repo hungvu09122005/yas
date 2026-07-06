@@ -1,5 +1,5 @@
-﻿name: cart-ci
-
+name: cart-ci
+# Test comment to check if CI runs build & test phases when workflow YAML is modified
 on:
   push:
     branches: ['**']
