@@ -52,6 +52,8 @@
         <org.lombok.version>1.18.42</org.lombok.version>
         <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
         <logstash-logback-encoder.version>8.0</logstash-logback-encoder.version>
+        <logback.version>1.5.36</logback.version>
+        <tomcat.version>11.0.23</tomcat.version>
         <opentelemetry-logback.vesion>2.9.0-alpha</opentelemetry-logback.vesion>
         <opentelemetry-semconv.version>1.37.0</opentelemetry-semconv.version>
         <opentelemetry.version>1.62.0</opentelemetry.version>
