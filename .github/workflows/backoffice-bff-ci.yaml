@@ -150,6 +150,33 @@ jobs:
           cache-from: type=gha,scope=${{ github.workflow }}
           cache-to: type=gha,mode=max,scope=${{ github.workflow }}
 
+      - name: Update GitOps Repository
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+        env:
+          GITOPS_REPO: "LCHLong/yas-gitops"
+          SERVICE_NAME: "backoffice-bff"
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }} # Yêu cầu Personal Access Token
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            IMAGE_TAG="${GITHUB_REF_NAME}"
+            TARGET_FILE="envs/staging/values.yaml"
+          else
+            IMAGE_TAG="${{ steps.meta.outputs.short_sha }}"
+            TARGET_FILE="envs/dev/values.yaml"
+          fi
+
+          git clone https://x-access-token:${PAT_TOKEN}@github.com/${GITOPS_REPO}.git gitops-repo
+          cd gitops-repo
+          
+          # Cập nhật tag trong file values.yaml bằng yq
+          yq e ".${SERVICE_NAME}.image.tag = \"${IMAGE_TAG}\"" -i ${TARGET_FILE}
+          
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git add ${TARGET_FILE}
+          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: auto-update ${SERVICE_NAME} image tag to ${IMAGE_TAG}" && git push origin main)
+
   publish-coverage:
     name: Publish coverage report
     needs: [test]
