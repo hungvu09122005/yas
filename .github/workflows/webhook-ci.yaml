@@ -175,7 +175,14 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
           git add ${TARGET_FILE}
-          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: auto-update ${SERVICE_NAME} image tag to ${IMAGE_TAG}" && git push origin main)
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore: auto-update ${SERVICE_NAME} image tag to ${IMAGE_TAG}"
+            for i in 1 2 3 4 5; do
+              git pull --rebase origin main && git push origin main && break || sleep 5
+            done
+          fi
 
   publish-coverage:
     name: Publish coverage report
