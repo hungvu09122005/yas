@@ -17,7 +17,7 @@ const About = () => {
   return (
     <>
       <Head>
-        <title>About</title>
+        <title>About Test Dev</title>
       </Head>
       <BreadcrumbComponent props={crumb} />
     </>
