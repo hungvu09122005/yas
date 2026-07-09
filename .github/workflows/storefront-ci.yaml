@@ -3,6 +3,7 @@
 on:
   push:
     branches: ['**']
+    tags: ['v*']
     paths:
       - 'storefront/**'
       - '.github/workflows/actions/action.yaml'

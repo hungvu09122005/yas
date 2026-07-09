@@ -3,6 +3,7 @@
 on:
   push:
     branches: ['**']
+    tags: ['v*']
     paths:
       - "sampledata/**"
       - ".github/workflows/actions/action.yaml"
@@ -10,6 +11,7 @@ on:
       - "pom.xml"
   pull_request:
     branches: ['**']
+    tags: ['v*']
     paths:
       - "sampledata/**"
       - ".github/workflows/actions/action.yaml"

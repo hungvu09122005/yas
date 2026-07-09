@@ -3,6 +3,7 @@
 on:
   push:
     branches: ['**']
+    tags: ['v*']
     paths:
       - 'backoffice-bff/**'
       - '.github/workflows/actions/action.yaml'

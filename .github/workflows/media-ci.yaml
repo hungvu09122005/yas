@@ -3,6 +3,7 @@
 on:
   push:
     branches: ['**']
+    tags: ['v*']
     paths:
       - 'media/**'
       - '.github/workflows/actions/action.yaml'
