@@ -1,0 +1,49 @@
+{{- if .Values.istio.enabled }}
+# ==========================================================
+# CẤU HÌNH MÃ HÓA ĐƯỜNG TRUYỀN (mTLS STRICT)
+# ==========================================================
+
+# 1. Bật mTLS theo chế độ được cấu hình cho toàn bộ namespace
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: {{ .Release.Namespace }}
+spec:
+  mtls:
+    mode: {{ .Values.istio.mtlsMode | default "STRICT" }}
+
+---
+# 2. Cấu hình ngoại lệ PERMISSIVE trên cổng 80 cho Storefront BFF
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: storefront-bff-mtls
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: storefront-bff
+  mtls:
+    mode: {{ .Values.istio.mtlsMode | default "STRICT" }}
+  portLevelMtls:
+    80:
+      mode: PERMISSIVE
+
+---
+# 3. Cấu hình ngoại lệ PERMISSIVE trên cổng 80 cho Backoffice BFF
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: backoffice-bff-mtls
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: backoffice-bff
+  mtls:
+    mode: {{ .Values.istio.mtlsMode | default "STRICT" }}
+  portLevelMtls:
+    80:
+      mode: PERMISSIVE
+{{- end }}
