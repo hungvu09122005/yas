@@ -15,5 +15,5 @@ spec:
   rules:
   - from:
     - source:
-        principals: ["cluster.local/ns/{{ .Release.Namespace }}/sa/storefront-bff"]
+        principals: ["cluster.local/ns/{{ .Release.Namespace }}/sa/storefront-bff", "cluster.local/ns/{{ .Release.Namespace }}/sa/backoffice-bff"]
 {{- end }}
