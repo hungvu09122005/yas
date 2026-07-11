@@ -319,3 +319,8 @@ reloader:
   fullnameOverride: "yas-reloader"
   reloader:
     watchGlobally: false
+
+istio:
+  enabled: false
+  mtlsMode: PERMISSIVE
+  faultInjection: false
