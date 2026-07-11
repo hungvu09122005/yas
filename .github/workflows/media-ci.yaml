@@ -170,7 +170,7 @@ jobs:
           cd gitops-repo
           
           # Cập nhật tag trong file values.yaml bằng yq
-          yq e ".${SERVICE_NAME}.image.tag = \"${IMAGE_TAG}\"" -i ${TARGET_FILE}
+          yq e ".${SERVICE_NAME}.backend.image.tag = \"${IMAGE_TAG}\"" -i ${TARGET_FILE}
           
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

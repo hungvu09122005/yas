@@ -1,3 +1,6 @@
+# Namespace for service discovery (defaults to release namespace)
+namespace: ""
+
 replicaCount: 1
 
 image:
