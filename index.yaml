@@ -1,5 +1,31 @@
 apiVersion: v1
 entries:
+  media:
+  - apiVersion: v2
+    appVersion: latest
+    created: "2026-07-11T13:06:20.819202548Z"
+    dependencies:
+    - name: backend
+      repository: file://../backend
+      version: 0.1.0
+    description: A Helm chart for Kubernetes
+    digest: 6da92ef1fa96623c29d944d4b03a60b73195d8b342c04011b0ee5e6984ae16ca
+    name: media
+    type: application
+    urls:
+    - https://github.com/hungvu09122005/yas/releases/download/media-0.1.0/media-0.1.0.tgz
+    version: 0.1.0
+  nginx:
+  - apiVersion: v2
+    appVersion: 1.27.2
+    created: "2026-07-11T13:06:20.952110303Z"
+    description: Nginx reverse proxy for YAS microservices
+    digest: 2fec43d7b94bf55e6a9fede9d7a2382b0311ce709add7159b0d29b53dec019da
+    name: nginx
+    type: application
+    urls:
+    - https://github.com/hungvu09122005/yas/releases/download/nginx-0.1.0/nginx-0.1.0.tgz
+    version: 0.1.0
   yas-configuration:
   - apiVersion: v2
     appVersion: 1.1.0
@@ -15,4 +41,4 @@ entries:
     urls:
     - https://github.com/hungvu09122005/yas/releases/download/yas-configuration-0.4.0/yas-configuration-0.4.0.tgz
     version: 0.4.0
-generated: "2026-07-06T15:05:40.886146999Z"
+generated: "2026-07-11T13:06:21.122183838Z"
