@@ -46,24 +46,4 @@ spec:
   portLevelMtls:
     80:
       mode: PERMISSIVE
-
----
-# 4. Cấu hình ngoại lệ PERMISSIVE trên cổng 80 cho Media Service
-apiVersion: security.istio.io/v1beta1
-kind: PeerAuthentication
-metadata:
-  name: media-mtls
-  namespace: {{ .Release.Namespace }}
-spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: media
-  mtls:
-    mode: {{ .Values.istio.mtlsMode | default "STRICT" }}
-  portLevelMtls:
-    80:
-      mode: PERMISSIVE
-    8090:
-      mode: PERMISSIVE
 {{- end }}
-
