@@ -97,6 +97,9 @@ const Header = ({ children }: Props) => {
 
   return (
     <header>
+      <div style={{ backgroundColor: '#ff4d4f', color: 'white', textAlign: 'center', padding: '12px', fontSize: '20px', fontWeight: 'bold', zIndex: 9999, position: 'relative' }}>
+        YAS STOREFRONT STAGING - TAG v1.2.3
+      </div>
       <div className="container-header">
         <nav className="top-bar">
           <div className="top-bar-container container">
