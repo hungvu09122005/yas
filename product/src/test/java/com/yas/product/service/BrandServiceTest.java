@@ -1,11 +1,14 @@
 package com.yas.product.service;
 
+import com.yas.commonlibrary.exception.BadRequestException;
 import com.yas.commonlibrary.exception.DuplicatedException;
 import com.yas.commonlibrary.exception.NotFoundException;
 import com.yas.product.model.Brand;
+import com.yas.product.model.Product;
 import com.yas.product.repository.BrandRepository;
 import com.yas.product.viewmodel.brand.BrandListGetVm;
 import com.yas.product.viewmodel.brand.BrandPostVm;
+import com.yas.product.viewmodel.brand.BrandVm;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -104,6 +107,69 @@ class BrandServiceTest {
 
         Assertions.assertThrows(NotFoundException.class, () -> {
             brandService.update(brandPostVm, 1L);
+        });
+    }
+
+    // Retrieve a list of brands by their IDs successfully
+    @Test
+    void test_getBrandsByIds_successfully() {
+        List<Long> ids = List.of(1L, 2L);
+        Brand brand1 = new Brand();
+        brand1.setId(1L);
+        brand1.setName("Brand1");
+        brand1.setSlug("brand-1");
+
+        Brand brand2 = new Brand();
+        brand2.setId(2L);
+        brand2.setName("Brand2");
+        brand2.setSlug("brand-2");
+
+        when(brandRepository.findAllById(ids)).thenReturn(List.of(brand1, brand2));
+
+        List<BrandVm> result = brandService.getBrandsByIds(ids);
+
+        assertEquals(2, result.size());
+        assertEquals(1L, result.get(0).id());
+        assertEquals("Brand1", result.get(0).name());
+        assertEquals(2L, result.get(1).id());
+        assertEquals("Brand2", result.get(1).name());
+    }
+
+    // Delete a brand successfully
+    @Test
+    void test_delete_brand_successfully() {
+        Brand brand = new Brand();
+        brand.setId(1L);
+        brand.setProducts(List.of());
+
+        when(brandRepository.findById(1L)).thenReturn(Optional.of(brand));
+
+        brandService.delete(1L);
+
+        org.mockito.Mockito.verify(brandRepository).deleteById(1L);
+    }
+
+    // Attempt to delete a brand that does not exist
+    @Test
+    void test_delete_nonexistent_brand() {
+        when(brandRepository.findById(1L)).thenReturn(Optional.empty());
+
+        Assertions.assertThrows(NotFoundException.class, () -> {
+            brandService.delete(1L);
+        });
+    }
+
+    // Attempt to delete a brand that contains products
+    @Test
+    void test_delete_brand_containing_products() {
+        Brand brand = new Brand();
+        brand.setId(1L);
+        brand.setProducts(List.of(new Product()));
+
+        when(brandRepository.findById(1L)).thenReturn(Optional.of(brand));
+
+        Assertions.assertThrows(BadRequestException.class, () -> {
+            brandService.delete(1L);
         });
     }
 }
